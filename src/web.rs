@@ -4,11 +4,19 @@ use axum::{
     response::Json,
     extract::Path,
 };
+use askama::Template;
+use askama_axum::{Response, IntoResponse};
 use serde_json::{json, Value};
 
+// Define templates
+#[derive(Template)]
+#[template(path = "home.html")]
+struct HomeTemplate;
 
-async fn home() -> &'static str {
-    "Welcome to Rustavel!"
+// Route handlers
+async fn home() -> Response {
+    let template = HomeTemplate;
+    template.into_response()
 }   
 
 // Route handlers
