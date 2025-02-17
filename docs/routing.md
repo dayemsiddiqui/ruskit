@@ -115,26 +115,253 @@ pub fn routes() -> Router {
 }
 ```
 
+## Request Data Handling
+
+Rustavel provides elegant ways to access different types of request data using Axum's powerful extractors.
+
+### URL Parameters
+
+You can capture URL parameters using curly braces in your route definition:
+
+```rust
+use axum::{extract::Path, Router};
+use serde::Deserialize;
+
+// Single parameter
+async fn show_user(Path(id): Path<String>) -> Response {
+    // Access id directly
+}
+
+// Multiple parameters
+#[derive(Deserialize)]
+struct UserPostParams {
+    user_id: String,
+    post_id: i32,
+}
+
+async fn show_user_post(
+    Path(params): Path<UserPostParams>
+) -> Response {
+    // Access params.user_id and params.post_id
+}
+
+// In your router
+Router::new()
+    .route("/users/:id", get(show_user))
+    .route("/users/:user_id/posts/:post_id", get(show_user_post))
+```
+
+### Query Parameters
+
+Handle query parameters (e.g., `?page=1&limit=10`) using the `Query` extractor:
+
+```rust
+use axum::extract::Query;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct PaginationParams {
+    page: Option<u32>,
+    limit: Option<u32>,
+}
+
+async fn list_users(
+    Query(params): Query<PaginationParams>
+) -> Response {
+    let page = params.page.unwrap_or(1);
+    let limit = params.limit.unwrap_or(10);
+    // Use page and limit for pagination
+}
+
+// Optional query parameters with defaults
+#[derive(Deserialize)]
+struct FilterParams {
+    #[serde(default = "default_status")]
+    status: String,
+    #[serde(default)]
+    sort_by: String,
+}
+
+fn default_status() -> String {
+    "active".to_string()
+}
+
+async fn filtered_users(
+    Query(params): Query<FilterParams>
+) -> Response {
+    // params.status will be "active" if not provided
+    // params.sort_by will be empty string if not provided
+}
+```
+
+### Request Body
+
+Handle POST, PUT, and PATCH request bodies using the `Json` extractor:
+
+```rust
+use axum::{
+    extract::Json,
+    response::IntoResponse,
+};
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize)]
+struct CreateUser {
+    username: String,
+    email: String,
+    password: String,
+}
+
+#[derive(Serialize)]
+struct UserResponse {
+    id: i32,
+    username: String,
+    email: String,
+}
+
+async fn create_user(
+    Json(payload): Json<CreateUser>
+) -> impl IntoResponse {
+    // Access payload.username, payload.email, etc.
+    Json(UserResponse {
+        id: 1,
+        username: payload.username,
+        email: payload.email,
+    })
+}
+
+// Handle form data
+use axum::extract::Form;
+
+#[derive(Deserialize)]
+struct LoginForm {
+    username: String,
+    password: String,
+}
+
+async fn login(
+    Form(data): Form<LoginForm>
+) -> Response {
+    // Handle form submission
+}
+```
+
+### Multipart Form Data
+
+Handle file uploads and multipart form data:
+
+```rust
+use axum::{
+    extract::Multipart,
+    response::IntoResponse,
+};
+
+async fn upload_file(mut multipart: Multipart) -> impl IntoResponse {
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let name = field.name().unwrap().to_string();
+        let data = field.bytes().await.unwrap();
+        
+        // Process the uploaded file
+        // Example: save to disk, process in memory, etc.
+    }
+}
+
+// In your router
+Router::new()
+    .route("/upload", post(upload_file))
+```
+
+### Headers and Cookies
+
+Access request headers and cookies:
+
+```rust
+use axum::{
+    extract::TypedHeader,
+    headers::{Authorization, Cookie},
+};
+
+async fn authenticated_route(
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+    TypedHeader(cookies): TypedHeader<Cookie>,
+) -> Response {
+    let token = auth.token();
+    let session = cookies.get("session").unwrap_or_default();
+    // Handle authentication
+}
+```
+
+### Combined Extractors
+
+You can combine multiple extractors in a single handler:
+
+```rust
+async fn complex_handler(
+    Path(id): Path<String>,
+    Query(params): Query<PaginationParams>,
+    Json(body): Json<CreateUser>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+) -> Response {
+    // Access all request data in one handler
+}
+```
+
+### Error Handling
+
+Implement proper error handling for request data:
+
+```rust
+use axum::{
+    response::IntoResponse,
+    http::StatusCode,
+};
+use serde_json::json;
+
+#[derive(Debug)]
+enum ApiError {
+    InvalidData(String),
+    NotFound,
+    Unauthorized,
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> axum::response::Response {
+        let (status, message) = match self {
+            ApiError::InvalidData(msg) => (StatusCode::BAD_REQUEST, msg),
+            ApiError::NotFound => (StatusCode::NOT_FOUND, "Resource not found".to_string()),
+            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
+        };
+
+        Json(json!({
+            "error": message
+        })).into_response()
+    }
+}
+
+async fn create_user(
+    Json(payload): Json<CreateUser>
+) -> Result<impl IntoResponse, ApiError> {
+    if payload.username.is_empty() {
+        return Err(ApiError::InvalidData("Username is required".to_string()));
+    }
+    // Process valid data
+    Ok(Json(json!({ "message": "User created" })))
+}
+```
+
 ## Best Practices
 
-1. **Route Organization**: Keep your routes organized by grouping related endpoints together.
-2. **RESTful Naming**: Follow RESTful conventions for your API endpoints:
-   - GET `/users` - List users
-   - GET `/users/{id}` - Show a specific user
-   - POST `/users` - Create a new user
-   - PUT `/users/{id}` - Update a user
-   - DELETE `/users/{id}` - Delete a user
-
-3. **Response Types**: Be consistent with your response types. For APIs, use JSON responses.
-
-4. **Error Handling**: Implement proper error handling for your routes (documentation coming soon).
+1. **Type Safety**: Always use strongly typed structs with `Deserialize` for request data
+2. **Validation**: Implement validation logic in your data structures
+3. **Error Handling**: Use custom error types and proper error responses
+4. **Documentation**: Use OpenAPI/Swagger annotations (coming soon)
+5. **Testing**: Write tests for your request handlers (documentation coming soon)
 
 ## Coming Soon
 
-- Route Groups
-- Route Middleware
-- Route Model Binding
-- Route Caching
-- Validation
-- Authentication
-- Authorization 
+- OpenAPI/Swagger Integration
+- Request Rate Limiting
+- Request Validation Middleware
+- Request Logging and Monitoring
+- API Versioning
+- GraphQL Support 
