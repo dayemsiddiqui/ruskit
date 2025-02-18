@@ -1,6 +1,6 @@
 # Data Transfer Objects (DTOs)
 
-DTOs are objects that define how data will be sent over the network. In Rustavel, DTOs are used to handle request and response data in a type-safe manner.
+In Ruskit, Data Transfer Objects (DTOs) are structures that define how data should be sent over the network. They help in validating incoming requests and structuring outgoing responses.
 
 ## Overview
 

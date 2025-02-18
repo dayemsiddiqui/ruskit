@@ -1,6 +1,6 @@
 # Controllers
 
-Controllers handle incoming HTTP requests and return responses. They are responsible for processing input, interacting with models, and returning appropriate responses.
+Controllers in Ruskit are responsible for handling incoming HTTP requests and returning appropriate responses. They serve as the central point for your application's request handling logic.
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # Commands
 
-Rustavel provides a set of CLI commands to help you scaffold and manage your application. These commands are available through the `cargo kit` command-line interface.
+Ruskit provides a set of CLI commands to help you scaffold and manage your application. These commands are available through the `cargo kit` command-line interface.
 
 ## Available Commands
 

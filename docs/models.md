@@ -1,6 +1,6 @@
 # Models
 
-Models in Rustavel represent your database tables and provide an elegant way to interact with your data. Each model corresponds to a table in your database and includes the schema definition, migrations, and methods for querying and manipulating data.
+Models in Ruskit represent the data structure and business logic of your application. They provide an abstraction layer for interacting with your database and implementing domain-specific functionality.
 
 ## Generating Models
 
