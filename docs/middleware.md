@@ -1,6 +1,6 @@
-# Middleware in Rustavel
+# Middleware in Ruskit
 
-Middleware provides a convenient mechanism for filtering HTTP requests entering your application. For example, Rustavel includes middleware for handling CORS and trimming strings. You may add your own middleware to customize it further.
+Middleware provides a convenient mechanism for filtering HTTP requests entering your application. For example, Ruskit includes middleware for handling CORS and trimming strings. You may add your own middleware to customize it further.
 
 ## Introduction
 
@@ -14,13 +14,13 @@ Middleware acts as a bridge between a request and a response, allowing you to:
 
 ### Available Middleware
 
-Rustavel comes with several built-in middleware components:
+Ruskit comes with several built-in middleware components:
 
 #### CORS Middleware
 Handles Cross-Origin Resource Sharing headers:
 
 ```rust
-use rustavel::presets::Cors;
+use ruskit::presets::Cors;
 
 Router::new()
     .route(
@@ -40,7 +40,7 @@ let cors = Cors::new("http://example.com")
 Automatically trims string inputs in requests:
 
 ```rust
-use rustavel::presets::TrimStrings;
+use ruskit::presets::TrimStrings;
 
 Router::new()
     .route(
@@ -51,13 +51,13 @@ Router::new()
 
 ### Applying Middleware
 
-There are three ways to apply middleware in Rustavel:
+There are three ways to apply middleware in Ruskit:
 
 #### 1. Route Middleware
 Apply middleware to specific routes:
 
 ```rust
-use rustavel::presets::{Cors, TrimStrings};
+use ruskit::presets::{Cors, TrimStrings};
 
 Router::new()
     .route(

@@ -1,6 +1,6 @@
-# Rustavel Documentation
+# Ruskit Documentation
 
-Welcome to the Rustavel documentation! Rustavel is a web application framework with expressive, elegant syntax inspired by Laravel, built for Rust. We believe development must be an enjoyable and creative experience. Rustavel takes the pain out of web development by easing common tasks used in many web projects.
+Welcome to the Ruskit documentation! Ruskit is a web application framework with expressive, elegant syntax inspired by Laravel, built for Rust. We believe development must be an enjoyable and creative experience. Ruskit takes the pain out of web development by easing common tasks used in many web projects.
 
 ## Table of Contents
 
@@ -20,11 +20,11 @@ Welcome to the Rustavel documentation! Rustavel is a web application framework w
 
 ### Installation
 
-Add Rustavel to your project:
+Add Ruskit to your project:
 
 ```toml
 [dependencies]
-rustavel = "0.1.0"  # Coming Soon
+ruskit = "0.1.0"  # Coming Soon
 ```
 
 ### Basic Usage
@@ -41,7 +41,7 @@ use serde_json::{json, Value};
 
 // Define a route handler
 async fn hello() -> Json<Value> {
-    Json(json!({ "message": "Hello, Rustavel!" }))
+    Json(json!({ "message": "Hello, Ruskit!" }))
 }
 
 // Register your routes
@@ -83,4 +83,4 @@ We welcome contributions! Please see our [Contributing Guide](./contributing.md)
 
 ## License
 
-The Rustavel framework is open-sourced software licensed under the [MIT license](../LICENSE). 
+The Ruskit framework is open-sourced software licensed under the [MIT license](../LICENSE). 

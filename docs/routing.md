@@ -1,10 +1,10 @@
-# Routing in Rustavel
+# Routing in Ruskit
 
-Rustavel provides a simple and expressive routing system built on top of Axum. This guide will help you understand how to define routes and handle HTTP requests in your Rustavel application.
+Ruskit provides a simple and expressive routing system built on top of Axum. This guide will help you understand how to define routes and handle HTTP requests in your Ruskit application.
 
 ## Basic Routing
 
-The most basic Rustavel routes accept a URI and a closure or function handler:
+The most basic Ruskit routes accept a URI and a closure or function handler:
 
 ```rust
 Router::new()
@@ -25,12 +25,12 @@ Router::new()
 
 ## Route Handlers
 
-Route handlers in Rustavel can return different types of responses:
+Route handlers in Ruskit can return different types of responses:
 
 ### Basic String Response
 ```rust
 async fn home() -> &'static str {
-    "Welcome to Rustavel!"
+    "Welcome to Ruskit!"
 }
 ```
 
@@ -73,7 +73,7 @@ Router::new()
 
 ## Example Routes File
 
-Here's a complete example of a routes file in Rustavel:
+Here's a complete example of a routes file in Ruskit:
 
 ```rust
 use axum::{
@@ -86,7 +86,7 @@ use serde_json::{json, Value};
 
 // Basic route handler
 async fn home() -> &'static str {
-    "Welcome to Rustavel!"
+    "Welcome to Ruskit!"
 }
 
 // JSON API handlers
@@ -117,7 +117,7 @@ pub fn routes() -> Router {
 
 ## Request Data Handling
 
-Rustavel provides elegant ways to access different types of request data using Axum's powerful extractors.
+Ruskit provides elegant ways to access different types of request data using Axum's powerful extractors.
 
 ### URL Parameters
 

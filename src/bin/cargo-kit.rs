@@ -1,4 +1,4 @@
-use rustavel::cli;
+use ruskit::cli;
 
 #[tokio::main]
 async fn main() {

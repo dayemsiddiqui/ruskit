@@ -89,7 +89,7 @@ async fn restart_server() -> Child {
         println!("{}", style(error).red());
     }
 
-    println!("{}", style("Starting server...").green());
+    println!("{}", style("Starting Ruskit server...").cyan());
     let child = Command::new("cargo")
         .arg("run")
         .stdout(Stdio::inherit())
@@ -157,7 +157,7 @@ pub async fn run() {
 
     match cli.command {
         Commands::Serve => {
-            println!("{}", style("Starting Rustavel server...").cyan());
+            println!("{}", style("Starting Ruskit server...").cyan());
             let mut child = Command::new("cargo")
                 .arg("run")
                 .stdout(Stdio::inherit())
@@ -177,7 +177,7 @@ pub async fn run() {
             }
         }
         Commands::Dev => {
-            println!("{}", style("Starting Rustavel development server...").cyan());
+            println!("{}", style("Starting Ruskit development server...").cyan());
             println!("{}", style("Hot reloading enabled").yellow());
 
             let mut server_process = restart_server().await;

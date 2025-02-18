@@ -1,12 +1,10 @@
-# Views and Templating in Rustavel
+# Views and Templating in Ruskit
 
-Rustavel uses [Askama](https://github.com/djc/askama) as its templating engine, providing compile-time template checking and high performance. The syntax is similar to Jinja2/Django templates, making it familiar for developers coming from other frameworks.
+Ruskit uses [Askama](https://github.com/djc/askama) as its templating engine, providing compile-time template checking and high performance. The syntax is similar to Jinja2/Django templates, making it familiar for developers coming from other frameworks.
 
-## Basic Template Usage
+## Template Storage
 
-### Template Structure
-
-Templates in Rustavel are stored in the `templates` directory at your project root. Each template is a `.html` file that can extend other templates.
+Templates in Ruskit are stored in the `templates` directory at your project root. Each template is a `.html` file that can extend other templates.
 
 ```rust
 // Define a template in your route handler
@@ -23,14 +21,14 @@ async fn home() -> Response {
 
 ### Template Inheritance
 
-Rustavel encourages template inheritance through a base layout:
+Ruskit encourages template inheritance through a base layout:
 
 ```html
 <!-- templates/base.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}Rustavel{% endblock %}</title>
+    <title>{% block title %}Ruskit{% endblock %}</title>
 </head>
 <body>
     {% block content %}{% endblock %}
@@ -40,20 +38,20 @@ Rustavel encourages template inheritance through a base layout:
 <!-- templates/home.html -->
 {% extends "base.html" %}
 
-{% block title %}Welcome | Rustavel{% endblock %}
+{% block title %}Welcome | Ruskit{% endblock %}
 
 {% block content %}
-    <h1>Welcome to Rustavel!</h1>
+    <h1>Welcome to Ruskit!</h1>
 {% endblock %}
 ```
 
 ## Tailwind CSS Integration
 
-Rustavel comes with out-of-the-box support for Tailwind CSS, providing a modern utility-first CSS framework for your templates.
+Ruskit comes with out-of-the-box support for Tailwind CSS, providing a modern utility-first CSS framework for your templates.
 
 ### Default Setup
 
-Every Rustavel template automatically includes the latest version of Tailwind CSS via CDN:
+Every Ruskit template automatically includes the latest version of Tailwind CSS via CDN:
 
 ```html
 <script src="https://cdn.tailwindcss.com"></script>
@@ -62,7 +60,7 @@ Every Rustavel template automatically includes the latest version of Tailwind CS
         theme: {
             extend: {
                 colors: {
-                    'rustavel': '#B7410E',
+                    'ruskit': '#B7410E',
                 },
             },
         },
@@ -88,7 +86,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'rustavel': '#B7410E',
+        'ruskit': '#B7410E',
       },
     },
   },
@@ -128,7 +126,7 @@ npx tailwindcss init
 
 ### Example Usage
 
-Here's how to use Tailwind CSS in your Rustavel templates:
+Here's how to use Tailwind CSS in your Ruskit templates:
 
 ```html
 {% extends "base.html" %}
@@ -140,13 +138,13 @@ Here's how to use Tailwind CSS in your Rustavel templates:
             <div class="flex justify-between">
                 <div class="flex space-x-7">
                     <a href="/" class="flex items-center py-4">
-                        <span class="font-semibold text-rustavel text-lg">
-                            Rustavel
+                        <span class="font-semibold text-ruskit text-lg">
+                            Ruskit
                         </span>
                     </a>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="/login" class="py-2 px-4 bg-rustavel text-white rounded hover:bg-opacity-90">
+                    <a href="/login" class="py-2 px-4 bg-ruskit text-white rounded hover:bg-opacity-90">
                         Login
                     </a>
                 </div>

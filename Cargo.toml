@@ -1,8 +1,8 @@
 [package]
-name = "rustavel"
+name = "ruskit"
 version = "0.1.0"
 edition = "2021"
-default-run = "rustavel"
+default-run = "ruskit"
 
 [dependencies]
 axum = "0.8.1"
@@ -25,3 +25,5 @@ tokio-stream = "0.1.14"
 libc = "0.2"
 nix = { version = "0.27", features = ["process", "signal"] }
 once_cell = "1.19.0"
+validator = { version = "0.16", features = ["derive"] }
+regex = "1.10.2"

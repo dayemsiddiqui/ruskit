@@ -1,6 +1,6 @@
-# Rustavel
+# Ruskit
 
-Rustavel is a web application framework with expressive, elegant syntax inspired by Laravel, built for Rust. We believe development must be an enjoyable and creative experience. Rustavel takes the pain out of web development by easing common tasks used in many web projects.
+Ruskit is a web application framework with expressive, elegant syntax inspired by Laravel, built for Rust. We believe development must be an enjoyable and creative experience. Ruskit takes the pain out of web development by easing common tasks used in many web projects.
 
 ## Features
 
@@ -15,21 +15,13 @@ Rustavel is a web application framework with expressive, elegant syntax inspired
 
 ## Quick Start
 
-Create a new Rustavel project
+Create a new Ruskit project
 
 ```bash
-cargo install rustavel-cli
-rustavel new my-project
+cargo install ruskit-cli
+ruskit new my-project
 ```
 
 Navigate to project directory
 
-```bash
-cd my-project
-```
-
-Run the development server
-
-```bash
-cargo run
 ```

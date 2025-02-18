@@ -27,7 +27,7 @@ async fn home() -> Response {
 
 // Route handlers
 async fn index() -> Json<Value> {
-    Json(json!({ "message": "Welcome to Rustavel!" }))
+    Json(json!({ "message": "Welcome to Ruskit!" }))
 }
 
 async fn users_index() -> Json<Value> {
