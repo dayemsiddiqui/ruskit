@@ -5,6 +5,7 @@ use crate::framework::{
         presets::{Cors, TrimStrings}
     },
     views::{Metadata, set_global_metadata},
+    database::{self, config::DatabaseConfig},
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -79,6 +80,12 @@ impl Application {
 
 /// Initialize the application
 pub async fn bootstrap() {
+    // Initialize database with SQLite configuration
+    let db_config = DatabaseConfig::from_env();
+    database::initialize(Some(db_config))
+        .await
+        .expect("Failed to initialize database");
+
     let app = Application::instance().await;
     let mut app = app.write().await;
 
