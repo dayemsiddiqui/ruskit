@@ -36,14 +36,15 @@ pub async fn users_store(Json(payload): Json<Value>) -> Json<Value> {
         .unwrap()
         .as_secs() as i64;
         
-    let user_data = json!({
-        "name": payload.get("name").and_then(|v| v.as_str()).unwrap_or(""),
-        "email": payload.get("email").and_then(|v| v.as_str()).unwrap_or(""),
-        "created_at": now,
-        "updated_at": now
-    });
+    let user = User {
+        id: 0, // This will be set by the database
+        name: payload.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+        email: payload.get("email").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+        created_at: now,
+        updated_at: now,
+    };
     
-    match User::create(user_data).await {
+    match User::create(user).await {
         Ok(user) => Json(json!({ "data": user })),
         Err(e) => Json(json!({ "error": e.to_string() })),
     }

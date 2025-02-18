@@ -11,6 +11,7 @@ use std::path::Path;
 use serde_json::Value;
 use sqlx::sqlite::SqlitePool;
 use crate::framework::database::factory::Factory;
+use sqlx::query_builder::QueryBuilder;
 
 type MigrationFn = fn() -> Vec<Migration>;
 
@@ -82,6 +83,9 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
         "id"
     }
 
+    /// Get the model's ID
+    fn id(&self) -> i64;
+
     /// Get the migrations for this model
     fn migrations() -> Vec<Migration>;
 
@@ -102,7 +106,7 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
             Self::primary_key()
         );
         
-        let result = sqlx::query_as(&query)
+        let result = sqlx::query_as::<sqlx::Sqlite, Self>(&query)
             .bind(id)
             .fetch_optional(pool.as_ref())
             .await?;
@@ -115,7 +119,7 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
         let pool = get_pool()?;
         let query = format!("SELECT * FROM {}", Self::table_name());
         
-        let results = sqlx::query_as(&query)
+        let results = sqlx::query_as::<sqlx::Sqlite, Self>(&query)
             .fetch_all(pool.as_ref())
             .await?;
             
@@ -123,45 +127,87 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
     }
 
     /// Create a new record
-    async fn create(data: Value) -> Result<Self, DatabaseError> {
+    async fn create(mut model: Self) -> Result<Self, DatabaseError> {
         println!("Creating new record...");
         let pool = get_pool()?;
-        let columns: Vec<String> = data.as_object().unwrap().keys().cloned().collect();
-        let values: Vec<Value> = data.as_object().unwrap().values().cloned().collect();
-        let placeholders: Vec<String> = (1..=values.len()).map(|_| format!("?")).collect();
+        println!("Got database pool successfully");
+        
+        // Convert the model to a JSON Value for field extraction
+        let data = serde_json::to_value(&model)?;
+        let obj = data.as_object().unwrap();
+        
+        // Filter out the id field since it's auto-generated
+        let columns: Vec<String> = obj.keys()
+            .filter(|&k| k != "id")
+            .cloned()
+            .collect();
+            
+        let placeholders: Vec<String> = (1..=columns.len()).map(|_| "?".to_string()).collect();
 
-        let query = format!(
+        // Create the insert query
+        let insert_query = format!(
             "INSERT INTO {} ({}) VALUES ({})",
             Self::table_name(),
             columns.join(", "),
             placeholders.join(", ")
         );
 
-        println!("Executing query: {}", query);
-        println!("With values: {:?}", values);
+        println!("Executing query: {}", insert_query);
+        println!("With values: {:?}", obj);
 
-        let mut query_builder = sqlx::query(&query);
-        for value in values {
-            query_builder = query_builder.bind(value.to_string());
+        // Start a transaction
+        let mut tx = pool.begin().await?;
+
+        // Build and execute the insert query
+        let mut query_builder = sqlx::query::<sqlx::Sqlite>(&insert_query);
+        for column in &columns {
+            if let Some(value) = obj.get(column) {
+                match value {
+                    Value::Number(n) => {
+                        if let Some(i) = n.as_i64() {
+                            query_builder = query_builder.bind(i);
+                        } else if let Some(f) = n.as_f64() {
+                            query_builder = query_builder.bind(f);
+                        }
+                    },
+                    Value::String(s) => {
+                        // Get the raw string value without JSON escaping
+                        let raw_string = s.as_str();
+                        query_builder = query_builder.bind(raw_string);
+                    },
+                    Value::Bool(b) => query_builder = query_builder.bind(b),
+                    Value::Null => query_builder = query_builder.bind(None::<String>),
+                    _ => return Err(DatabaseError::Other(format!("Unsupported value type for column {}: {:?}", column, value))),
+                }
+            }
         }
 
-        query_builder.execute(&*pool).await?;
+        // Execute the insert
+        let result = query_builder.execute(&mut *tx).await?;
 
-        let last_id = sqlx::query_scalar::<_, i64>("SELECT last_insert_rowid()")
-            .fetch_one(&*pool)
-            .await?;
+        // Get the ID of the inserted row
+        let id: i64 = result.last_insert_rowid();
 
-        println!("Record created with ID: {}", last_id);
 
-        let result = sqlx::query_as::<_, Self>(&format!(
-            "SELECT * FROM {} WHERE id = ?",
-            Self::table_name()
+        // Commit the transaction
+        tx.commit().await?;
+
+        // Log the result of the insert
+        println!("Insert result: {:?}", result.last_insert_rowid());
+        println!("Insert result: {:?}", result.rows_affected());
+       
+        
+
+        // Fetch the created record
+        let row = sqlx::query_as::<sqlx::Sqlite, Self>(&format!(
+            "SELECT * FROM {} WHERE {} = ?",
+            Self::table_name(),
+            Self::primary_key()
         ))
-        .bind(last_id)
-        .fetch_one(&*pool)
+        .bind(id)
+        .fetch_one(pool.as_ref())
         .await?;
 
-        println!("Record retrieved successfully");
-        Ok(result)
+        Ok(row)
     }
 } 

@@ -18,16 +18,41 @@ use seeder::DatabaseSeeder;
 
 pub static POOL: Lazy<Mutex<Option<Arc<SqlitePool>>>> = Lazy::new(|| Mutex::new(None));
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum DatabaseError {
-    #[error("Database connection error: {0}")]
-    ConnectionError(#[from] sqlx::Error),
-    #[error("Database not initialized")]
-    NotInitialized,
-    #[error("IO error: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("Serde error: {0}")]
-    SerdeError(#[from] serde_json::Error),
+    ConnectionError(sqlx::Error),
+    ConfigError(String),
+    Other(String),
+}
+
+impl std::fmt::Display for DatabaseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DatabaseError::ConnectionError(e) => write!(f, "Database connection error: {}", e),
+            DatabaseError::ConfigError(e) => write!(f, "Database configuration error: {}", e),
+            DatabaseError::Other(e) => write!(f, "Database error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for DatabaseError {}
+
+impl From<sqlx::Error> for DatabaseError {
+    fn from(error: sqlx::Error) -> Self {
+        DatabaseError::ConnectionError(error)
+    }
+}
+
+impl From<serde_json::Error> for DatabaseError {
+    fn from(error: serde_json::Error) -> Self {
+        DatabaseError::Other(error.to_string())
+    }
+}
+
+impl From<std::io::Error> for DatabaseError {
+    fn from(error: std::io::Error) -> Self {
+        DatabaseError::Other(error.to_string())
+    }
 }
 
 /// Initialize the database connection pool

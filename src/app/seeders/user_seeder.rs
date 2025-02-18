@@ -24,15 +24,8 @@ pub fn initialize() {
 impl Seeder for UserSeeder {
     async fn run(&self) -> Result<(), DatabaseError> {
         println!("Running UserSeeder...");
-        match User::create_many(10).await {
-            Ok(users) => {
-                println!("Created {} users successfully", users.len());
-                Ok(())
-            },
-            Err(e) => {
-                println!("Error creating users: {}", e);
-                Err(e)
-            }
-        }
+        let users = User::create_many(10).await?;
+        println!("Created {} users successfully", users.len());
+        Ok(())
     }
 } 

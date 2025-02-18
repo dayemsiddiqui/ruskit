@@ -12,19 +12,34 @@ use async_trait::async_trait;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Validate)]
 pub struct User {
+    #[sqlx(default)]
     pub id: i64,
     #[validate(length(min = 3, max = 255))]
+    #[serde(deserialize_with = "deserialize_unquoted_string")]
     pub name: String,
     #[validate(email)]
+    #[serde(deserialize_with = "deserialize_unquoted_string")]
     pub email: String,
     pub created_at: i64,
     pub updated_at: i64,
+}
+
+fn deserialize_unquoted_string<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    Ok(s.trim_matches('"').to_string())
 }
 
 #[async_trait]
 impl Model for User {
     fn table_name() -> &'static str {
         "users"
+    }
+
+    fn id(&self) -> i64 {
+        self.id
     }
 
     fn migrations() -> Vec<Migration> {

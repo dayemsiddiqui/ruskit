@@ -1,11 +1,10 @@
 use crate::app::models::User;
 use crate::framework::database::factory::Factory;
 use fake::{faker::internet::en::*, faker::name::en::*, Fake};
-use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 impl Factory for User {
-    fn definition() -> serde_json::Value {
+    fn definition() -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -16,13 +15,12 @@ impl Factory for User {
         let email = SafeEmail().fake::<String>();
         println!("Generated name: {}, email: {}", name, email);
 
-        let data = json!({
-            "name": name,
-            "email": email,
-            "created_at": now,
-            "updated_at": now
-        });
-        println!("Generated data: {:?}", data);
-        data
+        User {
+            id: 0, // This will be set by the database
+            name,
+            email,
+            created_at: now,
+            updated_at: now,
+        }
     }
 } 

@@ -37,16 +37,28 @@ impl DatabaseSeeder {
         let count = seeders.len();
         println!("Running {} seeders...", count);
         
-        for seeder in seeders.iter() {
-            println!("Running seeder...");
+        let mut errors = Vec::new();
+        
+        for (i, seeder) in seeders.iter().enumerate() {
+            println!("Running seeder {} of {}...", i + 1, count);
             match seeder.run().await {
-                Ok(_) => println!("Seeder completed successfully"),
+                Ok(_) => println!("Seeder {} completed successfully", i + 1),
                 Err(e) => {
-                    println!("Seeder failed: {}", e);
-                    return Err(e);
+                    println!("Seeder {} failed: {}", i + 1, e);
+                    errors.push(format!("Seeder {} failed: {}", i + 1, e));
                 }
             }
         }
-        Ok(())
+
+        if errors.is_empty() {
+            println!("All seeders completed successfully");
+            Ok(())
+        } else {
+            println!("Some seeders failed:");
+            for error in &errors {
+                println!("  - {}", error);
+            }
+            Err(DatabaseError::Other(format!("{} out of {} seeders failed", errors.len(), count)))
+        }
     }
 } 
