@@ -3,10 +3,6 @@ use askama_axum::Response;
 use crate::framework::views::{Metadata, TemplateExt, HasMetadata};
 use axum::response::Html;
 
-/// Home page template
-#[derive(Template, Default)]
-#[template(path = "home.html")]
-pub struct HomeTemplate;
 
 /// About page template with custom fields
 #[derive(Template, Default)]
@@ -21,10 +17,6 @@ pub struct AboutTemplate {
 #[template(path = "landing.html")]
 pub struct LandingTemplate;
 
-/// Renders the home page
-pub async fn home() -> Response {
-    HomeTemplate::default().into_response()
-}   
 
 /// Renders the about page with team member information
 pub async fn about() -> Response {
