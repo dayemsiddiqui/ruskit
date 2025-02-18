@@ -2,6 +2,7 @@ pub mod cli;
 pub mod web;
 pub mod bootstrap;
 pub mod framework;
+pub mod app;
 
 // Re-export framework types
 pub use framework::middleware::{
