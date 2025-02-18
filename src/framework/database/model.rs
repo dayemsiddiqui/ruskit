@@ -9,9 +9,6 @@ use once_cell::sync::Lazy;
 use std::fs;
 use std::path::Path;
 use serde_json::Value;
-use sqlx::sqlite::SqlitePool;
-use crate::framework::database::factory::Factory;
-use sqlx::query_builder::QueryBuilder;
 
 type MigrationFn = fn() -> Vec<Migration>;
 
@@ -127,7 +124,7 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
     }
 
     /// Create a new record
-    async fn create(mut model: Self) -> Result<Self, DatabaseError> {
+    async fn create(model: Self) -> Result<Self, DatabaseError> {
         println!("Creating new record...");
         let pool = get_pool()?;
         println!("Got database pool successfully");

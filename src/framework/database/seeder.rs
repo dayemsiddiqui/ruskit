@@ -2,8 +2,6 @@ use async_trait::async_trait;
 use crate::framework::database::DatabaseError;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
-use std::fs;
-use std::path::Path;
 
 #[async_trait]
 pub trait Seeder: Send + Sync {

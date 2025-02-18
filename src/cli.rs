@@ -7,8 +7,6 @@ use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use walkdir::WalkDir;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
-use notify_debouncer_mini::new_debouncer;
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
 static CHILD_PID: AtomicI32 = AtomicI32::new(0);

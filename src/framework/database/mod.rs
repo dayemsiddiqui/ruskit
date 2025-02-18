@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use sqlx::{sqlite::{SqlitePool, SqlitePoolOptions}};
-use thiserror::Error;
 use std::fs;
 use std::path::Path;
 use std::sync::Mutex;

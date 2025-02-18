@@ -5,7 +5,7 @@ use crate::framework::{
         presets::{Cors, TrimStrings}
     },
     views::{Metadata, set_global_metadata},
-    database::{self, migration::MigrationManager},
+    database::{self},
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;

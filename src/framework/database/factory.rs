@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-use serde_json::Value;
 use crate::framework::database::{model::Model, DatabaseError};
 
 pub trait Factory: Model {
