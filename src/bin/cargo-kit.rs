@@ -6,6 +6,7 @@ use ruskit::framework::database::{
 use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use console::style;
 
 #[derive(Parser)]
 #[command(name = "cargo-kit")]
@@ -54,6 +55,18 @@ enum Commands {
     #[command(name = "make:seeder")]
     MakeSeeder {
         /// Name of the seeder to create
+        name: String,
+    },
+    /// Create a new controller
+    #[command(name = "make:controller")]
+    MakeController {
+        /// Name of the controller to create
+        name: String,
+    },
+    /// Create a new DTO
+    #[command(name = "make:dto")]
+    MakeDto {
+        /// Name of the DTO to create
         name: String,
     },
     /// Seed the database with sample data
@@ -131,6 +144,20 @@ async fn main() {
                 std::process::exit(1);
             }
         },
+        Commands::MakeController { name } => {
+            println!("Creating controller {}...", name);
+            if let Err(e) = make_controller(&name) {
+                eprintln!("Error creating controller: {}", e);
+                std::process::exit(1);
+            }
+        },
+        Commands::MakeDto { name } => {
+            println!("Creating DTO {}...", name);
+            if let Err(e) = make_dto(&name) {
+                eprintln!("Error creating DTO: {}", e);
+                std::process::exit(1);
+            }
+        },
         Commands::DbSeed => {
             use ruskit::framework::database::seeder::DatabaseSeeder;
             use ruskit::app;
@@ -200,6 +227,10 @@ pub struct {model_name} {{
 
 #[async_trait]
 impl Model for {model_name} {{
+    fn id(&self) -> i64 {{
+        self.id
+    }}
+
     fn table_name() -> &'static str {{
         "{table_name}"
     }}
@@ -543,5 +574,232 @@ static SEEDER: Lazy<()> = Lazy::new(|| {{
     }
 
     fs::write(mod_file, mod_content)?;
+    Ok(())
+}
+
+fn make_controller(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let controller_dir = Path::new("src/app/controllers");
+    if !controller_dir.exists() {
+        fs::create_dir_all(controller_dir)?;
+    }
+    
+    let controller_name = if name.ends_with("Controller") {
+        name.to_string()
+    } else {
+        format!("{}Controller", name)
+    };
+    
+    // Check if model and DTO files exist
+    let model_exists = Path::new("src/app/models")
+        .join(format!("{}.rs", name.to_lowercase()))
+        .exists();
+    let dto_exists = Path::new("src/app/dtos")
+        .join(format!("{}.rs", name.to_lowercase()))
+        .exists();
+    
+    // Convert to snake case: UserController -> user_controller
+    let file_name = controller_dir.join(format!("{}_controller.rs", name.to_lowercase()));
+    
+    // Build imports based on what exists
+    let mut imports = String::from(r#"use axum::{
+    response::Json,
+    extract::Path,
+};"#);
+    
+    if model_exists {
+        imports.push_str(&format!("\nuse crate::app::models::{};", name));
+        imports.push_str("\nuse crate::framework::database::model::Model;");
+    }
+    
+    if dto_exists {
+        imports.push_str(&format!("\nuse crate::app::dtos::{}::{{Create{}Request, {}Response, {}ListResponse}};", 
+            name.to_lowercase(), name, name, name));
+    }
+
+    let controller_content = format!(r#"{imports}
+
+/// {} Controller handling all {}-related endpoints
+pub struct {} {{}}
+
+impl {} {{"#, 
+        name, name.to_lowercase(),
+        controller_name, controller_name
+    );
+
+    // Add methods based on what's available
+    let mut methods = String::new();
+    
+    if model_exists && dto_exists {
+        methods.push_str(&format!(r#"
+    /// Returns a list of {}s
+    pub async fn index() -> Json<{}ListResponse> {{
+        match {}::all().await {{
+            Ok(items) => Json({}ListResponse::from(items)),
+            Err(e) => panic!("Database error: {{}}", e), // In a real app, use proper error handling
+        }}
+    }}
+
+    /// Returns details for a specific {}
+    pub async fn show(Path(id): Path<i64>) -> Json<Option<{}Response>> {{
+        match {}::find(id).await {{
+            Ok(Some(item)) => Json(Some({}Response::from(item))),
+            Ok(None) => Json(None),
+            Err(e) => panic!("Database error: {{}}", e), // In a real app, use proper error handling
+        }}
+    }}
+
+    /// Creates a new {}
+    pub async fn store(Json(payload): Json<Create{}Request>) -> Json<{}Response> {{
+        let item: {} = payload.into();
+        match {}::create(item).await {{
+            Ok(created) => Json({}Response::from(created)),
+            Err(e) => panic!("Database error: {{}}", e), // In a real app, use proper error handling
+        }}
+    }}"#,
+            name.to_lowercase(), name, name, name,
+            name.to_lowercase(), name, name, name,
+            name.to_lowercase(), name, name, name, name, name
+        ));
+    } else {
+        methods.push_str("\n    // TODO: Add your controller methods here\n");
+        if !model_exists {
+            methods.push_str(&format!("    // Note: Create a model first using: cargo kit make:model {}\n", name));
+        }
+        if !dto_exists {
+            methods.push_str(&format!("    // Note: Create DTOs first using: cargo kit make:dto {}\n", name));
+        }
+    }
+
+    let controller_content = format!("{}\n{}\n}}", controller_content, methods);
+
+    fs::write(&file_name, controller_content)?;
+
+    // Update mod.rs with snake case module name
+    let mod_file = controller_dir.join("mod.rs");
+    let mut mod_content = String::new();
+    
+    if mod_file.exists() {
+        mod_content = fs::read_to_string(&mod_file)?;
+    }
+
+    let mod_name = format!("{}_controller", name.to_lowercase());
+    let mod_line = format!("pub mod {};\npub use {}::*;\n", mod_name, mod_name);
+    if !mod_content.contains(&mod_line) {
+        mod_content.push_str(&mod_line);
+    }
+
+    fs::write(mod_file, mod_content)?;
+    println!("Created controller file: {}", file_name.display());
+    
+    // Print helpful messages about missing dependencies
+    if !model_exists {
+        println!("{}", style(format!("Note: Model '{}' does not exist. Create it with: cargo kit make:model {}", name, name)).yellow());
+    }
+    if !dto_exists {
+        println!("{}", style(format!("Note: DTO '{}' does not exist. Create it with: cargo kit make:dto {}", name, name)).yellow());
+    }
+    
+    Ok(())
+}
+
+fn make_dto(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let dto_dir = Path::new("src/app/dtos");
+    if !dto_dir.exists() {
+        fs::create_dir_all(dto_dir)?;
+    }
+    
+    // Use base name: User -> user.rs
+    let file_name = dto_dir.join(format!("{}.rs", name.to_lowercase()));
+    
+    // Check if model exists
+    let model_exists = Path::new("src/app/models")
+        .join(format!("{}.rs", name.to_lowercase()))
+        .exists();
+    
+    let mut imports = String::from("use serde::{Serialize, Deserialize};\nuse validator::Validate;");
+    
+    if model_exists {
+        imports.push_str(&format!("\nuse crate::app::models::{};", name));
+    }
+    
+    let dto_content = format!(r#"{imports}
+
+#[derive(Serialize)]
+pub struct {name}Response {{
+    pub id: i64,
+    // Add your fields here
+    pub created_at: i64,
+    pub updated_at: i64,
+}}
+
+#[derive(Deserialize, Validate)]
+pub struct Create{name}Request {{
+    // Add your validation fields here
+}}
+
+#[derive(Serialize)]
+pub struct {name}ListResponse {{
+    pub data: Vec<{name}Response>,
+}}
+
+impl From<Vec<{name}>> for {name}ListResponse {{
+    fn from(items: Vec<{name}>) -> Self {{
+        Self {{
+            data: items.into_iter().map({name}Response::from).collect(),
+        }}
+    }}
+}}
+
+impl From<{name}> for {name}Response {{
+    fn from(item: {name}) -> Self {{
+        Self {{
+            id: item.id,
+            // Map your fields here
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }}
+    }}
+}}
+
+impl From<Create{name}Request> for {name} {{
+    fn from(req: Create{name}Request) -> Self {{
+        use std::time::{{SystemTime, UNIX_EPOCH}};
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+            
+        Self {{
+            id: 0,
+            // Map your fields here
+            created_at: now,
+            updated_at: now,
+        }}
+    }}
+}}"#, name=name);
+
+    fs::write(&file_name, dto_content)?;
+
+    // Update mod.rs with just the base name
+    let mod_file = dto_dir.join("mod.rs");
+    let mut mod_content = String::new();
+    
+    if mod_file.exists() {
+        mod_content = fs::read_to_string(&mod_file)?;
+    }
+
+    let mod_line = format!("pub mod {};\n", name.to_lowercase());
+    if !mod_content.contains(&mod_line) {
+        mod_content.push_str(&mod_line);
+    }
+
+    fs::write(mod_file, mod_content)?;
+    println!("Created DTO file: {}", file_name.display());
+    
+    // Print helpful message if model doesn't exist
+    if !model_exists {
+        println!("{}", style(format!("Note: Model '{}' does not exist. Create it with: cargo kit make:model {}", name, name)).yellow());
+    }
+    
     Ok(())
 } 
