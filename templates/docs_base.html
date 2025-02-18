@@ -10,13 +10,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --background: #0a0a0a;
-            --text: #ffffff;
-            --text-muted: #9ca3af;
-            --card-bg: #18181b;
-            --border: #27272a;
+            --primary: #646cff;
+            --primary-dark: #5058d9;
+            --background: #ffffff;
+            --text: #213547;
+            --text-muted: #4b5563;
+            --card-bg: #f9fafb;
+            --border: #e5e7eb;
             --sidebar-width: 280px;
             --topbar-height: 64px;
             --content-width: 750px;
@@ -39,14 +39,14 @@
 
         .sidebar {
             width: var(--sidebar-width);
-            border-right: 1px solid var(--border);
             height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
-            overflow-y: auto;
-            padding: 1.5rem;
+            padding: 1rem;
+            border-right: 1px solid var(--border);
             background: var(--background);
+            overflow-y: auto;
         }
 
         .sidebar-header {
@@ -70,28 +70,36 @@
 
         .nav-group-title {
             font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 1rem 0 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
         .nav-items a {
-            display: block;
-            padding: 0.5rem 0;
             color: var(--text-muted);
             text-decoration: none;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
             font-size: 0.875rem;
-            transition: color 0.2s;
+            transition: all 0.2s;
         }
 
         .nav-items a:hover {
-            color: var(--text);
+            color: var(--primary);
+            background: var(--card-bg);
         }
 
         .nav-items a.active {
             color: var(--primary);
+            background: var(--card-bg);
             font-weight: 500;
         }
 
@@ -99,110 +107,135 @@
             margin-left: var(--sidebar-width);
             width: calc(100% - var(--sidebar-width));
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .topbar {
             height: var(--topbar-height);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 2rem;
             position: fixed;
             top: 0;
+            left: var(--sidebar-width);
             right: 0;
-            width: calc(100% - var(--sidebar-width));
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             background: var(--background);
+            border-bottom: 1px solid var(--border);
             z-index: 10;
         }
 
         .content {
+            width: 100%;
             max-width: var(--content-width);
-            margin: calc(var(--topbar-height) + 2rem) auto 4rem;
-            padding: 0 2rem;
+            padding: calc(var(--topbar-height) + 2rem) 2rem 4rem;
         }
 
-        .content h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
+        .prose {
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .prose h1 {
+            font-size: 2.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
             line-height: 1.2;
         }
 
-        .content h2 {
-            font-size: 1.5rem;
+        .prose h2 {
+            font-size: 1.75rem;
             font-weight: 600;
-            margin: 2rem 0 1rem;
-            padding-top: 1rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
         }
 
-        .content h3 {
+        .prose h3 {
             font-size: 1.25rem;
             font-weight: 600;
-            margin: 1.5rem 0 1rem;
+            margin: 2rem 0 1rem;
         }
 
-        .content p {
-            margin-bottom: 1rem;
+        .prose p {
+            margin: 1rem 0;
+        }
+
+        .prose a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .prose a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .prose ul, .prose ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .prose li {
+            margin: 0.5rem 0;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid var(--primary);
+            margin: 1.5rem 0;
+            padding: 0.5rem 0 0.5rem 1rem;
+            background: var(--card-bg);
             color: var(--text-muted);
         }
 
-        .content code {
+        /* Code styling */
+        .prose code {
             background: var(--card-bg);
             padding: 0.2em 0.4em;
             border-radius: 0.25rem;
             font-size: 0.875em;
             font-family: 'Fira Code', monospace;
+            color: #476582;
+            border: 1px solid #dfe2e7;
         }
 
-        .content pre {
-            background: var(--card-bg);
-            padding: 1rem;
+        .prose pre {
+            background: #f8f9fc;
+            padding: 1.25rem 1.5rem;
             border-radius: 0.5rem;
-            border: 1px solid var(--border);
+            border: 1px solid #dfe2e7;
             overflow-x: auto;
             margin: 1rem 0;
+            line-height: 1.5;
         }
 
-        .content pre code {
-            background: none;
+        .prose pre code {
+            background: transparent;
             padding: 0;
-            border-radius: 0;
+            border: none;
+            color: #476582;
         }
 
-        .content ul {
-            margin: 1rem 0;
-            padding-left: 1.5rem;
-            color: var(--text-muted);
-        }
-
-        .content li {
-            margin-bottom: 0.5rem;
-        }
-
-        .content a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .content a:hover {
-            text-decoration: underline;
-        }
-
-        /* Prism.js Dark Theme Overrides */
+        /* Prism.js Theme Overrides */
         :not(pre) > code[class*="language-"],
         pre[class*="language-"] {
-            background: var(--card-bg);
+            background: #f8f9fc;
+            color: #2c3e50;
         }
 
         .token.comment,
         .token.prolog,
         .token.doctype,
         .token.cdata {
-            color: #8b949e;
+            color: #5d6f88;
         }
 
         .token.punctuation {
-            color: #c9d1d9;
+            color: #2c3e50;
         }
 
         .token.property,
@@ -212,7 +245,7 @@
         .token.constant,
         .token.symbol,
         .token.deleted {
-            color: #79c0ff;
+            color: #2563eb;
         }
 
         .token.selector,
@@ -221,7 +254,7 @@
         .token.char,
         .token.builtin,
         .token.inserted {
-            color: #a5d6ff;
+            color: #0f766e;
         }
 
         .token.operator,
@@ -229,24 +262,151 @@
         .token.url,
         .language-css .token.string,
         .style .token.string {
-            color: #d2a8ff;
+            color: #8b5cf6;
         }
 
         .token.atrule,
         .token.attr-value,
         .token.keyword {
-            color: #ff7b72;
+            color: #7c3aed;
         }
 
         .token.function,
         .token.class-name {
-            color: #d2a8ff;
+            color: #e11d48;
         }
 
         .token.regex,
         .token.important,
         .token.variable {
-            color: #ffa657;
+            color: #0d9488;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1536px) {
+            :root {
+                --content-width: 896px;
+                --sidebar-width: 280px;
+            }
+        }
+
+        @media (max-width: 1280px) {
+            :root {
+                --content-width: 768px;
+                --sidebar-width: 256px;
+            }
+
+            .content {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            :root {
+                --content-width: 640px;
+                --sidebar-width: 224px;
+            }
+
+            .content {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+
+            .sidebar {
+                padding: 1rem 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 0px;
+                --topbar-height: 56px;
+            }
+
+            .content {
+                max-width: 640px;
+                padding: calc(var(--topbar-height) + 1rem) 1.5rem 2rem;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .sidebar {
+                width: 280px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 30;
+                box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .topbar {
+                left: 0;
+            }
+
+            /* Menu button */
+            .menu-button {
+                display: block;
+                position: fixed;
+                top: 0.75rem;
+                left: 0.75rem;
+                z-index: 40;
+                padding: 0.5rem;
+                background: var(--background);
+                border: 1px solid var(--border);
+                border-radius: 0.375rem;
+                cursor: pointer;
+                color: var(--text);
+            }
+
+            .menu-button:hover {
+                background: var(--card-bg);
+            }
+
+            .prose pre {
+                margin: 1rem -1.5rem;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .prose h1 {
+                font-size: 1.875rem;
+                margin-bottom: 1rem;
+            }
+
+            .prose h2 {
+                font-size: 1.5rem;
+                margin: 2rem 0 0.75rem;
+            }
+
+            .prose h3 {
+                font-size: 1.25rem;
+                margin: 1.5rem 0 0.75rem;
+            }
+
+            .prose pre {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+
+            .prose ul, .prose ol {
+                padding-left: 1.25rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .menu-button {
+                display: none;
+            }
         }
     </style>
     {% block additional_styles %}{% endblock %}
@@ -255,6 +415,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+    <button class="menu-button" aria-label="Toggle Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="logo">Ruskit</div>
@@ -295,5 +463,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script>
+        // Mobile menu functionality
+        const menuButton = document.querySelector('.menu-button');
+        const sidebar = document.querySelector('.sidebar');
+        const content = document.querySelector('.content');
+
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Close sidebar when clicking outside
+        content.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Close sidebar when pressing escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
 </body>
 </html> 
