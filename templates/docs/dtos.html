@@ -1,0 +1,77 @@
+{% extends "docs/page.html" %}
+
+{% block doc_content %}
+<h1>Data Transfer Objects (DTOs)</h1>
+
+<p>DTOs are structures that define how data should be sent over the network. They help in validating request data and structuring response data.</p>
+
+<h2>Creating DTOs</h2>
+
+<p>DTOs in Rustavel are typically created using Rust structs with Serde derive macros:</p>
+
+<pre><code class="language-rust">#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUserDto {
+    pub name: String,
+    pub email: String,
+    pub password: String,
+}
+</code></pre>
+
+<h2>Validation</h2>
+
+<p>You can add validation to your DTOs using the validator crate:</p>
+
+<pre><code class="language-rust">#[derive(Debug, Serialize, Deserialize, Validate)]
+pub struct CreateUserDto {
+    #[validate(length(min = 3, max = 50))]
+    pub name: String,
+    
+    #[validate(email)]
+    pub email: String,
+    
+    #[validate(length(min = 8))]
+    pub password: String,
+}
+</code></pre>
+
+<h2>Using DTOs in Controllers</h2>
+
+<p>DTOs can be used in your controllers to handle request and response data:</p>
+
+<pre><code class="language-rust">pub async fn create(
+    Json(dto): Json<CreateUserDto>
+) -> Result<Response, AppError> {
+    // Validate the DTO
+    dto.validate()?;
+    
+    // Process the validated data
+    let user = User::create(dto).await?;
+    
+    // Return a response
+    Ok(Json(user).into_response())
+}
+</code></pre>
+
+<h2>Response DTOs</h2>
+
+<p>You can also create DTOs specifically for responses:</p>
+
+<pre><code class="language-rust">#[derive(Debug, Serialize)]
+pub struct UserResponseDto {
+    pub id: i32,
+    pub name: String,
+    pub email: String,
+    // Note: password is not included in response
+}
+
+impl From<User> for UserResponseDto {
+    fn from(user: User) -> Self {
+        Self {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        }
+    }
+}
+</code></pre>
+{% endblock %} 

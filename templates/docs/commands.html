@@ -1,0 +1,87 @@
+{% extends "docs/page.html" %}
+
+{% block doc_content %}
+<h1>Commands</h1>
+
+<p>Rustavel provides a powerful command-line interface through the <code>cargo kit</code> command. These commands help you manage your application, generate code, and perform various tasks.</p>
+
+<h2>Available Commands</h2>
+
+<h3>Create Commands</h3>
+<pre><code class="language-bash"># Create a new controller
+cargo kit make:controller UserController
+
+# Create a new model
+cargo kit make:model User
+
+# Create a new migration
+cargo kit make:migration create_users_table
+
+# Create a new seeder
+cargo kit make:seeder UsersSeeder
+
+# Create a new factory
+cargo kit make:factory UserFactory
+</code></pre>
+
+<h3>Database Commands</h3>
+<pre><code class="language-bash"># Run migrations
+cargo kit migrate
+
+# Rollback migrations
+cargo kit migrate:rollback
+
+# Reset database and run all migrations
+cargo kit migrate:fresh
+
+# Run database seeders
+cargo kit db:seed
+</code></pre>
+
+<h2>Creating Custom Commands</h2>
+
+<p>You can create your own custom commands by implementing the <code>Command</code> trait:</p>
+
+<pre><code class="language-rust">use rustavel::commands::Command;
+
+pub struct CustomCommand;
+
+impl Command for CustomCommand {
+    fn name(&self) -> &'static str {
+        "custom:command"
+    }
+
+    fn description(&self) -> &'static str {
+        "Description of what your command does"
+    }
+
+    async fn execute(&self, args: Vec<String>) -> Result<(), Box<dyn Error>> {
+        // Command implementation here
+        Ok(())
+    }
+}
+</code></pre>
+
+<h2>Registering Commands</h2>
+
+<p>Register your custom commands in your application's command registry:</p>
+
+<pre><code class="language-rust">use rustavel::commands::CommandRegistry;
+
+pub fn register_commands(registry: &mut CommandRegistry) {
+    registry.register(Box::new(CustomCommand));
+}
+</code></pre>
+
+<h2>Running Commands Programmatically</h2>
+
+<p>You can also run commands programmatically from your code:</p>
+
+<pre><code class="language-rust">use rustavel::commands::CommandRunner;
+
+async fn run_command() -> Result<(), Box<dyn Error>> {
+    let runner = CommandRunner::new();
+    runner.run("custom:command", vec!["arg1", "arg2"]).await
+}
+</code></pre>
+{% endblock %} 

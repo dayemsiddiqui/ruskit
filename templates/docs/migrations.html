@@ -1,0 +1,120 @@
+{% extends "docs/page.html" %}
+
+{% block doc_content %}
+<h1>Database Migrations</h1>
+
+<p>Migrations are like version control for your database, allowing you to define and modify your database schema in a structured way.</p>
+
+<h2>Creating Migrations</h2>
+
+<p>Create a new migration using the command:</p>
+
+<pre><code class="language-bash">cargo kit make:migration create_users_table</code></pre>
+
+<p>This creates a new migration file with up and down methods:</p>
+
+<pre><code class="language-rust">use sea_orm_migration::prelude::*;
+
+#[derive(DeriveMigration)]
+pub struct Migration {
+    pub name: &'static str,
+}
+
+impl Migration {
+    pub fn new() -> Self {
+        Self {
+            name: "create_users_table",
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl MigrationTrait for Migration {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .create_table(
+                Table::create()
+                    .table(Users::Table)
+                    .col(ColumnDef::new(Users::Id).integer().not_null().auto_increment().primary_key())
+                    .col(ColumnDef::new(Users::Name).string().not_null())
+                    .col(ColumnDef::new(Users::Email).string().not_null().unique_key())
+                    .col(ColumnDef::new(Users::Password).string().not_null())
+                    .col(ColumnDef::new(Users::CreatedAt).timestamp().not_null())
+                    .col(ColumnDef::new(Users::UpdatedAt).timestamp().not_null())
+                    .to_owned(),
+            )
+            .await
+    }
+
+    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .drop_table(Table::drop().table(Users::Table).to_owned())
+            .await
+    }
+}
+</code></pre>
+
+<h2>Running Migrations</h2>
+
+<p>Run your migrations using these commands:</p>
+
+<pre><code class="language-bash"># Run pending migrations
+cargo kit migrate
+
+# Rollback the last migration
+cargo kit migrate:rollback
+
+# Rollback all migrations and run them again
+cargo kit migrate:fresh
+
+# Rollback all migrations
+cargo kit migrate:reset</code></pre>
+
+<h2>Migration Status</h2>
+
+<p>Check the status of your migrations:</p>
+
+<pre><code class="language-bash">cargo kit migrate:status</code></pre>
+
+<h2>Writing Migrations</h2>
+
+<p>Migrations support various column types and modifiers:</p>
+
+<pre><code class="language-rust">// Column Types
+.col(ColumnDef::new(Column::Id).integer())
+.col(ColumnDef::new(Column::Name).string())
+.col(ColumnDef::new(Column::Description).text())
+.col(ColumnDef::new(Column::Price).decimal())
+.col(ColumnDef::new(Column::IsActive).boolean())
+.col(ColumnDef::new(Column::CreatedAt).timestamp())
+
+// Modifiers
+.not_null()
+.null()
+.unique_key()
+.default(Value::String("default".into()))
+.auto_increment()
+.primary_key()</code></pre>
+
+<h2>Foreign Keys</h2>
+
+<p>Add foreign key relationships in your migrations:</p>
+
+<pre><code class="language-rust">manager
+    .create_table(
+        Table::create()
+            .table(Posts::Table)
+            .col(ColumnDef::new(Posts::Id).integer().not_null().auto_increment().primary_key())
+            .col(ColumnDef::new(Posts::UserId).integer().not_null())
+            .foreign_key(
+                ForeignKey::create()
+                    .name("fk_posts_users")
+                    .from(Posts::Table, Posts::UserId)
+                    .to(Users::Table, Users::Id)
+                    .on_delete(ForeignKeyAction::Cascade)
+                    .on_update(ForeignKeyAction::Cascade)
+            )
+            .to_owned(),
+    )
+    .await</code></pre>
+{% endblock %} 

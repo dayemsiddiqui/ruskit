@@ -1,14 +1,12 @@
 use askama::Template;
 use askama_axum::Response;
+use crate::framework::TemplateExt;
 use axum::extract::Path;
-use pulldown_cmark::{Parser, Options, html};
-use std::fs;
-use crate::framework::views::{TemplateExt, HasMetadata, Metadata};
+use askama::Html;
 
 #[derive(Template)]
 #[template(path = "docs.html")]
 pub struct DocsTemplate {
-    pub content: String,
     pub title: String,
     pub description: String,
     pub current_page: String,
@@ -31,7 +29,6 @@ pub struct DocItem {
 impl Default for DocsTemplate {
     fn default() -> Self {
         Self {
-            content: String::new(),
             title: String::new(),
             description: String::new(),
             current_page: String::new(),
@@ -131,70 +128,190 @@ impl Default for DocsTemplate {
     }
 }
 
+#[derive(Template, Default)]
+#[template(path = "docs/routing.html")]
+pub struct RoutingTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/controllers.html")]
+pub struct ControllersTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/models.html")]
+pub struct ModelsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/views.html")]
+pub struct ViewsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/middleware.html")]
+pub struct MiddlewareTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/validation.html")]
+pub struct ValidationTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/dtos.html")]
+pub struct DtosTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/migrations.html")]
+pub struct MigrationsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/factories.html")]
+pub struct FactoriesTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/seeders.html")]
+pub struct SeedersTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template, Default)]
+#[template(path = "docs/commands.html")]
+pub struct CommandsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
 pub struct DocsController;
 
 impl DocsController {
+    fn get_sections_with_active(page: &str) -> Vec<DocSection> {
+        let mut sections = Vec::new();
+        for section in DocsTemplate::default().sections {
+            let mut new_section = DocSection {
+                title: section.title,
+                items: Vec::new(),
+            };
+            for item in section.items {
+                let path_page = item.path.strip_prefix("/docs/").unwrap_or(&item.path);
+                new_section.items.push(DocItem {
+                    title: item.title,
+                    path: item.path.clone(),
+                    is_active: path_page == page,
+                });
+            }
+            sections.push(new_section);
+        }
+        sections
+    }
+
     pub async fn show(Path(page): Path<String>) -> Response {
-        let path = format!("docs/{}.md", page);
-        let content = match fs::read_to_string(&path) {
-            Ok(content) => content,
-            Err(_) => return Self::not_found(),
-        };
-
-        let mut options = Options::empty();
-        options.insert(Options::ENABLE_STRIKETHROUGH);
-        options.insert(Options::ENABLE_TABLES);
+        let sections = Self::get_sections_with_active(&page);
         
-        let parser = Parser::new_ext(&content, options);
-        let mut html_output = String::new();
-        html::push_html(&mut html_output, parser);
-
-        let lines: Vec<&str> = content.lines().collect();
-        let title = lines.first()
-            .map(|line| line.trim_start_matches("# ").to_string())
-            .unwrap_or_else(|| "Documentation".to_string());
-        
-        let description = lines.iter()
-            .skip(1)
-            .find(|line| !line.is_empty())
-            .map(|line| line.to_string())
-            .unwrap_or_else(|| "Ruskit framework documentation".to_string());
-
-        let mut template = DocsTemplate::with_metadata(
-            Metadata::new(&title)
-                .with_description(&description)
-        );
-
-        // Set the active page
-        for section in &mut template.sections {
-            for item in &mut section.items {
-                item.is_active = item.path == format!("/docs/{}", page);
+        match page.as_str() {
+            "routing" => RoutingTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "controllers" => ControllersTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "models" => ModelsTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "views" => ViewsTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "middleware" => MiddlewareTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "validation" => ValidationTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "dtos" => DtosTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "migrations" => MigrationsTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "factories" => FactoriesTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "seeders" => SeedersTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "commands" => CommandsTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            _ => {
+                let mut template = DocsTemplate::default();
+                template.current_page = page;
+                template.title = "Documentation".to_string();
+                template.description = format!("{} - Ruskit Documentation", template.title);
+                template.into_response()
             }
         }
-
-        template.content = html_output;
-        template.title = title;
-        template.description = description;
-        template.current_page = page;
-
-        template.into_response()
     }
 
     pub async fn index() -> Response {
-        Self::show(Path("introduction".to_string())).await
-    }
-
-    fn not_found() -> Response {
-        let mut template = DocsTemplate::with_metadata(
-            Metadata::new("Not Found")
-                .with_description("Page not found")
-        );
-
-        template.content = "<h1>Page Not Found</h1><p>The documentation page you're looking for doesn't exist.</p>".to_string();
-        template.title = "Not Found".to_string();
-        template.description = "Page not found".to_string();
-        template.current_page = "404".to_string();
-
+        let mut template = DocsTemplate::default();
+        template.title = "Documentation".to_string();
+        template.description = "Ruskit Documentation".to_string();
         template.into_response()
     }
 } 

@@ -198,7 +198,18 @@
         </div>
 
         <nav>
-            {% block sidebar_content %}{% endblock %}
+            {% block sidebar_content %}
+            {% for section in sections %}
+            <div class="nav-group">
+                <div class="nav-group-title">{{ section.title }}</div>
+                <div class="nav-items">
+                    {% for item in section.items %}
+                    <a href="{{ item.path }}" {% if item.is_active %}class="active"{% endif %}>{{ item.title }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endblock %}
         </nav>
     </aside>
 

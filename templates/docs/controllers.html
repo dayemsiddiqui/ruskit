@@ -1,0 +1,251 @@
+{% extends "docs_base.html" %}
+
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>Controllers</h1>
+
+    <p>Controllers handle incoming HTTP requests and return responses. They are responsible for processing input, interacting with models, and returning appropriate responses.</p>
+
+    <h2>Overview</h2>
+
+    <p>Controllers in Rustavel:</p>
+    <ul>
+        <li>Handle HTTP requests</li>
+        <li>Process input data through DTOs</li>
+        <li>Interact with models for data operations</li>
+        <li>Return JSON responses</li>
+        <li>Follow RESTful conventions</li>
+    </ul>
+
+    <h2>Creating Controllers</h2>
+
+    <p>Use the <code>make:controller</code> command to generate a new controller:</p>
+
+    <pre><code class="language-bash">cargo kit make:controller Post</code></pre>
+
+    <p>This creates:</p>
+    <ul>
+        <li><code>src/app/controllers/post_controller.rs</code></li>
+        <li>Updates <code>src/app/controllers/mod.rs</code></li>
+    </ul>
+
+    <h3>Generated Structure</h3>
+
+    <pre><code class="language-rust">use axum::{
+    response::Json,
+    extract::Path,
+};
+use crate::app::models::Post;
+use crate::framework::database::model::Model;
+use crate::app::dtos::post::{CreatePostRequest, PostResponse, PostListResponse};
+
+pub struct PostController {}
+
+impl PostController {
+    pub async fn index() -> Json<PostListResponse> {
+        // List all posts
+    }
+
+    pub async fn show(Path(id): Path<i64>) -> Json<Option<PostResponse>> {
+        // Show single post
+    }
+
+    pub async fn store(Json(payload): Json<CreatePostRequest>) -> Json<PostResponse> {
+        // Create new post
+    }
+}</code></pre>
+
+    <h2>RESTful Methods</h2>
+
+    <p>Standard RESTful methods in controllers:</p>
+
+    <h3>Index - List Resources</h3>
+    <pre><code class="language-rust">pub async fn index() -> Json<PostListResponse> {
+    match Post::all().await {
+        Ok(items) => Json(PostListResponse::from(items)),
+        Err(e) => panic!("Database error: {}", e),
+    }
+}</code></pre>
+
+    <h3>Show - Single Resource</h3>
+    <pre><code class="language-rust">pub async fn show(Path(id): Path<i64>) -> Json<Option<PostResponse>> {
+    match Post::find(id).await {
+        Ok(Some(item)) => Json(Some(PostResponse::from(item))),
+        Ok(None) => Json(None),
+        Err(e) => panic!("Database error: {}", e),
+    }
+}</code></pre>
+
+    <h3>Store - Create Resource</h3>
+    <pre><code class="language-rust">pub async fn store(Json(payload): Json<CreatePostRequest>) -> Json<PostResponse> {
+    let item: Post = payload.into();
+    match Post::create(item).await {
+        Ok(created) => Json(PostResponse::from(created)),
+        Err(e) => panic!("Database error: {}", e),
+    }
+}</code></pre>
+
+    <h3>Update - Modify Resource</h3>
+    <pre><code class="language-rust">pub async fn update(
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdatePostRequest>
+) -> Json<PostResponse> {
+    match Post::find(id).await {
+        Ok(Some(mut item)) => {
+            item.update_from(payload);
+            match item.save().await {
+                Ok(updated) => Json(PostResponse::from(updated)),
+                Err(e) => panic!("Database error: {}", e),
+            }
+        }
+        Ok(None) => panic!("Post not found"),
+        Err(e) => panic!("Database error: {}", e),
+    }
+}</code></pre>
+
+    <h3>Destroy - Delete Resource</h3>
+    <pre><code class="language-rust">pub async fn destroy(Path(id): Path<i64>) -> Json<()> {
+    match Post::find(id).await {
+        Ok(Some(item)) => {
+            match item.delete().await {
+                Ok(_) => Json(()),
+                Err(e) => panic!("Database error: {}", e),
+            }
+        }
+        Ok(None) => panic!("Post not found"),
+        Err(e) => panic!("Database error: {}", e),
+    }
+}</code></pre>
+
+    <h2>Request Handling</h2>
+
+    <h3>Path Parameters</h3>
+    <pre><code class="language-rust">use axum::extract::Path;
+
+pub async fn show(Path(id): Path<i64>) -> Json<Option<PostResponse>> {
+    // Access id directly
+}</code></pre>
+
+    <h3>Query Parameters</h3>
+    <pre><code class="language-rust">use axum::extract::Query;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+pub struct ListParams {
+    page: Option<i32>,
+    per_page: Option<i32>,
+}
+
+pub async fn index(Query(params): Query<ListParams>) -> Json<PostListResponse> {
+    // Access params.page and params.per_page
+}</code></pre>
+
+    <h3>Request Body</h3>
+    <pre><code class="language-rust">use axum::Json;
+
+pub async fn store(Json(payload): Json<CreatePostRequest>) -> Json<PostResponse> {
+    // payload is already deserialized
+}</code></pre>
+
+    <h2>Error Handling</h2>
+
+    <p>Use Result types for proper error handling:</p>
+
+    <pre><code class="language-rust">use axum::{
+    response::Json,
+    http::StatusCode,
+};
+use crate::framework::error::ApiError;
+
+pub async fn show(Path(id): Path<i64>) -> Result<Json<PostResponse>, ApiError> {
+    match Post::find(id).await {
+        Ok(Some(post)) => Ok(Json(PostResponse::from(post))),
+        Ok(None) => Err(ApiError::not_found("Post not found")),
+        Err(e) => Err(ApiError::database_error(e)),
+    }
+}</code></pre>
+
+    <h2>Middleware</h2>
+
+    <p>Apply middleware to controller methods:</p>
+
+    <pre><code class="language-rust">use crate::framework::middleware::auth::Auth;
+
+#[derive(Clone)]
+pub struct PostController {}
+
+impl PostController {
+    pub async fn store(
+        Auth(user): Auth,
+        Json(payload): Json<CreatePostRequest>
+    ) -> Result<Json<PostResponse>, ApiError> {
+        // User is authenticated
+        let mut post: Post = payload.into();
+        post.user_id = user.id;
+        // ...
+    }
+}</code></pre>
+
+    <h2>Best Practices</h2>
+
+    <ol>
+        <li>
+            <strong>Separation of Concerns</strong>
+            <ul>
+                <li>Keep controllers thin</li>
+                <li>Move business logic to services</li>
+                <li>Use DTOs for input/output</li>
+                <li>Handle errors appropriately</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Resource Naming</strong>
+            <ul>
+                <li>Use plural nouns for resource names</li>
+                <li>Follow RESTful conventions</li>
+                <li>Keep names clear and descriptive</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Method Naming</strong>
+            <ul>
+                <li>Use standard RESTful method names</li>
+                <li>Add custom methods when needed</li>
+                <li>Keep method names descriptive</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Error Handling</strong>
+            <ul>
+                <li>Use proper error types</li>
+                <li>Return appropriate status codes</li>
+                <li>Provide helpful error messages</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Input Validation</strong>
+            <ul>
+                <li>Use DTOs for input validation</li>
+                <li>Validate path parameters</li>
+                <li>Check query parameters</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Response Format</strong>
+            <ul>
+                <li>Use consistent response structures</li>
+                <li>Include appropriate metadata</li>
+                <li>Follow API conventions</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Security</strong>
+            <ul>
+                <li>Apply authentication middleware</li>
+                <li>Validate user permissions</li>
+                <li>Sanitize input data</li>
+            </ul>
+        </li>
+    </ol>
+</div>
+{% endblock %} 

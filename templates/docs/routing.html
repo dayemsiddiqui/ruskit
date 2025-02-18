@@ -1,0 +1,233 @@
+{% extends "docs_base.html" %}
+
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>Routing in Ruskit</h1>
+
+    <p>Ruskit provides a simple and expressive routing system built on top of Axum. This guide will help you understand how to define routes and handle HTTP requests in your Ruskit application.</p>
+
+    <h2>Basic Routing</h2>
+
+    <p>The most basic Ruskit routes accept a URI and a closure or function handler:</p>
+
+    <pre><code class="language-rust">Router::new()
+    .route("/", get(home))</code></pre>
+
+    <h3>Available Router Methods</h3>
+
+    <p>You may register routes for any HTTP verb using the corresponding methods:</p>
+
+    <pre><code class="language-rust">Router::new()
+    .route("/users", get(users_index))         // GET
+    .route("/users", post(users_store))        // POST
+    .route("/users/{id}", put(users_update))   // PUT
+    .route("/users/{id}", delete(users_delete)) // DELETE</code></pre>
+
+    <h2>Route Handlers</h2>
+
+    <p>Route handlers in Ruskit can return different types of responses:</p>
+
+    <h3>Basic String Response</h3>
+    <pre><code class="language-rust">async fn home() -> &'static str {
+    "Welcome to Ruskit!"
+}</code></pre>
+
+    <h3>JSON Response</h3>
+    <pre><code class="language-rust">async fn users_index() -> Json<Value> {
+    Json(json!({ "message": "List of users" }))
+}</code></pre>
+
+    <h2>Route Parameters</h2>
+
+    <h3>Required Parameters</h3>
+
+    <p>You can capture route segments using curly braces <code>{}</code>:</p>
+
+    <pre><code class="language-rust">// Route definition
+.route("/users/{id}", get(users_show))
+
+// Handler
+async fn users_show(Path(id): Path<String>) -> Json<Value> {
+    Json(json!({
+        "message": "Show user details",
+        "id": id
+    }))
+}</code></pre>
+
+    <h2>API Routes</h2>
+
+    <p>When building an API, you'll typically want to group related routes under an API prefix:</p>
+
+    <pre><code class="language-rust">Router::new()
+    .route("/api/users", get(users_index))
+    .route("/api/users/{id}", get(users_show))
+    .route("/api/users", post(users_store))</code></pre>
+
+    <h2>Example Routes File</h2>
+
+    <p>Here's a complete example of a routes file in Ruskit:</p>
+
+    <pre><code class="language-rust">use axum::{
+    Router,
+    routing::{get, post},
+    response::Json,
+    extract::Path,
+};
+use serde_json::{json, Value};
+
+// Basic route handler
+async fn home() -> &'static str {
+    "Welcome to Ruskit!"
+}
+
+// JSON API handlers
+async fn users_index() -> Json<Value> {
+    Json(json!({ "message": "List of users" }))
+}
+
+async fn users_show(Path(id): Path<String>) -> Json<Value> {
+    Json(json!({
+        "message": "Show user details",
+        "id": id
+    }))
+}
+
+async fn users_store() -> Json<Value> {
+    Json(json!({ "message": "Create new user" }))
+}
+
+// Define all routes
+pub fn routes() -> Router {
+    Router::new()
+        .route("/", get(home))
+        .route("/api/users", get(users_index))
+        .route("/api/users/{id}", get(users_show))
+        .route("/api/users", post(users_store))
+}</code></pre>
+
+    <h2>Request Data Handling</h2>
+
+    <p>Ruskit provides elegant ways to access different types of request data using Axum's powerful extractors.</p>
+
+    <h3>URL Parameters</h3>
+
+    <p>You can capture URL parameters using curly braces in your route definition:</p>
+
+    <pre><code class="language-rust">use axum::{extract::Path, Router};
+use serde::Deserialize;
+
+// Single parameter
+async fn show_user(Path(id): Path<String>) -> Response {
+    // Access id directly
+}
+
+// Multiple parameters
+#[derive(Deserialize)]
+struct UserPostParams {
+    user_id: String,
+    post_id: i32,
+}
+
+async fn show_user_post(
+    Path(params): Path<UserPostParams>
+) -> Response {
+    // Access params.user_id and params.post_id
+}
+
+// In your router
+Router::new()
+    .route("/users/:id", get(show_user))
+    .route("/users/:user_id/posts/:post_id", get(show_user_post))</code></pre>
+
+    <h3>Query Parameters</h3>
+
+    <p>Handle query parameters (e.g., <code>?page=1&limit=10</code>) using the <code>Query</code> extractor:</p>
+
+    <pre><code class="language-rust">use axum::extract::Query;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct PaginationParams {
+    page: Option<u32>,
+    limit: Option<u32>,
+}
+
+async fn list_users(
+    Query(params): Query<PaginationParams>
+) -> Response {
+    let page = params.page.unwrap_or(1);
+    let limit = params.limit.unwrap_or(10);
+    // Use page and limit for pagination
+}
+
+// Optional query parameters with defaults
+#[derive(Deserialize)]
+struct FilterParams {
+    #[serde(default = "default_status")]
+    status: String,
+    #[serde(default)]
+    sort_by: String,
+}
+
+fn default_status() -> String {
+    "active".to_string()
+}
+
+async fn filtered_users(
+    Query(params): Query<FilterParams>
+) -> Response {
+    // params.status will be "active" if not provided
+    // params.sort_by will be empty string if not provided
+}</code></pre>
+
+    <h3>Request Body</h3>
+
+    <p>Handle POST, PUT, and PATCH request bodies using the <code>Json</code> extractor:</p>
+
+    <pre><code class="language-rust">use axum::{
+    extract::Json,
+    response::IntoResponse,
+};
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize)]
+struct CreateUser {
+    username: String,
+    email: String,
+    password: String,
+}
+
+#[derive(Serialize)]
+struct UserResponse {
+    id: i32,
+    username: String,
+    email: String,
+}
+
+async fn create_user(
+    Json(payload): Json<CreateUser>
+) -> impl IntoResponse {
+    // Access payload.username, payload.email, etc.
+    Json(UserResponse {
+        id: 1,
+        username: payload.username,
+        email: payload.email,
+    })
+}
+
+// Handle form data
+use axum::extract::Form;
+
+#[derive(Deserialize)]
+struct LoginForm {
+    username: String,
+    password: String,
+}
+
+async fn login(
+    Form(data): Form<LoginForm>
+) -> Response {
+    // Handle form submission
+}</code></pre>
+</div>
+{% endblock %} 

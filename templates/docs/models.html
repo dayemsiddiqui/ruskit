@@ -1,0 +1,243 @@
+{% extends "docs_base.html" %}
+
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>Models</h1>
+
+    <p>Models in Rustavel represent your database tables and provide an elegant way to interact with your data. Each model corresponds to a table in your database and includes the schema definition, migrations, and methods for querying and manipulating data.</p>
+
+    <h2>Generating Models</h2>
+
+    <p>You can quickly generate a new model using the <code>kit make:model</code> command:</p>
+
+    <pre><code class="language-bash"># Generate a model
+cargo kit make:model Post
+
+# Generate a model with migration
+cargo kit make:model Post --migration
+
+# After generating a model with migration, run:
+cargo kit migrate</code></pre>
+
+    <p>This will:</p>
+    <ol>
+        <li>Create a new model file in <code>src/app/models/</code></li>
+        <li>Add the model to <code>src/app/models/mod.rs</code></li>
+        <li>Generate a basic model structure with:
+            <ul>
+                <li>Standard fields (id, created_at, updated_at)</li>
+                <li>Model trait implementation</li>
+                <li>Migration setup</li>
+                <li>Basic query methods</li>
+            </ul>
+        </li>
+    </ol>
+
+    <p>The generated model will include TODO comments to help you add your custom fields and methods.</p>
+
+    <h2>Creating a Model Manually</h2>
+
+    <p>If you prefer to create a model manually, create a new file in <code>src/app/models/</code> and define your struct with the necessary derives:</p>
+
+    <pre><code class="language-rust">use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+use crate::framework::database::{
+    model::Model,
+    query_builder::QueryBuilder,
+    DatabaseError,
+    migration::Migration,
+};
+use async_trait::async_trait;
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Post {
+    pub id: i64,
+    pub title: String,
+    pub content: String,
+    pub user_id: i64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}</code></pre>
+
+    <p>Then implement the <code>Model</code> trait:</p>
+
+    <pre><code class="language-rust">#[async_trait]
+impl Model for Post {
+    fn table_name() -> &'static str {
+        "posts"
+    }
+
+    fn migrations() -> Vec<Migration> {
+        vec![
+            Migration::new(
+                "create_posts_table",
+                "CREATE TABLE posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )",
+                "DROP TABLE posts"
+            )
+        ]
+    }
+}</code></pre>
+
+    <h2>Basic Operations</h2>
+
+    <p>Every model automatically gets these basic operations:</p>
+
+    <pre><code class="language-rust">// Find by ID
+let post = Post::find(1).await?;
+
+// Get all records
+let all_posts = Post::all().await?;
+
+// Create a new record
+let new_post = Post::create(json!({
+    "title": "My First Post",
+    "content": "Hello World!",
+    "user_id": 1,
+    "created_at": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+    "updated_at": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+})).await?;</code></pre>
+
+    <h2>Custom Query Methods</h2>
+
+    <p>You can add custom query methods to your models:</p>
+
+    <pre><code class="language-rust">impl Post {
+    // Get posts by user
+    pub async fn by_user(user_id: i64) -> Result<Vec<Self>, DatabaseError> {
+        QueryBuilder::table(Self::table_name())
+            .where_clause("user_id", "=", user_id)
+            .get::<Self>()
+            .await
+    }
+
+    // Get recent posts
+    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {
+        QueryBuilder::table(Self::table_name())
+            .order_by("created_at", "DESC")
+            .limit(limit)
+            .get::<Self>()
+            .await
+    }
+
+    // Get published posts
+    pub async fn published() -> Result<Vec<Self>, DatabaseError> {
+        QueryBuilder::table(Self::table_name())
+            .where_clause("published", "=", true)
+            .get::<Self>()
+            .await
+    }
+}</code></pre>
+
+    <h2>Query Builder</h2>
+
+    <p>The <code>QueryBuilder</code> provides a fluent interface for building SQL queries:</p>
+
+    <pre><code class="language-rust">// Complex query example
+let posts = QueryBuilder::table("posts")
+    .select("posts.*, users.name as author_name")
+    .where_clause("published", "=", true)
+    .where_clause("created_at", ">", yesterday_timestamp)
+    .order_by("created_at", "DESC")
+    .limit(10)
+    .offset(20)
+    .get::<Post>()
+    .await?;</code></pre>
+
+    <h2>Relationships</h2>
+
+    <p>You can define relationships between models:</p>
+
+    <pre><code class="language-rust">impl Post {
+    // Get the author of the post
+    pub async fn author(&self) -> Result<User, DatabaseError> {
+        User::find(self.user_id).await?
+            .ok_or(DatabaseError::ConnectionError(
+                sqlx::Error::RowNotFound
+            ))
+    }
+
+    // Get comments for the post
+    pub async fn comments(&self) -> Result<Vec<Comment>, DatabaseError> {
+        Comment::by_post(self.id).await
+    }
+}</code></pre>
+
+    <h2>Model Validation</h2>
+
+    <p>You can add validation to your models using the <code>validator</code> crate:</p>
+
+    <pre><code class="language-rust">use validator::Validate;
+
+#[derive(Debug, Serialize, Deserialize, FromRow, Validate)]
+pub struct Post {
+    pub id: i64,
+    #[validate(length(min = 3, max = 100))]
+    pub title: String,
+    #[validate(length(min = 10))]
+    pub content: String,
+    pub user_id: i64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+impl Post {
+    pub async fn create_validated(attrs: serde_json::Value) -> Result<Self, ValidationError> {
+        let post: Post = serde_json::from_value(attrs)?;
+        post.validate()?;
+        Ok(Self::create(attrs).await?)
+    }
+}</code></pre>
+
+    <h2>Best Practices</h2>
+
+    <ol>
+        <li>
+            <strong>Naming Conventions</strong>:
+            <ul>
+                <li>Use singular names for model structs (<code>Post</code>, not <code>Posts</code>)</li>
+                <li>Use snake_case for table names (<code>posts</code>, not <code>Posts</code>)</li>
+                <li>Use descriptive names for relationships and methods</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Field Types</strong>:
+            <ul>
+                <li>Use appropriate types for your fields (e.g., <code>i64</code> for IDs and timestamps)</li>
+                <li>Consider using <code>Option<T></code> for nullable fields</li>
+                <li>Use <code>bool</code> for boolean fields (SQLite stores them as INTEGER)</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Timestamps</strong>:
+            <ul>
+                <li>Always include <code>created_at</code> and <code>updated_at</code> fields</li>
+                <li>Use UNIX timestamps (seconds since epoch) for consistency</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Security</strong>:
+            <ul>
+                <li>Never expose sensitive fields directly</li>
+                <li>Implement proper access control in your models</li>
+                <li>Validate input data before creating/updating records</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Performance</strong>:
+            <ul>
+                <li>Add indexes for frequently queried fields</li>
+                <li>Use appropriate field types for better performance</li>
+                <li>Consider adding caching for frequently accessed data</li>
+            </ul>
+        </li>
+    </ol>
+</div>
+{% endblock %} 
