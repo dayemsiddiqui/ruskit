@@ -264,19 +264,66 @@ fn make_migration(name: &str, model: &str) -> Result<(), Box<dyn std::error::Err
     // Find the migrations vector
     if let Some(migrations_start) = content.find("fn migrations() -> Vec<Migration> {") {
         if let Some(vec_start) = content[migrations_start..].find("vec![") {
-            let vec_end = content[migrations_start + vec_start..].find("]")
-                .ok_or("Could not find end of migrations vector")?;
+            // Find the actual end of the vector by counting brackets
+            let vec_content = &content[migrations_start + vec_start..];
+            let mut bracket_count = 0;
+            let mut vec_end = 0;
             
-            // Insert the new migration at the end of the vector
-            let insert_pos = migrations_start + vec_start + vec_end;
-            let migration = format!(
-                r#",
+            for (i, c) in vec_content.chars().enumerate() {
+                match c {
+                    '[' => bracket_count += 1,
+                    ']' => {
+                        bracket_count -= 1;
+                        if bracket_count == 0 {
+                            vec_end = i;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            
+            if vec_end == 0 {
+                return Err("Could not find proper end of migrations vector".into());
+            }
+            
+            // Find the last Migration::new in the vector
+            let last_migration_pos = vec_content[..vec_end]
+                .rfind("Migration::new")
+                .unwrap_or(vec_end);
+            
+            // If we found a previous migration, insert after its closing parenthesis
+            let insert_pos = if last_migration_pos < vec_end {
+                let remaining = &vec_content[last_migration_pos..vec_end];
+                if let Some(paren_end) = remaining.find("),") {
+                    migrations_start + vec_start + last_migration_pos + paren_end + 1
+                } else {
+                    migrations_start + vec_start + vec_end
+                }
+            } else {
+                migrations_start + vec_start + vec_end
+            };
+            
+            // Insert the new migration
+            let migration = if content[..insert_pos].trim_end().ends_with(',') {
+                format!(
+                    r#"
             Migration::new(
                 "{timestamp}_{name}",
                 "-- Add your UP migration SQL here",
                 "-- Add your DOWN migration SQL here"
             )"#
-            );
+                )
+            } else {
+                format!(
+                    r#",
+            Migration::new(
+                "{timestamp}_{name}",
+                "-- Add your UP migration SQL here",
+                "-- Add your DOWN migration SQL here"
+            )"#
+                )
+            };
             
             content.insert_str(insert_pos, &migration);
             fs::write(path, content)?;
