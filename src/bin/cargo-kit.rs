@@ -69,6 +69,12 @@ enum Commands {
         /// Name of the DTO to create
         name: String,
     },
+    /// Create model, DTO and controller
+    #[command(name = "make:all")]
+    MakeAll {
+        /// Name to use for all components
+        name: String,
+    },
     /// Seed the database with sample data
     #[command(name = "db:seed")]
     DbSeed,
@@ -157,6 +163,33 @@ async fn main() {
                 eprintln!("Error creating DTO: {}", e);
                 std::process::exit(1);
             }
+        },
+        Commands::MakeAll { name } => {
+            println!("Creating all components for {}...", name);
+            
+            // Create model first (includes migration)
+            println!("\n1. Creating model...");
+            if let Err(e) = make_model(&name, true) {
+                eprintln!("Error creating model: {}", e);
+                std::process::exit(1);
+            }
+            
+            // Create DTO next
+            println!("\n2. Creating DTO...");
+            if let Err(e) = make_dto(&name) {
+                eprintln!("Error creating DTO: {}", e);
+                std::process::exit(1);
+            }
+            
+            // Create controller last (depends on both model and DTO)
+            println!("\n3. Creating controller...");
+            if let Err(e) = make_controller(&name) {
+                eprintln!("Error creating controller: {}", e);
+                std::process::exit(1);
+            }
+            
+            println!("\n{}", style(format!("Successfully created all components for {}!", name)).green());
+            println!("Run migrations with: cargo kit migrate");
         },
         Commands::DbSeed => {
             use ruskit::framework::database::seeder::DatabaseSeeder;
