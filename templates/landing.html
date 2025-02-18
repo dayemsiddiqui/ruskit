@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block additional_styles %}
+.hero {
+    padding: 6rem 0;
+    text-align: center;
+    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+}
+
+.hero h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(to right, var(--text), var(--text-muted));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 3rem;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 4rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--border);
+}
+
+.code-preview {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.code-preview pre {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.features {
+    padding: 6rem 0;
+}
+
+.features h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    transition: transform 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-card h3 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.feature-card p {
+    color: var(--text-muted);
+}
+
+.documentation {
+    padding: 6rem 0;
+    background: var(--card-bg);
+}
+
+.documentation h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+.doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.doc-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.doc-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+.doc-card h3 {
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.doc-card p {
+    color: var(--text-muted);
+}
+{% endblock %}
+
+{% block content %}
+<header class="hero">
+    <div class="container">
+        <h1>Build Better Web Apps with Rust</h1>
+        <p class="hero-subtitle">Ruskit combines the elegance of Laravel with the performance and safety of Rust</p>
+        <div class="cta-buttons">
+            <a href="#get-started" class="btn btn-primary">Get Started</a>
+            <a href="#docs" class="btn btn-secondary">Read Docs</a>
+        </div>
+        <div class="code-preview">
+            <pre><code># Create a new Ruskit project
+cargo new my-app
+cd my-app
+
+# Add Ruskit as a dependency
+cargo add ruskit
+
+# Start the development server
+cargo run</code></pre>
+        </div>
+    </div>
+</header>
+
+<section id="features" class="features">
+    <div class="container">
+        <h2>Why Choose Ruskit?</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>Type-Safe Templates</h3>
+                <p>Built with Askama for compile-time template checking, ensuring your views are always valid.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Powerful Routing</h3>
+                <p>Intuitive and flexible routing system with middleware support and type-safe handlers.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Built-in Validation</h3>
+                <p>Comprehensive validation system with type-safe rules and custom validators.</p>
+            </div>
+            <div class="feature-card">
+                <h3>SEO Optimized</h3>
+                <p>Advanced metadata management system for perfect SEO and social sharing.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="docs" class="documentation">
+    <div class="container">
+        <h2>Documentation</h2>
+        <div class="doc-grid">
+            <a href="/docs/routing" class="doc-card">
+                <h3>Routing</h3>
+                <p>Learn about Ruskit's powerful routing system</p>
+            </a>
+            <a href="/docs/views" class="doc-card">
+                <h3>Views & Templates</h3>
+                <p>Master type-safe templating with Askama</p>
+            </a>
+            <a href="/docs/middleware" class="doc-card">
+                <h3>Middleware</h3>
+                <p>Explore the flexible middleware system</p>
+            </a>
+            <a href="/docs/validation" class="doc-card">
+                <h3>Validation</h3>
+                <p>Implement robust input validation</p>
+            </a>
+            <a href="/docs/models" class="doc-card">
+                <h3>Models</h3>
+                <p>Work with database models efficiently</p>
+            </a>
+            <a href="/docs/controllers" class="doc-card">
+                <h3>Controllers</h3>
+                <p>Structure your application logic</p>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %} 

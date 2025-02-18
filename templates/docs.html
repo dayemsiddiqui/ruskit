@@ -1,0 +1,21 @@
+{% extends "docs_base.html" %}
+
+{% block title %}{{ title }} - Ruskit Documentation{% endblock %}
+{% block description %}{{ description }}{% endblock %}
+
+{% block sidebar_content %}
+    {% for section in sections %}
+        <div class="nav-group">
+            <div class="nav-group-title">{{ section.title }}</div>
+            <div class="nav-items">
+                {% for item in section.items %}
+                    <a href="{{ item.path }}" {% if item.is_active %}class="active"{% endif %}>{{ item.title }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+    {% raw %}{{ content }}{% endraw %}
+{% endblock %} 

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ruskit Documentation{% endblock %}</title>
+    <meta name="description" content="{% block description %}Documentation for the Ruskit web framework{% endblock %}">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --background: #0a0a0a;
+            --text: #ffffff;
+            --text-muted: #9ca3af;
+            --card-bg: #18181b;
+            --border: #27272a;
+            --sidebar-width: 280px;
+            --topbar-height: 64px;
+            --content-width: 750px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: var(--background);
+        }
+
+        .sidebar-header {
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-group {
+            margin-bottom: 2rem;
+        }
+
+        .nav-group-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-items a {
+            display: block;
+            padding: 0.5rem 0;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .nav-items a:hover {
+            color: var(--text);
+        }
+
+        .nav-items a.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: var(--topbar-height);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: calc(100% - var(--sidebar-width));
+            background: var(--background);
+            z-index: 10;
+        }
+
+        .content {
+            max-width: var(--content-width);
+            margin: calc(var(--topbar-height) + 2rem) auto 4rem;
+            padding: 0 2rem;
+        }
+
+        .content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            padding-top: 1rem;
+        }
+
+        .content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .content p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .content code {
+            background: var(--card-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .content pre {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .content pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .content ul {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .content a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    {% block additional_styles %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Ruskit</div>
+            <div style="color: var(--text-muted); font-size: 0.875rem;">Documentation</div>
+        </div>
+
+        <nav>
+            {% block sidebar_content %}{% endblock %}
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="topbar">
+            <div style="flex-grow: 1;"></div>
+            <a href="https://github.com/yourusername/ruskit" class="github-link" style="color: var(--text-muted); text-decoration: none; font-size: 0.875rem;">
+                GitHub
+            </a>
+        </div>
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html> 
