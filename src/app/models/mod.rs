@@ -1,7 +1,1 @@
-mod user;
-mod post;
-
-pub use user::User;
-pub use post::Post;
-mod comment;
-pub use comment::Comment;
+// This file will be populated with models as they are created
