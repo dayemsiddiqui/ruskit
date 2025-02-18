@@ -6,6 +6,7 @@ use crate::framework::database::{
     query_builder::QueryBuilder,
     DatabaseError,
     migration::Migration,
+    factory::Factory,
 };
 use async_trait::async_trait;
 

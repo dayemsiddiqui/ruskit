@@ -11,11 +11,18 @@ impl Factory for User {
             .unwrap()
             .as_secs() as i64;
 
-        json!({
-            "name": Name().fake::<String>(),
-            "email": FreeEmail().fake::<String>(),
+        println!("Generating fake data...");
+        let name = Name().fake::<String>();
+        let email = SafeEmail().fake::<String>();
+        println!("Generated name: {}, email: {}", name, email);
+
+        let data = json!({
+            "name": name,
+            "email": email,
             "created_at": now,
             "updated_at": now
-        })
+        });
+        println!("Generated data: {:?}", data);
+        data
     }
 } 

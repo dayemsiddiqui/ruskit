@@ -22,6 +22,9 @@ struct Cli {
 enum Commands {
     /// Run database migrations
     Migrate,
+    /// Drop all tables and re-run all migrations
+    #[command(name = "migrate:fresh")]
+    MigrateFresh,
     /// Start development server with hot reload
     Dev,
     /// Start production server
@@ -82,6 +85,13 @@ async fn main() {
                 std::process::exit(1);
             }
         },
+        Commands::MigrateFresh => {
+            println!("Dropping all tables and re-running migrations...");
+            if let Err(e) = run_fresh().await {
+                eprintln!("Error refreshing database: {}", e);
+                std::process::exit(1);
+            }
+        },
         Commands::Dev => {
             println!("Starting development server...");
             // TODO: Implement dev server with hot reload
@@ -123,9 +133,14 @@ async fn main() {
         },
         Commands::DbSeed => {
             use ruskit::framework::database::seeder::DatabaseSeeder;
+            use ruskit::app;
+            
+            println!("Initializing application...");
+            app::initialize();
             
             println!("Initializing database...");
-            if let Err(e) = initialize(None).await {
+            let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
+            if let Err(e) = initialize(Some(db_config)).await {
                 eprintln!("Error initializing database: {}", e);
                 std::process::exit(1);
             }
@@ -259,9 +274,21 @@ impl {model_name} {{
 }
 
 async fn run_migrate() -> Result<(), Box<dyn std::error::Error>> {
+    use ruskit::app;
+    
+    println!("Initializing application...");
+    app::initialize();
+    
+    // Initialize database connection
+    println!("Initializing database...");
+    let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
+    initialize(Some(db_config)).await?;
+    
+    // Run migrations
+    println!("Running migrations...");
     let manager = MigrationManager::new().await?;
     manager.run(manager.get_all_model_migrations()).await?;
-    println!("Migrations completed successfully.");
+    println!("Migrations completed successfully");
     Ok(())
 }
 
@@ -273,9 +300,26 @@ async fn run_rollback() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn run_fresh() -> Result<(), Box<dyn std::error::Error>> {
+    use ruskit::app;
+    
+    println!("Initializing application...");
+    app::initialize();
+    
+    // Initialize database connection
+    println!("Initializing database...");
+    let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
+    initialize(Some(db_config)).await?;
+    
+    // Drop all tables
     let manager = MigrationManager::new().await?;
-    manager.refresh().await?;
-    println!("Database refresh completed successfully.");
+    println!("Dropping all tables...");
+    manager.drop_all_tables().await?;
+    println!("All tables dropped successfully");
+    
+    // Run migrations
+    println!("Running fresh migrations...");
+    manager.run(manager.get_all_model_migrations()).await?;
+    println!("Fresh migrations completed successfully");
     Ok(())
 }
 

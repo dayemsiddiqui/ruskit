@@ -12,11 +12,18 @@ pub trait Seeder: Send + Sync {
 
 pub struct DatabaseSeeder;
 
-static SEEDERS: Lazy<Mutex<Vec<Box<dyn Seeder + Send + Sync>>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static SEEDERS: Lazy<Mutex<Vec<Box<dyn Seeder + Send + Sync>>>> = Lazy::new(|| {
+    println!("Initializing seeders vector");
+    Mutex::new(Vec::new())
+});
 
 impl DatabaseSeeder {
     pub fn register(seeder: Box<dyn Seeder + Send + Sync>) {
-        SEEDERS.lock().unwrap().push(seeder);
+        println!("Registering seeder in DatabaseSeeder...");
+        let mut seeders = SEEDERS.lock().unwrap();
+        seeders.push(seeder);
+        let count = seeders.len();
+        println!("Total registered seeders: {}", count);
     }
 
     fn discover_seeders() -> Result<(), DatabaseError> {
@@ -26,10 +33,19 @@ impl DatabaseSeeder {
     }
 
     pub async fn run_all() -> Result<(), DatabaseError> {
-        Self::discover_seeders()?;
         let seeders = SEEDERS.lock().unwrap();
+        let count = seeders.len();
+        println!("Running {} seeders...", count);
+        
         for seeder in seeders.iter() {
-            seeder.run().await?;
+            println!("Running seeder...");
+            match seeder.run().await {
+                Ok(_) => println!("Seeder completed successfully"),
+                Err(e) => {
+                    println!("Seeder failed: {}", e);
+                    return Err(e);
+                }
+            }
         }
         Ok(())
     }

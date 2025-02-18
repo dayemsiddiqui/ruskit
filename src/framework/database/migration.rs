@@ -8,6 +8,9 @@ use crate::framework::database::{
 use crate::framework::database::model::{Model, discover_and_register_models, get_all_model_migrations};
 use crate::app::models::*;
 use sqlx::query;
+use sqlx::{Pool, Sqlite};
+use std::fs;
+use std::path::Path;
 
 pub struct Migration {
     pub name: String,
@@ -26,7 +29,7 @@ impl Migration {
 }
 
 pub struct MigrationManager {
-    pool: SqlitePool,
+    pool: Pool<Sqlite>,
 }
 
 impl MigrationManager {
@@ -81,42 +84,65 @@ impl MigrationManager {
     }
 
     pub async fn run(&self, migrations: Vec<Migration>) -> Result<(), DatabaseError> {
-        self.setup_migration_table().await?;
-        
-        // Get the current batch number
-        let batch = self.get_last_batch().await? + 1;
-        
-        // Get already run migrations
-        let executed_migrations = self.get_all_migrations().await?;
-        
+        // Create migrations table if it doesn't exist
+        sqlx::query(
+            "CREATE TABLE IF NOT EXISTS migrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                batch INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )"
+        )
+        .execute(&self.pool)
+        .await?;
+
+        // Get the last batch number
+        let last_batch: i64 = sqlx::query_scalar("SELECT COALESCE(MAX(batch), 0) FROM migrations")
+            .fetch_one(&self.pool)
+            .await?;
+
+        let current_batch = last_batch + 1;
+
+        // Get list of already run migrations
+        let executed_migrations: Vec<String> = sqlx::query_scalar("SELECT name FROM migrations")
+            .fetch_all(&self.pool)
+            .await?;
+
+        // Run pending migrations
         for migration in migrations {
             if !executed_migrations.contains(&migration.name) {
                 println!("Running migration: {}", migration.name);
-                
+
+                // Begin transaction
+                let mut tx = self.pool.begin().await?;
+
                 // Run the migration
                 sqlx::query(&migration.up)
-                    .execute(&self.pool)
+                    .execute(&mut *tx)
                     .await?;
-                
+
                 // Record the migration
                 let now = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_secs() as i64;
-                    
+
                 sqlx::query(
-                    "INSERT INTO migrations (name, batch, migration_time) VALUES (?, ?, ?)"
+                    "INSERT INTO migrations (name, batch, created_at) VALUES (?, ?, ?)"
                 )
                 .bind(&migration.name)
-                .bind(batch)
+                .bind(current_batch)
                 .bind(now)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
+
+                // Commit transaction
+                tx.commit().await?;
 
                 println!("Migration completed: {}", migration.name);
             }
         }
-        
+
         Ok(())
     }
 
@@ -189,7 +215,42 @@ impl MigrationManager {
     }
 
     pub fn get_all_model_migrations(&self) -> Vec<Migration> {
-        get_all_model_migrations()
+        crate::app::models::get_all_model_migrations()
+    }
+
+    pub async fn drop_all_tables(&self) -> Result<(), DatabaseError> {
+        // Begin transaction
+        let mut tx = self.pool.begin().await?;
+
+        // Disable foreign key checks temporarily
+        sqlx::query("PRAGMA foreign_keys = OFF")
+            .execute(&mut *tx)
+            .await?;
+
+        // Get all table names
+        let tables: Vec<String> = sqlx::query_scalar(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name != 'sqlite_sequence'"
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
+        // Drop each table
+        for table in tables {
+            println!("Dropping table: {}", table);
+            sqlx::query(&format!("DROP TABLE IF EXISTS {}", table))
+                .execute(&mut *tx)
+                .await?;
+        }
+
+        // Re-enable foreign key checks
+        sqlx::query("PRAGMA foreign_keys = ON")
+            .execute(&mut *tx)
+            .await?;
+
+        // Commit transaction
+        tx.commit().await?;
+
+        Ok(())
     }
 }
 

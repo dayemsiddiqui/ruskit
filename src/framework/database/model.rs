@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
-use sqlx::{FromRow, Row, sqlite::SqliteRow};
+use sqlx::{FromRow, sqlite::SqliteRow};
 use crate::framework::database::{get_pool, DatabaseError};
 use crate::framework::database::migration::Migration;
 use std::sync::Mutex;
@@ -8,6 +8,9 @@ use std::collections::HashMap;
 use once_cell::sync::Lazy;
 use std::fs;
 use std::path::Path;
+use serde_json::Value;
+use sqlx::sqlite::SqlitePool;
+use crate::framework::database::factory::Factory;
 
 type MigrationFn = fn() -> Vec<Migration>;
 
@@ -120,56 +123,45 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
     }
 
     /// Create a new record
-    async fn create(attributes: impl Serialize + Send + 'static) -> Result<Self, DatabaseError> {
+    async fn create(data: Value) -> Result<Self, DatabaseError> {
+        println!("Creating new record...");
         let pool = get_pool()?;
-        let json = serde_json::to_value(attributes)?;
-        
-        if let serde_json::Value::Object(map) = json {
-            let columns: Vec<String> = map.keys().map(|k| k.to_string()).collect();
-            let values: Vec<_> = (0..columns.len()).map(|_| "?").collect();
-            
-            let mut tx = pool.begin().await?;
-            
-            let query = format!(
-                "INSERT INTO {} ({}) VALUES ({})",
-                Self::table_name(),
-                columns.join(", "),
-                values.join(", ")
-            );
-            
-            let mut query_builder = sqlx::query(&query);
-            for value in map.values() {
-                query_builder = query_builder.bind(value);
-            }
-            
-            query_builder.execute(&mut *tx).await?;
-            
-            // Get the last inserted record
-            let last_id = sqlx::query_scalar::<_, i64>("SELECT last_insert_rowid()")
-                .fetch_one(&mut *tx)
-                .await?;
-                
-            let result = sqlx::query_as::<_, Self>(&format!(
-                "SELECT * FROM {} WHERE {} = ?",
-                Self::table_name(),
-                Self::primary_key()
-            ))
-            .bind(last_id)
-            .fetch_one(&mut *tx)
-            .await?;
-            
-            tx.commit().await?;
-            Ok(result)
-        } else {
-            Err(DatabaseError::ConnectionError(
-                sqlx::Error::Configuration("Invalid attributes".into())
-            ))
-        }
-    }
-}
+        let columns: Vec<String> = data.as_object().unwrap().keys().cloned().collect();
+        let values: Vec<Value> = data.as_object().unwrap().values().cloned().collect();
+        let placeholders: Vec<String> = (1..=values.len()).map(|_| format!("?")).collect();
 
-impl From<serde_json::Error> for DatabaseError {
-    fn from(error: serde_json::Error) -> Self {
-        DatabaseError::ConnectionError(sqlx::Error::Configuration(error.to_string().into()))
+        let query = format!(
+            "INSERT INTO {} ({}) VALUES ({})",
+            Self::table_name(),
+            columns.join(", "),
+            placeholders.join(", ")
+        );
+
+        println!("Executing query: {}", query);
+        println!("With values: {:?}", values);
+
+        let mut query_builder = sqlx::query(&query);
+        for value in values {
+            query_builder = query_builder.bind(value.to_string());
+        }
+
+        query_builder.execute(&*pool).await?;
+
+        let last_id = sqlx::query_scalar::<_, i64>("SELECT last_insert_rowid()")
+            .fetch_one(&*pool)
+            .await?;
+
+        println!("Record created with ID: {}", last_id);
+
+        let result = sqlx::query_as::<_, Self>(&format!(
+            "SELECT * FROM {} WHERE id = ?",
+            Self::table_name()
+        ))
+        .bind(last_id)
+        .fetch_one(&*pool)
+        .await?;
+
+        println!("Record retrieved successfully");
+        Ok(result)
     }
 } 

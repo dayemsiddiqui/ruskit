@@ -1,0 +1,3 @@
+[tasks.kit]
+command = "cargo"
+args = ["install", "--path", ".", "--force"] 

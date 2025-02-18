@@ -39,6 +39,23 @@ This will:
 3. Sort migrations by timestamp to ensure consistent order
 4. Run any migrations that haven't been executed yet
 
+### Fresh Migrations
+
+```bash
+cargo kit migrate:fresh
+```
+
+This command will:
+1. Drop all tables in your database (including the migrations table)
+2. Re-run all migrations from scratch
+
+This is useful when you want to:
+- Reset your database to a clean state
+- Test your migrations work correctly from a fresh start
+- Resolve issues with inconsistent migration states
+
+Note: This command will delete all data in your database. Use with caution in production environments.
+
 ## Migration Structure
 
 Each migration consists of:

@@ -3,19 +3,24 @@ use serde_json::Value;
 use crate::framework::database::model::Model;
 use crate::framework::database::DatabaseError;
 
-#[async_trait]
 pub trait Factory: Model {
     fn definition() -> Value;
     
     async fn factory() -> Result<Self, DatabaseError> {
-        Self::create(Self::definition()).await
+        println!("Creating factory instance...");
+        let data = Self::definition();
+        println!("Factory data: {:?}", data);
+        Self::create(data).await
     }
     
     async fn create_many(count: i32) -> Result<Vec<Self>, DatabaseError> {
+        println!("Creating {} instances...", count);
         let mut records = Vec::new();
-        for _ in 0..count {
+        for i in 0..count {
+            println!("Creating instance {}...", i + 1);
             records.push(Self::factory().await?);
         }
+        println!("Successfully created {} instances", count);
         Ok(records)
     }
 } 

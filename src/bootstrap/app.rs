@@ -5,7 +5,7 @@ use crate::framework::{
         presets::{Cors, TrimStrings}
     },
     views::{Metadata, set_global_metadata},
-    database::{self, config::DatabaseConfig, migration::MigrationManager},
+    database::{self, migration::MigrationManager},
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -110,14 +110,9 @@ pub async fn bootstrap() -> Result<Application, Box<dyn std::error::Error>> {
         .await?;
     
     // Store the pool globally
-    database::set_pool(pool.clone())?;
+    *database::POOL.lock().unwrap() = Some(Arc::new(pool));
     println!("Database pool initialized successfully");
 
-    // Run migrations
-    println!("Running migrations...");
-    let manager = MigrationManager::new().await?;
-    manager.run(manager.get_all_model_migrations()).await?;
-    println!("Migrations completed successfully");
 
     let app = Application::instance().await;
     let mut app = app.write().await;
