@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Ruskit Documentation{% endblock %}</title>
     <meta name="description" content="{% block description %}Documentation for the Ruskit web framework{% endblock %}">
+    <!-- Add Prism CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
     <style>
         :root {
             --primary: #6366f1;
@@ -184,6 +187,67 @@
         .content a:hover {
             text-decoration: underline;
         }
+
+        /* Prism.js Dark Theme Overrides */
+        :not(pre) > code[class*="language-"],
+        pre[class*="language-"] {
+            background: var(--card-bg);
+        }
+
+        .token.comment,
+        .token.prolog,
+        .token.doctype,
+        .token.cdata {
+            color: #8b949e;
+        }
+
+        .token.punctuation {
+            color: #c9d1d9;
+        }
+
+        .token.property,
+        .token.tag,
+        .token.boolean,
+        .token.number,
+        .token.constant,
+        .token.symbol,
+        .token.deleted {
+            color: #79c0ff;
+        }
+
+        .token.selector,
+        .token.attr-name,
+        .token.string,
+        .token.char,
+        .token.builtin,
+        .token.inserted {
+            color: #a5d6ff;
+        }
+
+        .token.operator,
+        .token.entity,
+        .token.url,
+        .language-css .token.string,
+        .style .token.string {
+            color: #d2a8ff;
+        }
+
+        .token.atrule,
+        .token.attr-value,
+        .token.keyword {
+            color: #ff7b72;
+        }
+
+        .token.function,
+        .token.class-name {
+            color: #d2a8ff;
+        }
+
+        .token.regex,
+        .token.important,
+        .token.variable {
+            color: #ffa657;
+        }
     </style>
     {% block additional_styles %}{% endblock %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -225,5 +289,11 @@
             {% block content %}{% endblock %}
         </div>
     </main>
+
+    <!-- Add Prism.js and its plugins -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
 </body>
 </html> 
