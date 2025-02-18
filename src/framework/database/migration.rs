@@ -1,8 +1,8 @@
 use sqlx::{SqlitePool, Row};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::framework::database::{DatabaseError, config};
-use crate::framework::database::model::Model;
-use crate::app::models::User;
+use crate::framework::database::model::{Model, discover_and_register_models, get_all_model_migrations};
+use crate::app::models::*;
 
 pub struct Migration {
     pub name: String,
@@ -29,6 +29,14 @@ impl MigrationManager {
         // Initialize database if not already initialized
         let db_config = config::DatabaseConfig::from_env();
         let pool = SqlitePool::connect(&db_config.connection_url()).await?;
+        
+        // Discover and register all models
+        discover_and_register_models().map_err(|e| 
+            DatabaseError::ConnectionError(sqlx::Error::Configuration(
+                format!("Failed to discover models: {}", e).into()
+            ))
+        )?;
+        
         
         Ok(Self { pool })
     }
@@ -176,12 +184,7 @@ impl MigrationManager {
     }
 
     pub fn get_all_model_migrations(&self) -> Vec<Migration> {
-        // Collect migrations from all models
-        // For now, we only have User model, but this will be expanded
-        // as more models are added
-        let mut migrations = Vec::new();
-        migrations.extend(User::migrations());
-        migrations
+        get_all_model_migrations()
     }
 }
 

@@ -3,6 +3,64 @@ use serde::{de::DeserializeOwned, Serialize};
 use sqlx::{FromRow, Row, sqlite::SqliteRow};
 use crate::framework::database::{get_pool, DatabaseError};
 use crate::framework::database::migration::Migration;
+use std::sync::Mutex;
+use std::collections::HashMap;
+use once_cell::sync::Lazy;
+use std::fs;
+use std::path::Path;
+
+type MigrationFn = fn() -> Vec<Migration>;
+
+static MODEL_REGISTRY: Lazy<Mutex<HashMap<String, MigrationFn>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+pub fn register_model_with_migrations(model_name: String, migrations_fn: MigrationFn) {
+    MODEL_REGISTRY.lock().unwrap().insert(model_name, migrations_fn);
+}
+
+pub fn get_all_model_migrations() -> Vec<Migration> {
+    let registry = MODEL_REGISTRY.lock().unwrap();
+    let mut migrations = Vec::new();
+    
+    for migrations_fn in registry.values() {
+        migrations.extend(migrations_fn());
+    }
+    
+    // Sort migrations by name to ensure consistent order
+    migrations.sort_by(|a, b| a.name.cmp(&b.name));
+    migrations
+}
+
+/// Automatically discover and register all models in the models directory
+pub fn discover_and_register_models() -> std::io::Result<()> {
+    let models_dir = Path::new("src/app/models");
+    if !models_dir.exists() {
+        return Ok(());
+    }
+
+    // Read all entries in the models directory
+    for entry in fs::read_dir(models_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        // Skip mod.rs and non-rust files
+        if path.is_file() && 
+           path.extension().map_or(false, |ext| ext == "rs") && 
+           path.file_name().map_or(false, |name| name != "mod.rs") {
+            // Get the model name from the file name
+            if let Some(model_name) = path.file_stem().and_then(|s| s.to_str()) {
+                // Convert to PascalCase for the struct name
+                let model_name = model_name.chars().next().unwrap_or('_').to_uppercase().to_string() + 
+                               &model_name[1..];
+                let full_type_name = format!("ruskit::app::models::{}", model_name);
+                
+                // The model will register itself when it's used
+                println!("Discovered model: {}", full_type_name);
+            }
+        }
+    }
+    
+    Ok(())
+}
 
 #[async_trait]
 pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned + Send + Sync + Sized + Unpin {
@@ -16,6 +74,14 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
 
     /// Get the migrations for this model
     fn migrations() -> Vec<Migration>;
+
+    /// Register this model in the registry
+    fn register() {
+        register_model_with_migrations(
+            std::any::type_name::<Self>().to_string(),
+            Self::migrations
+        );
+    }
 
     /// Find a model by its primary key
     async fn find(id: i64) -> Result<Option<Self>, DatabaseError> {

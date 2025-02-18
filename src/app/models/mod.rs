@@ -1,6 +1,5 @@
 mod user;
+mod post;
 
 pub use user::User;
-
-mod post;
 pub use post::Post;

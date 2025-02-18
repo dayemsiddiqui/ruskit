@@ -62,7 +62,10 @@ async fn main() {
         },
         Commands::Serve => {
             println!("Starting production server...");
-            // TODO: Implement production server
+            if let Err(e) = run_server().await {
+                eprintln!("Error starting server: {}", e);
+                std::process::exit(1);
+            }
         },
         Commands::MakeModel { name } => {
             println!("Creating model {}...", name);
@@ -197,5 +200,24 @@ async fn run_fresh() -> Result<(), Box<dyn std::error::Error>> {
     let manager = MigrationManager::new().await?;
     manager.refresh().await?;
     println!("Database refresh completed successfully.");
+    Ok(())
+}
+
+async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
+    use ruskit::web;
+    use std::net::SocketAddr;
+    use tokio::net::TcpListener;
+
+    // Get routes from web.rs
+    let app = web::routes().await;
+
+    // Run the server
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("Server running on http://{}", addr);
+
+    // Create the listener
+    let listener = TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+
     Ok(())
 } 
