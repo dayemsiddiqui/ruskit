@@ -3,194 +3,141 @@
 {% block content %}
 <div class="prose prose-slate max-w-none">
     <h1>Database Migrations</h1>
-    
-    <p>Migrations are version control for your database schema. They allow you to modify your database structure in a consistent and repeatable way.</p>
 
-    <h2>Creating Migrations</h2>
-    <p>Generate a new migration using the CLI:</p>
+    <p>Ruskit provides a robust database migration system that ensures your database schema changes are versioned, ordered, and can be rolled out consistently across different environments.</p>
 
-    <pre><code class="language-bash">cargo kit make:migration create_users_table</code></pre>
+    <h2>Migration Commands</h2>
 
-    <p>This creates a new migration in <code>src/database/migrations/YYYYMMDDHHMMSS_create_users_table.rs</code>:</p>
+    <h3>Create a New Model with Migration</h3>
+    <pre><code class="language-bash">cargo kit make:model Post</code></pre>
 
-    <pre><code class="language-rust">use sea_orm_migration::prelude::*;
+    <p>This will:</p>
+    <ol>
+        <li>Create a new model file at <code>src/app/models/post.rs</code></li>
+        <li>Add the model to <code>src/app/models/mod.rs</code></li>
+        <li>Create an initial migration with timestamp prefix (e.g., <code>1739885809_create_posts_table</code>)</li>
+        <li>Set up basic model structure with id, created_at, and updated_at fields</li>
+    </ol>
 
-#[derive(DeriveMigration)]
-pub struct Migration;
+    <h3>Add a New Migration to Existing Model</h3>
+    <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
 
-#[async_trait]
-impl MigrationTrait for Migration {
-    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .create_table(
-                Table::create()
-                    .table(Users::Table)
-                    .col(ColumnDef::new(Users::Id).integer().not_null().auto_increment().primary_key())
-                    .col(ColumnDef::new(Users::Name).string().not_null())
-                    .col(ColumnDef::new(Users::Email).string().not_null().unique_key())
-                    .col(ColumnDef::new(Users::Password).string().not_null())
-                    .col(ColumnDef::new(Users::CreatedAt).timestamp().not_null())
-                    .col(ColumnDef::new(Users::UpdatedAt).timestamp().not_null())
-                    .to_owned(),
-            )
-            .await
-    }
+    <p>This will:</p>
+    <ol>
+        <li>Add a new migration to the specified model's migrations vector</li>
+        <li>Automatically prefix the migration with a timestamp (e.g., <code>1739885809_add_email_to_users</code>)</li>
+        <li>Create placeholders for UP and DOWN migrations</li>
+    </ol>
 
-    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .drop_table(Table::drop().table(Users::Table).to_owned())
-            .await
-    }
-}
+    <h3>Run Migrations</h3>
+    <pre><code class="language-bash">cargo kit migrate</code></pre>
 
-#[derive(DeriveIden)]
-enum Users {
-    Table,
-    Id,
-    Name,
-    Email,
-    Password,
-    CreatedAt,
-    UpdatedAt,
-}</code></pre>
+    <p>This will:</p>
+    <ol>
+        <li>Discover all models in your application</li>
+        <li>Collect all migrations from these models</li>
+        <li>Sort migrations by timestamp to ensure consistent order</li>
+        <li>Run any migrations that haven't been executed yet</li>
+    </ol>
 
-    <h2>Running Migrations</h2>
-    <p>Run your migrations using the CLI:</p>
+    <h3>Fresh Migrations</h3>
+    <pre><code class="language-bash">cargo kit migrate:fresh</code></pre>
 
-    <pre><code class="language-bash"># Run all pending migrations
-cargo kit migrate
+    <p>This command will:</p>
+    <ol>
+        <li>Drop all tables in your database (including the migrations table)</li>
+        <li>Re-run all migrations from scratch</li>
+    </ol>
 
-# Rollback the last migration
-cargo kit migrate:rollback
-
-# Rollback all migrations
-cargo kit migrate:reset
-
-# Refresh the database (rollback all and migrate)
-cargo kit migrate:refresh</code></pre>
-
-    <h2>Column Types</h2>
-    <p>SeaORM supports various column types:</p>
-
-    <pre><code class="language-rust">// Numeric types
-.col(ColumnDef::new(Column::Id).integer().not_null())
-.col(ColumnDef::new(Column::Price).decimal().not_null())
-.col(ColumnDef::new(Column::Count).big_integer())
-.col(ColumnDef::new(Column::Score).float())
-
-// String types
-.col(ColumnDef::new(Column::Name).string().not_null())
-.col(ColumnDef::new(Column::Description).text())
-.col(ColumnDef::new(Column::Code).char_len(5))
-
-// Boolean
-.col(ColumnDef::new(Column::IsActive).boolean().not_null())
-
-// Date and Time
-.col(ColumnDef::new(Column::CreatedAt).timestamp().not_null())
-.col(ColumnDef::new(Column::Date).date())
-.col(ColumnDef::new(Column::Time).time())</code></pre>
-
-    <h2>Modifying Tables</h2>
-    <p>Common table modifications:</p>
-
-    <pre><code class="language-rust">// Add column
-manager
-    .alter_table(
-        Table::alter()
-            .table(Posts::Table)
-            .add_column(ColumnDef::new(Posts::Views).integer().default(0))
-            .to_owned(),
-    )
-    .await?;
-
-// Drop column
-manager
-    .alter_table(
-        Table::alter()
-            .table(Posts::Table)
-            .drop_column(Posts::Views)
-            .to_owned(),
-    )
-    .await?;
-
-// Rename column
-manager
-    .alter_table(
-        Table::alter()
-            .table(Posts::Table)
-            .rename_column(Posts::Title, Posts::Heading)
-            .to_owned(),
-    )
-    .await?;
-
-// Add index
-manager
-    .create_index(
-        Index::create()
-            .table(Posts::Table)
-            .col(Posts::Title)
-            .to_owned(),
-    )
-    .await?;</code></pre>
-
-    <h2>Foreign Keys</h2>
-    <p>Create relationships between tables:</p>
-
-    <pre><code class="language-rust">// Create posts table with foreign key
-manager
-    .create_table(
-        Table::create()
-            .table(Posts::Table)
-            .col(ColumnDef::new(Posts::Id).integer().not_null().auto_increment().primary_key())
-            .col(ColumnDef::new(Posts::UserId).integer().not_null())
-            .col(ColumnDef::new(Posts::Title).string().not_null())
-            .col(ColumnDef::new(Posts::Content).text())
-            .foreign_key(
-                ForeignKey::create()
-                    .name("fk-posts-user_id")
-                    .from(Posts::Table, Posts::UserId)
-                    .to(Users::Table, Users::Id)
-                    .on_delete(ForeignKeyAction::Cascade)
-                    .on_update(ForeignKeyAction::Cascade),
-            )
-            .to_owned(),
-    )
-    .await?;</code></pre>
-
-    <h2>Best Practices</h2>
+    <p>This is useful when you want to:</p>
     <ul>
-        <li>Always provide both up and down migrations</li>
-        <li>Keep migrations small and focused</li>
-        <li>Use meaningful names for migrations</li>
-        <li>Test migrations before applying to production</li>
-        <li>Back up your database before running migrations in production</li>
-        <li>Use foreign key constraints to maintain data integrity</li>
-        <li>Consider indexing for frequently queried columns</li>
+        <li>Reset your database to a clean state</li>
+        <li>Test your migrations work correctly from a fresh start</li>
+        <li>Resolve issues with inconsistent migration states</li>
     </ul>
 
-    <h2>Testing Migrations</h2>
-    <p>Test your migrations in a separate database:</p>
+    <p>Note: This command will delete all data in your database. Use with caution in production environments.</p>
 
-    <pre><code class="language-rust">#[tokio::test]
-async fn test_migrations() {
-    // Setup test database
-    let db = setup_test_db().await;
+    <h2>Migration Structure</h2>
 
-    // Run migrations
-    Migrator::up(&db, None).await.unwrap();
+    <p>Each migration consists of:</p>
+    <ol>
+        <li>A unique name with timestamp prefix (e.g., <code>1739885809_create_users_table</code>)</li>
+        <li>An UP migration (the changes to apply)</li>
+        <li>A DOWN migration (how to reverse the changes)</li>
+    </ol>
 
-    // Verify table exists
-    let table_exists = db
-        .execute("SELECT * FROM information_schema.tables WHERE table_name = 'users'")
-        .await
-        .unwrap()
-        .rows_affected() > 0;
+    <p>Example migration:</p>
+    <pre><code class="language-rust">Migration::new(
+    "1739885809_add_email_to_users",
+    // UP migration
+    "ALTER TABLE users ADD COLUMN email TEXT;",
+    // DOWN migration
+    "ALTER TABLE users DROP COLUMN email;"
+)</code></pre>
 
-    assert!(table_exists);
+    <h2>Migration Ordering</h2>
 
-    // Test rollback
-    Migrator::down(&db, None).await.unwrap();
+    <p>Migrations are automatically ordered by their timestamp prefix, ensuring that:</p>
+    <ol>
+        <li>Migrations run in the order they were created</li>
+        <li>New migrations always run after existing ones</li>
+        <li>The order is consistent across all environments</li>
+    </ol>
+
+    <h2>Best Practices</h2>
+
+    <ol>
+        <li><strong>One Change Per Migration</strong>: Each migration should handle one specific change (e.g., adding a column, creating a table)</li>
+        <li><strong>Meaningful Names</strong>: Use descriptive names for migrations:
+            <ul>
+                <li><code>create_users_table</code></li>
+                <li><code>add_email_to_users</code></li>
+                <li><code>add_foreign_key_to_posts</code></li>
+            </ul>
+        </li>
+        <li><strong>Always Include DOWN Migrations</strong>: Make sure your DOWN migrations correctly reverse the changes made in UP migrations</li>
+        <li><strong>Run Migrations Immediately</strong>: After creating a new migration, run <code>cargo kit migrate</code> to apply it</li>
+        <li><strong>Version Control</strong>: Commit your migrations along with related code changes</li>
+    </ol>
+
+    <h2>Migration Files</h2>
+
+    <p>Migrations are stored in your model files under the <code>migrations()</code> function:</p>
+
+    <pre><code class="language-rust">impl Model for User {
+    fn migrations() -> Vec<Migration> {
+        vec![
+            Migration::new(
+                "1739885800_create_users_table",
+                "CREATE TABLE users (...)",
+                "DROP TABLE users"
+            ),
+            Migration::new(
+                "1739885809_add_email_to_users",
+                "ALTER TABLE users ADD COLUMN email TEXT;",
+                "ALTER TABLE users DROP COLUMN email;"
+            ),
+        ]
+    }
 }</code></pre>
+
+    <h2>Migration Table</h2>
+
+    <p>Ruskit maintains a <code>migrations</code> table in your database to track which migrations have been run:</p>
+
+    <pre><code class="language-sql">CREATE TABLE migrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    batch INTEGER NOT NULL,
+    migration_time INTEGER NOT NULL
+)</code></pre>
+
+    <p>This ensures that:</p>
+    <ol>
+        <li>Each migration runs exactly once</li>
+        <li>Migrations can be rolled back by batch</li>
+        <li>You can track when each migration was applied</li>
+    </ol>
 </div>
 {% endblock %} 

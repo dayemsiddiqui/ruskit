@@ -1,87 +1,151 @@
-{% extends "docs/page.html" %}
+{% extends "docs_base.html" %}
 
-{% block doc_content %}
-<h1>Commands</h1>
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>Commands</h1>
 
-<p>Rustavel provides a powerful command-line interface through the <code>cargo kit</code> command. These commands help you manage your application, generate code, and perform various tasks.</p>
+    <p>Rustavel provides a set of CLI commands to help you scaffold and manage your application. These commands are available through the <code>cargo kit</code> command-line interface.</p>
 
-<h2>Available Commands</h2>
+    <h2>Available Commands</h2>
 
-<h3>Create Commands</h3>
-<pre><code class="language-bash"># Create a new controller
-cargo kit make:controller UserController
+    <h3>Database Commands</h3>
+    <ul>
+        <li><code>cargo kit migrate</code> - Run all pending database migrations</li>
+        <li><code>cargo kit migrate:fresh</code> - Drop all tables and re-run all migrations</li>
+        <li><code>cargo kit db:seed</code> - Seed the database with sample data</li>
+    </ul>
 
-# Create a new model
-cargo kit make:model User
+    <h3>Development Commands</h3>
+    <ul>
+        <li><code>cargo kit dev</code> - Start development server with hot reload</li>
+        <li><code>cargo kit serve</code> - Start production server</li>
+    </ul>
 
-# Create a new migration
-cargo kit make:migration create_users_table
+    <h3>Make Commands</h3>
 
-# Create a new seeder
-cargo kit make:seeder UsersSeeder
+    <h4>Models and Database</h4>
+    <ul>
+        <li>
+            <code>cargo kit make:model &lt;Name&gt;</code> - Create a new model with migration
+            <pre><code class="language-bash">cargo kit make:model User</code></pre>
+        </li>
+        <li>
+            <code>cargo kit make:migration &lt;name&gt; --model &lt;ModelName&gt;</code> - Create a new migration for an existing model
+            <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
+        </li>
+        <li>
+            <code>cargo kit make:factory &lt;Name&gt;</code> - Create a new factory for a model
+            <pre><code class="language-bash">cargo kit make:factory User</code></pre>
+        </li>
+        <li>
+            <code>cargo kit make:seeder &lt;Name&gt;</code> - Create a new database seeder
+            <pre><code class="language-bash">cargo kit make:seeder Users</code></pre>
+        </li>
+    </ul>
 
-# Create a new factory
-cargo kit make:factory UserFactory
-</code></pre>
+    <h4>Controllers and DTOs</h4>
+    <ul>
+        <li>
+            <code>cargo kit make:controller &lt;Name&gt;</code> - Create a new controller
+            <pre><code class="language-bash">cargo kit make:controller User</code></pre>
+        </li>
+        <li>
+            <code>cargo kit make:dto &lt;Name&gt;</code> - Create a new DTO (Data Transfer Object)
+            <pre><code class="language-bash">cargo kit make:dto User</code></pre>
+        </li>
+    </ul>
 
-<h3>Database Commands</h3>
-<pre><code class="language-bash"># Run migrations
-cargo kit migrate
+    <h4>All-in-One Scaffolding</h4>
+    <ul>
+        <li>
+            <code>cargo kit make:all &lt;Name&gt;</code> - Create model, DTO, and controller in one command
+            <pre><code class="language-bash">cargo kit make:all Post</code></pre>
+            <p>This command will:</p>
+            <ol>
+                <li>Create a model with migration</li>
+                <li>Create DTOs for requests and responses</li>
+                <li>Create a controller with basic CRUD operations</li>
+            </ol>
+        </li>
+    </ul>
 
-# Rollback migrations
-cargo kit migrate:rollback
+    <h2>Command Behavior</h2>
 
-# Reset database and run all migrations
-cargo kit migrate:fresh
+    <h3>Model Generation</h3>
+    <ul>
+        <li>Creates a new model file in <code>src/app/models</code></li>
+        <li>Automatically creates a migration</li>
+        <li>Updates <code>mod.rs</code> to include the new model</li>
+        <li>Includes basic timestamp fields and ID</li>
+    </ul>
 
-# Run database seeders
-cargo kit db:seed
-</code></pre>
+    <h3>Controller Generation</h3>
+    <ul>
+        <li>Creates a new controller in <code>src/app/controllers</code></li>
+        <li>Checks for existence of related model and DTOs</li>
+        <li>Generates CRUD methods if model and DTOs exist</li>
+        <li>Updates <code>mod.rs</code> to include the new controller</li>
+    </ul>
 
-<h2>Creating Custom Commands</h2>
+    <h3>DTO Generation</h3>
+    <ul>
+        <li>Creates request and response DTOs in <code>src/app/dtos</code></li>
+        <li>Includes validation support</li>
+        <li>Generates From implementations for model conversion</li>
+        <li>Updates <code>mod.rs</code> to include the new DTOs</li>
+    </ul>
 
-<p>You can create your own custom commands by implementing the <code>Command</code> trait:</p>
+    <h3>Migration Generation</h3>
+    <ul>
+        <li>Creates a new migration in the model file</li>
+        <li>Uses timestamp-based ordering</li>
+        <li>Provides up and down migration templates</li>
+    </ul>
 
-<pre><code class="language-rust">use rustavel::commands::Command;
+    <h3>Factory Generation</h3>
+    <ul>
+        <li>Creates a new factory in <code>src/app/factories</code></li>
+        <li>Includes fake data generation setup</li>
+        <li>Updates <code>mod.rs</code> to include the new factory</li>
+    </ul>
 
-pub struct CustomCommand;
+    <h3>Seeder Generation</h3>
+    <ul>
+        <li>Creates a new seeder in <code>src/app/seeders</code></li>
+        <li>Includes basic seeder structure</li>
+        <li>Updates <code>mod.rs</code> to include the new seeder</li>
+    </ul>
 
-impl Command for CustomCommand {
-    fn name(&self) -> &'static str {
-        "custom:command"
-    }
+    <h2>Best Practices</h2>
 
-    fn description(&self) -> &'static str {
-        "Description of what your command does"
-    }
+    <ol>
+        <li>
+            Use PascalCase for model, controller, and DTO names:
+            <pre><code class="language-bash">cargo kit make:model User
+cargo kit make:controller BlogPost
+cargo kit make:dto UserProfile</code></pre>
+        </li>
 
-    async fn execute(&self, args: Vec<String>) -> Result<(), Box<dyn Error>> {
-        // Command implementation here
-        Ok(())
-    }
-}
-</code></pre>
+        <li>
+            Use snake_case for migration names:
+            <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
+        </li>
 
-<h2>Registering Commands</h2>
+        <li>
+            When using <code>make:all</code>, ensure the name represents a single entity:
+            <pre><code class="language-bash">cargo kit make:all BlogPost  # Good
+cargo kit make:all blog_posts  # Not recommended</code></pre>
+        </li>
 
-<p>Register your custom commands in your application's command registry:</p>
+        <li>
+            Run migrations after creating or modifying models:
+            <pre><code class="language-bash">cargo kit migrate</code></pre>
+        </li>
 
-<pre><code class="language-rust">use rustavel::commands::CommandRegistry;
-
-pub fn register_commands(registry: &mut CommandRegistry) {
-    registry.register(Box::new(CustomCommand));
-}
-</code></pre>
-
-<h2>Running Commands Programmatically</h2>
-
-<p>You can also run commands programmatically from your code:</p>
-
-<pre><code class="language-rust">use rustavel::commands::CommandRunner;
-
-async fn run_command() -> Result<(), Box<dyn Error>> {
-    let runner = CommandRunner::new();
-    runner.run("custom:command", vec!["arg1", "arg2"]).await
-}
-</code></pre>
+        <li>
+            Use <code>migrate:fresh</code> during development to reset the database:
+            <pre><code class="language-bash">cargo kit migrate:fresh</code></pre>
+        </li>
+    </ol>
+</div>
 {% endblock %} 
