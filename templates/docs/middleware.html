@@ -2,110 +2,244 @@
 
 {% block content %}
 <div class="prose prose-slate max-w-none">
-    <h1>Middleware</h1>
-    
-    <p>Middleware provides a convenient mechanism for filtering HTTP requests entering your application. For example, Rustavel includes middleware for authentication, CORS, and request logging.</p>
+    <h1>Middleware in Ruskit</h1>
 
-    <h2>Creating Middleware</h2>
-    <p>To create a middleware, implement the <code>Middleware</code> trait:</p>
+    <p>Middleware provides a convenient mechanism for filtering HTTP requests entering your application. For example, Ruskit includes middleware for handling CORS and trimming strings. You may add your own middleware to customize it further.</p>
 
-    <pre><code class="language-rust">use axum::middleware::Next;
-use axum::response::Response;
-use axum::http::Request;
+    <h2>Introduction</h2>
 
-pub struct AuthMiddleware;
+    <p>Middleware acts as a bridge between a request and a response, allowing you to:</p>
+    <ul>
+        <li>Modify requests before they reach your route handlers</li>
+        <li>Modify responses before they are sent back to the client</li>
+        <li>Perform actions before or after request handling</li>
+        <li>Terminate requests early if certain conditions aren't met</li>
+    </ul>
 
-#[async_trait]
-impl Middleware for AuthMiddleware {
-    async fn handle<B>(&self, req: Request<B>, next: Next<B>) -> Result<Response, Response> {
-        // Get the authorization header
-        let auth_header = req.headers()
-            .get("Authorization")
-            .and_then(|h| h.to_str().ok());
+    <h2>Using Built-in Middleware</h2>
 
-        match auth_header {
-            Some(token) => {
-                // Validate the token
-                if let Ok(user) = validate_token(token).await {
-                    // Add user to request extensions
-                    req.extensions_mut().insert(user);
-                    // Continue to the next middleware or handler
-                    Ok(next.run(req).await)
-                } else {
-                    Err(StatusCode::UNAUTHORIZED.into_response())
-                }
-            }
-            None => Err(StatusCode::UNAUTHORIZED.into_response())
-        }
+    <h3>Available Middleware</h3>
+
+    <p>Ruskit comes with several built-in middleware components:</p>
+
+    <h4>CORS Middleware</h4>
+    <p>Handles Cross-Origin Resource Sharing headers:</p>
+
+    <pre><code class="language-rust">use ruskit::presets::Cors;
+
+Router::new()
+    .route(
+        "/api", 
+        get(handler).middleware(Cors::new("http://example.com"))
+    )</code></pre>
+
+    <p>Configure CORS with additional options:</p>
+    <pre><code class="language-rust">let cors = Cors::new("http://example.com")
+    .with_methods("GET, POST, PUT, DELETE")
+    .with_headers("Content-Type, Authorization");</code></pre>
+
+    <h4>TrimStrings Middleware</h4>
+    <p>Automatically trims string inputs in requests:</p>
+
+    <pre><code class="language-rust">use ruskit::presets::TrimStrings;
+
+Router::new()
+    .route(
+        "/users", 
+        post(create_user).middleware(TrimStrings::new())
+    )</code></pre>
+
+    <h3>Applying Middleware</h3>
+
+    <p>There are three ways to apply middleware in Ruskit:</p>
+
+    <h4>1. Route Middleware</h4>
+    <p>Apply middleware to specific routes:</p>
+
+    <pre><code class="language-rust">use ruskit::presets::{Cors, TrimStrings};
+
+Router::new()
+    .route(
+        "/api/users",
+        get(users_index)
+            .middleware(TrimStrings::new())
+            .middleware(Cors::new("http://example.com"))
+    )</code></pre>
+
+    <h4>2. Global Middleware</h4>
+    <p>Apply middleware to every HTTP request:</p>
+
+    <pre><code class="language-rust">// In your bootstrap.rs
+pub async fn bootstrap() {
+    let app = Application::instance().await;
+    let mut app = app.write().await;
+
+    // Configure global middleware
+    app.middleware(|stack| {
+        stack.add(Middleware::Cors(Cors::new("*")));
+        stack.add(Middleware::TrimStrings(TrimStrings::new()));
+    }).await;
+}</code></pre>
+
+    <h4>3. Middleware Groups</h4>
+    <p>Group middleware for specific sets of routes:</p>
+
+    <pre><code class="language-rust">// Define middleware groups
+app.middleware_groups(|groups| {
+    groups.push((
+        "api",
+        vec![
+            Middleware::Cors(Cors::new("http://api.example.com")),
+            Middleware::TrimStrings(TrimStrings::new())
+        ]
+    ));
+}).await;
+
+// Use middleware group
+if let Some(middlewares) = middleware_group("api").await {
+    router = router.middlewares(middlewares);
+}</code></pre>
+
+    <h2>Creating Custom Middleware</h2>
+
+    <h3>Basic Structure</h3>
+
+    <p>Create a new middleware by implementing a struct with a handle method:</p>
+
+    <pre><code class="language-rust">use axum::{
+    middleware::Next,
+    response::Response,
+    http::Request,
+    body::Body,
+};
+
+#[derive(Clone)]
+pub struct LogRequest;
+
+impl LogRequest {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub(crate) async fn handle(
+        &self,
+        request: Request<Body>,
+        next: Next,
+    ) -> Result<Response, Response> {
+        println!("Incoming request to: {}", request.uri());
+        let response = next.run(request).await;
+        println!("Outgoing response");
+        Ok(response)
     }
 }</code></pre>
 
-    <h2>Using Middleware</h2>
-    <p>You can apply middleware in several ways:</p>
+    <h3>Registering Custom Middleware</h3>
 
-    <h3>Global Middleware</h3>
-    <p>Apply middleware to all routes:</p>
+    <p>1. Add your middleware to the internal Middleware enum:</p>
 
-    <pre><code class="language-rust">let app = Router::new()
-    .route("/", get(handler))
-    .layer(AuthMiddleware::new());</code></pre>
+    <pre><code class="language-rust">// In framework/middleware/internal.rs
+pub enum Middleware {
+    Cors(presets::Cors),
+    TrimStrings(presets::TrimStrings),
+    LogRequest(LogRequest),  // Add your variant
+}</code></pre>
 
-    <h3>Route-Specific Middleware</h3>
-    <p>Apply middleware to specific routes:</p>
+    <p>2. Implement the From trait:</p>
 
-    <pre><code class="language-rust">let app = Router::new()
-    .route("/public", get(public_handler))
-    .route("/private", 
-        get(private_handler)
-            .with_middleware(AuthMiddleware::new())
-    );</code></pre>
+    <pre><code class="language-rust">impl From<LogRequest> for Middleware {
+    fn from(middleware: LogRequest) -> Self {
+        Self::LogRequest(middleware)
+    }
+}</code></pre>
 
-    <h3>Group Middleware</h3>
-    <p>Apply middleware to a group of routes:</p>
+    <h3>Using Custom Middleware</h3>
 
-    <pre><code class="language-rust">let protected = Router::new()
-    .route("/dashboard", get(dashboard))
-    .route("/settings", get(settings))
-    .with_middleware(AuthMiddleware::new());
+    <pre><code class="language-rust">use crate::middleware::LogRequest;
 
-let app = Router::new()
-    .route("/", get(home))
-    .nest("/admin", protected);</code></pre>
-
-    <h2>Built-in Middleware</h2>
-    <p>Rustavel includes several built-in middleware:</p>
-
-    <h3>Authentication</h3>
-    <pre><code class="language-rust">use rustavel::middleware::Auth;
-
-let app = Router::new()
-    .route("/profile", get(profile))
-    .with_middleware(Auth::new());</code></pre>
-
-    <h3>CORS</h3>
-    <pre><code class="language-rust">use rustavel::middleware::Cors;
-
-let app = Router::new()
-    .route("/api", get(api))
-    .with_middleware(Cors::new()
-        .allow_origin("https://example.com")
-        .allow_methods(vec!["GET", "POST"])
-    );</code></pre>
-
-    <h3>Request Logger</h3>
-    <pre><code class="language-rust">use rustavel::middleware::Logger;
-
-let app = Router::new()
-    .route("/", get(handler))
-    .with_middleware(Logger::new());</code></pre>
+Router::new()
+    .route("/api", get(handler).middleware(LogRequest::new()))</code></pre>
 
     <h2>Best Practices</h2>
-    <ul>
-        <li>Keep middleware focused on a single responsibility</li>
-        <li>Use descriptive names for middleware structs</li>
-        <li>Handle errors gracefully and return appropriate responses</li>
-        <li>Consider performance implications of middleware order</li>
-        <li>Use type-safe extensions for passing data between middleware</li>
-    </ul>
+
+    <ol>
+        <li>
+            <strong>Order of Middleware</strong>
+            <ul>
+                <li>Place middleware that modifies the request before middleware that uses the request</li>
+                <li>Authentication/Authorization middleware should typically run early</li>
+                <li>Logging middleware often works best at the start or end of the chain</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Performance Considerations</strong>
+            <ul>
+                <li>Keep middleware logic efficient</li>
+                <li>Only use middleware where needed</li>
+                <li>Consider the impact of middleware on response times</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Error Handling</strong>
+            <ul>
+                <li>Use the Result type to properly handle errors</li>
+                <li>Return appropriate error responses</li>
+                <li>Consider logging middleware errors for debugging</li>
+            </ul>
+        </li>
+        <li>
+            <strong>State Management</strong>
+            <ul>
+                <li>Use Clone or Arc for sharing state between middleware instances</li>
+                <li>Keep middleware stateless when possible</li>
+                <li>Use configuration structs for middleware that needs configuration</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>Middleware Execution Flow</h2>
+
+    <p>The middleware execution follows this pattern:</p>
+
+    <ol>
+        <li>Request enters the application</li>
+        <li>Global middleware executes in order of registration</li>
+        <li>Group middleware executes (if applicable)</li>
+        <li>Route-specific middleware executes</li>
+        <li>Route handler executes</li>
+        <li>Middleware executes in reverse order for the response</li>
+        <li>Response leaves the application</li>
+    </ol>
+
+    <h2>Debugging Middleware</h2>
+
+    <p>To debug middleware:</p>
+
+    <p>1. Use logging to track execution:</p>
+    <pre><code class="language-rust">println!("Middleware: Processing request to {}", request.uri());</code></pre>
+
+    <p>2. Check middleware order:</p>
+    <pre><code class="language-rust">// Explicit ordering
+router
+    .middleware(first_middleware)
+    .middleware(second_middleware)
+    .middleware(third_middleware)</code></pre>
+
+    <p>3. Test middleware in isolation:</p>
+    <pre><code class="language-rust">#[cfg(test)]
+mod tests {
+    #[tokio::test]
+    async fn test_middleware() {
+        let middleware = MyMiddleware::new();
+        let request = Request::builder()
+            .uri("/test")
+            .body(Body::empty())
+            .unwrap();
+        let response = middleware
+            .handle(request, next)
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+}</code></pre>
 </div>
 {% endblock %} 
