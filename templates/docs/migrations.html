@@ -1,34 +1,24 @@
-{% extends "docs/page.html" %}
+{% extends "docs_base.html" %}
 
-{% block doc_content %}
-<h1>Database Migrations</h1>
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>Database Migrations</h1>
+    
+    <p>Migrations are version control for your database schema. They allow you to modify your database structure in a consistent and repeatable way.</p>
 
-<p>Migrations are like version control for your database, allowing you to define and modify your database schema in a structured way.</p>
+    <h2>Creating Migrations</h2>
+    <p>Generate a new migration using the CLI:</p>
 
-<h2>Creating Migrations</h2>
+    <pre><code class="language-bash">cargo kit make:migration create_users_table</code></pre>
 
-<p>Create a new migration using the command:</p>
+    <p>This creates a new migration in <code>src/database/migrations/YYYYMMDDHHMMSS_create_users_table.rs</code>:</p>
 
-<pre><code class="language-bash">cargo kit make:migration create_users_table</code></pre>
-
-<p>This creates a new migration file with up and down methods:</p>
-
-<pre><code class="language-rust">use sea_orm_migration::prelude::*;
+    <pre><code class="language-rust">use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigration)]
-pub struct Migration {
-    pub name: &'static str,
-}
+pub struct Migration;
 
-impl Migration {
-    pub fn new() -> Self {
-        Self {
-            name: "create_users_table",
-        }
-    }
-}
-
-#[async_trait::async_trait]
+#[async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
@@ -52,69 +42,155 @@ impl MigrationTrait for Migration {
             .await
     }
 }
-</code></pre>
 
-<h2>Running Migrations</h2>
+#[derive(DeriveIden)]
+enum Users {
+    Table,
+    Id,
+    Name,
+    Email,
+    Password,
+    CreatedAt,
+    UpdatedAt,
+}</code></pre>
 
-<p>Run your migrations using these commands:</p>
+    <h2>Running Migrations</h2>
+    <p>Run your migrations using the CLI:</p>
 
-<pre><code class="language-bash"># Run pending migrations
+    <pre><code class="language-bash"># Run all pending migrations
 cargo kit migrate
 
 # Rollback the last migration
 cargo kit migrate:rollback
 
-# Rollback all migrations and run them again
-cargo kit migrate:fresh
-
 # Rollback all migrations
-cargo kit migrate:reset</code></pre>
+cargo kit migrate:reset
 
-<h2>Migration Status</h2>
+# Refresh the database (rollback all and migrate)
+cargo kit migrate:refresh</code></pre>
 
-<p>Check the status of your migrations:</p>
+    <h2>Column Types</h2>
+    <p>SeaORM supports various column types:</p>
 
-<pre><code class="language-bash">cargo kit migrate:status</code></pre>
+    <pre><code class="language-rust">// Numeric types
+.col(ColumnDef::new(Column::Id).integer().not_null())
+.col(ColumnDef::new(Column::Price).decimal().not_null())
+.col(ColumnDef::new(Column::Count).big_integer())
+.col(ColumnDef::new(Column::Score).float())
 
-<h2>Writing Migrations</h2>
-
-<p>Migrations support various column types and modifiers:</p>
-
-<pre><code class="language-rust">// Column Types
-.col(ColumnDef::new(Column::Id).integer())
-.col(ColumnDef::new(Column::Name).string())
+// String types
+.col(ColumnDef::new(Column::Name).string().not_null())
 .col(ColumnDef::new(Column::Description).text())
-.col(ColumnDef::new(Column::Price).decimal())
-.col(ColumnDef::new(Column::IsActive).boolean())
-.col(ColumnDef::new(Column::CreatedAt).timestamp())
+.col(ColumnDef::new(Column::Code).char_len(5))
 
-// Modifiers
-.not_null()
-.null()
-.unique_key()
-.default(Value::String("default".into()))
-.auto_increment()
-.primary_key()</code></pre>
+// Boolean
+.col(ColumnDef::new(Column::IsActive).boolean().not_null())
 
-<h2>Foreign Keys</h2>
+// Date and Time
+.col(ColumnDef::new(Column::CreatedAt).timestamp().not_null())
+.col(ColumnDef::new(Column::Date).date())
+.col(ColumnDef::new(Column::Time).time())</code></pre>
 
-<p>Add foreign key relationships in your migrations:</p>
+    <h2>Modifying Tables</h2>
+    <p>Common table modifications:</p>
 
-<pre><code class="language-rust">manager
+    <pre><code class="language-rust">// Add column
+manager
+    .alter_table(
+        Table::alter()
+            .table(Posts::Table)
+            .add_column(ColumnDef::new(Posts::Views).integer().default(0))
+            .to_owned(),
+    )
+    .await?;
+
+// Drop column
+manager
+    .alter_table(
+        Table::alter()
+            .table(Posts::Table)
+            .drop_column(Posts::Views)
+            .to_owned(),
+    )
+    .await?;
+
+// Rename column
+manager
+    .alter_table(
+        Table::alter()
+            .table(Posts::Table)
+            .rename_column(Posts::Title, Posts::Heading)
+            .to_owned(),
+    )
+    .await?;
+
+// Add index
+manager
+    .create_index(
+        Index::create()
+            .table(Posts::Table)
+            .col(Posts::Title)
+            .to_owned(),
+    )
+    .await?;</code></pre>
+
+    <h2>Foreign Keys</h2>
+    <p>Create relationships between tables:</p>
+
+    <pre><code class="language-rust">// Create posts table with foreign key
+manager
     .create_table(
         Table::create()
             .table(Posts::Table)
             .col(ColumnDef::new(Posts::Id).integer().not_null().auto_increment().primary_key())
             .col(ColumnDef::new(Posts::UserId).integer().not_null())
+            .col(ColumnDef::new(Posts::Title).string().not_null())
+            .col(ColumnDef::new(Posts::Content).text())
             .foreign_key(
                 ForeignKey::create()
-                    .name("fk_posts_users")
+                    .name("fk-posts-user_id")
                     .from(Posts::Table, Posts::UserId)
                     .to(Users::Table, Users::Id)
                     .on_delete(ForeignKeyAction::Cascade)
-                    .on_update(ForeignKeyAction::Cascade)
+                    .on_update(ForeignKeyAction::Cascade),
             )
             .to_owned(),
     )
-    .await</code></pre>
+    .await?;</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+        <li>Always provide both up and down migrations</li>
+        <li>Keep migrations small and focused</li>
+        <li>Use meaningful names for migrations</li>
+        <li>Test migrations before applying to production</li>
+        <li>Back up your database before running migrations in production</li>
+        <li>Use foreign key constraints to maintain data integrity</li>
+        <li>Consider indexing for frequently queried columns</li>
+    </ul>
+
+    <h2>Testing Migrations</h2>
+    <p>Test your migrations in a separate database:</p>
+
+    <pre><code class="language-rust">#[tokio::test]
+async fn test_migrations() {
+    // Setup test database
+    let db = setup_test_db().await;
+
+    // Run migrations
+    Migrator::up(&db, None).await.unwrap();
+
+    // Verify table exists
+    let table_exists = db
+        .execute("SELECT * FROM information_schema.tables WHERE table_name = 'users'")
+        .await
+        .unwrap()
+        .rows_affected() > 0;
+
+    assert!(table_exists);
+
+    // Test rollback
+    Migrator::down(&db, None).await.unwrap();
+}</code></pre>
+</div>
 {% endblock %} 

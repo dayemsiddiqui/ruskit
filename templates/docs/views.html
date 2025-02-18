@@ -2,6 +2,84 @@
 
 {% block content %}
 <div class="prose prose-slate max-w-none">
-    {{ content }}
+    <h1>Views</h1>
+    
+    <p>Rustavel uses Askama for type-safe templating. This provides compile-time template validation and excellent performance.</p>
+
+    <h2>Creating Templates</h2>
+    <p>Templates in Rustavel are Rust structs that implement the Template trait:</p>
+
+    <pre><code class="language-rust">#[derive(Template)]
+#[template(path = "users/index.html")]
+pub struct UsersTemplate {
+    pub users: Vec<User>,
+    pub title: String,
+}</code></pre>
+
+    <h2>Template Syntax</h2>
+    <p>Askama provides a powerful templating syntax similar to Jinja2:</p>
+
+    <h3>Variables</h3>
+    <pre><code class="language-html">{% raw %}&lt;h1&gt;{{ title }}&lt;/h1&gt;
+&lt;p&gt;Welcome, {{ user.name }}!&lt;/p&gt;{% endraw %}</code></pre>
+
+    <h3>Loops</h3>
+    <pre><code class="language-html">{% raw %}{% for user in users %}
+    &lt;div class="user"&gt;
+        &lt;h2&gt;{{ user.name }}&lt;/h2&gt;
+        &lt;p&gt;{{ user.email }}&lt;/p&gt;
+    &lt;/div&gt;
+{% endfor %}{% endraw %}</code></pre>
+
+    <h3>Conditionals</h3>
+    <pre><code class="language-html">{% raw %}{% if user.is_admin %}
+    &lt;div class="admin-panel"&gt;...&lt;/div&gt;
+{% else %}
+    &lt;div class="user-panel"&gt;...&lt;/div&gt;
+{% endif %}{% endraw %}</code></pre>
+
+    <h3>Template Inheritance</h3>
+    <p>You can extend base templates and override blocks:</p>
+
+    <pre><code class="language-html">{% raw %}{% extends "base.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+    &lt;h1&gt;{{ user.name }}'s Profile&lt;/h1&gt;
+    ...
+{% endblock %}{% endraw %}</code></pre>
+
+    <h2>Using Templates in Controllers</h2>
+    <p>Templates can be used directly in your controllers:</p>
+
+    <pre><code class="language-rust">pub async fn index() -> Response {
+    let template = UsersTemplate {
+        users: User::all().await?,
+        title: "Users".to_string(),
+    };
+    template.into_response()
+}</code></pre>
+
+    <h2>Template Organization</h2>
+    <p>Templates should be organized in the <code>templates</code> directory:</p>
+    <pre><code>templates/
+├── base.html
+├── users/
+│   ├── index.html
+│   ├── show.html
+│   └── edit.html
+└── posts/
+    ├── index.html
+    └── show.html</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+        <li>Keep templates DRY by using inheritance and includes</li>
+        <li>Use meaningful names for template files and structs</li>
+        <li>Organize templates by feature or resource</li>
+        <li>Keep logic in controllers, not templates</li>
+        <li>Use consistent naming conventions</li>
+    </ul>
 </div>
 {% endblock %} 

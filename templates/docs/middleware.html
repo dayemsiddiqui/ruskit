@@ -2,6 +2,110 @@
 
 {% block content %}
 <div class="prose prose-slate max-w-none">
-    {{ content }}
+    <h1>Middleware</h1>
+    
+    <p>Middleware provides a convenient mechanism for filtering HTTP requests entering your application. For example, Rustavel includes middleware for authentication, CORS, and request logging.</p>
+
+    <h2>Creating Middleware</h2>
+    <p>To create a middleware, implement the <code>Middleware</code> trait:</p>
+
+    <pre><code class="language-rust">use axum::middleware::Next;
+use axum::response::Response;
+use axum::http::Request;
+
+pub struct AuthMiddleware;
+
+#[async_trait]
+impl Middleware for AuthMiddleware {
+    async fn handle<B>(&self, req: Request<B>, next: Next<B>) -> Result<Response, Response> {
+        // Get the authorization header
+        let auth_header = req.headers()
+            .get("Authorization")
+            .and_then(|h| h.to_str().ok());
+
+        match auth_header {
+            Some(token) => {
+                // Validate the token
+                if let Ok(user) = validate_token(token).await {
+                    // Add user to request extensions
+                    req.extensions_mut().insert(user);
+                    // Continue to the next middleware or handler
+                    Ok(next.run(req).await)
+                } else {
+                    Err(StatusCode::UNAUTHORIZED.into_response())
+                }
+            }
+            None => Err(StatusCode::UNAUTHORIZED.into_response())
+        }
+    }
+}</code></pre>
+
+    <h2>Using Middleware</h2>
+    <p>You can apply middleware in several ways:</p>
+
+    <h3>Global Middleware</h3>
+    <p>Apply middleware to all routes:</p>
+
+    <pre><code class="language-rust">let app = Router::new()
+    .route("/", get(handler))
+    .layer(AuthMiddleware::new());</code></pre>
+
+    <h3>Route-Specific Middleware</h3>
+    <p>Apply middleware to specific routes:</p>
+
+    <pre><code class="language-rust">let app = Router::new()
+    .route("/public", get(public_handler))
+    .route("/private", 
+        get(private_handler)
+            .with_middleware(AuthMiddleware::new())
+    );</code></pre>
+
+    <h3>Group Middleware</h3>
+    <p>Apply middleware to a group of routes:</p>
+
+    <pre><code class="language-rust">let protected = Router::new()
+    .route("/dashboard", get(dashboard))
+    .route("/settings", get(settings))
+    .with_middleware(AuthMiddleware::new());
+
+let app = Router::new()
+    .route("/", get(home))
+    .nest("/admin", protected);</code></pre>
+
+    <h2>Built-in Middleware</h2>
+    <p>Rustavel includes several built-in middleware:</p>
+
+    <h3>Authentication</h3>
+    <pre><code class="language-rust">use rustavel::middleware::Auth;
+
+let app = Router::new()
+    .route("/profile", get(profile))
+    .with_middleware(Auth::new());</code></pre>
+
+    <h3>CORS</h3>
+    <pre><code class="language-rust">use rustavel::middleware::Cors;
+
+let app = Router::new()
+    .route("/api", get(api))
+    .with_middleware(Cors::new()
+        .allow_origin("https://example.com")
+        .allow_methods(vec!["GET", "POST"])
+    );</code></pre>
+
+    <h3>Request Logger</h3>
+    <pre><code class="language-rust">use rustavel::middleware::Logger;
+
+let app = Router::new()
+    .route("/", get(handler))
+    .with_middleware(Logger::new());</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+        <li>Keep middleware focused on a single responsibility</li>
+        <li>Use descriptive names for middleware structs</li>
+        <li>Handle errors gracefully and return appropriate responses</li>
+        <li>Consider performance implications of middleware order</li>
+        <li>Use type-safe extensions for passing data between middleware</li>
+    </ul>
 </div>
 {% endblock %} 

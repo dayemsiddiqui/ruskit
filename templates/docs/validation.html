@@ -2,6 +2,167 @@
 
 {% block content %}
 <div class="prose prose-slate max-w-none">
-    {{ content }}
+    <h1>Validation</h1>
+    
+    <p>Rustavel provides a powerful validation system for request data, built on top of the <code>validator</code> crate. This ensures your application only processes valid data.</p>
+
+    <h2>Basic Validation</h2>
+    <p>Use the <code>Validate</code> derive macro to add validation rules to your DTOs:</p>
+
+    <pre><code class="language-rust">use validator::Validate;
+use serde::Deserialize;
+
+#[derive(Deserialize, Validate)]
+pub struct CreateUserRequest {
+    #[validate(length(min = 3, max = 50))]
+    pub name: String,
+
+    #[validate(email)]
+    pub email: String,
+
+    #[validate(length(min = 8))]
+    pub password: String,
+
+    #[validate(range(min = 18, max = 150))]
+    pub age: u32,
+}</code></pre>
+
+    <h2>Built-in Validation Rules</h2>
+    <p>Rustavel includes many built-in validation rules:</p>
+
+    <h3>String Validation</h3>
+    <pre><code class="language-rust">#[derive(Validate)]
+pub struct StringValidation {
+    #[validate(length(min = 5, max = 20))]
+    pub username: String,
+
+    #[validate(email)]
+    pub email: String,
+
+    #[validate(url)]
+    pub website: String,
+
+    #[validate(contains = "hello")]
+    pub greeting: String,
+
+    #[validate(regex = "^[a-zA-Z]+$")]
+    pub letters_only: String,
+}</code></pre>
+
+    <h3>Numeric Validation</h3>
+    <pre><code class="language-rust">#[derive(Validate)]
+pub struct NumericValidation {
+    #[validate(range(min = 18, max = 100))]
+    pub age: u32,
+
+    #[validate(multiple_of = 5)]
+    pub multiple: i32,
+
+    #[validate(custom = "validate_positive")]
+    pub positive: f64,
+}</code></pre>
+
+    <h3>Collection Validation</h3>
+    <pre><code class="language-rust">#[derive(Validate)]
+pub struct CollectionValidation {
+    #[validate(length(min = 1, max = 10))]
+    pub tags: Vec<String>,
+
+    #[validate]
+    pub items: Vec<ValidatedItem>,
+
+    #[validate(required_if = "condition")]
+    pub optional_field: Option<String>,
+}</code></pre>
+
+    <h2>Custom Validation Rules</h2>
+    <p>You can create custom validation rules using functions:</p>
+
+    <pre><code class="language-rust">fn validate_positive(value: &f64) -> Result<(), ValidationError> {
+    if *value > 0.0 {
+        Ok(())
+    } else {
+        Err(ValidationError::new("must be positive"))
+    }
+}
+
+#[derive(Validate)]
+pub struct CustomValidation {
+    #[validate(custom = "validate_positive")]
+    pub amount: f64,
+}</code></pre>
+
+    <h2>Using Validation in Controllers</h2>
+    <p>Validate request data in your controllers:</p>
+
+    <pre><code class="language-rust">pub async fn create_user(
+    Json(data): Json<CreateUserRequest>
+) -> Result<Response, AppError> {
+    // Validate the request data
+    data.validate()?;
+
+    // Process the validated data
+    let user = User::create(data).await?;
+
+    Ok(Json(user).into_response())
+}</code></pre>
+
+    <h2>Nested Validation</h2>
+    <p>Validate nested structures:</p>
+
+    <pre><code class="language-rust">#[derive(Validate)]
+pub struct Address {
+    #[validate(length(min = 5))]
+    pub street: String,
+    
+    #[validate(length(min = 2))]
+    pub city: String,
+    
+    #[validate(regex = "^[0-9]{5}$")]
+    pub zip: String,
+}
+
+#[derive(Validate)]
+pub struct CreateUserRequest {
+    #[validate]
+    pub name: String,
+    
+    #[validate]
+    pub address: Address,
+}</code></pre>
+
+    <h2>Error Handling</h2>
+    <p>Handle validation errors gracefully:</p>
+
+    <pre><code class="language-rust">impl From<ValidationErrors> for AppError {
+    fn from(errors: ValidationErrors) -> Self {
+        AppError::ValidationError(errors)
+    }
+}
+
+pub async fn create_user(
+    Json(data): Json<CreateUserRequest>
+) -> Result<Response, AppError> {
+    match data.validate() {
+        Ok(_) => {
+            // Process valid data
+            let user = User::create(data).await?;
+            Ok(Json(user).into_response())
+        }
+        Err(errors) => {
+            // Return validation errors
+            Err(AppError::ValidationError(errors))
+        }
+    }
+}</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+        <li>Validate data as early as possible in the request lifecycle</li>
+        <li>Use appropriate validation rules for each field</li>
+        <li>Provide clear error messages for validation failures</li>
+        <li>Consider using custom validation rules for complex requirements</li>
+        <li>Handle validation errors consistently across your application</li>
+    </ul>
 </div>
 {% endblock %} 

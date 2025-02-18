@@ -2,6 +2,154 @@
 
 {% block content %}
 <div class="prose prose-slate max-w-none">
-    {{ content }}
+    <h1>Factories</h1>
+    
+    <p>Factories provide a convenient way to generate test data for your application. They help you create model instances with fake but realistic data for testing and seeding.</p>
+
+    <h2>Creating Factories</h2>
+    <p>Generate a new factory using the CLI:</p>
+
+    <pre><code class="language-bash">cargo kit make:factory User</code></pre>
+
+    <p>This creates a new factory in <code>src/database/factories/user_factory.rs</code>:</p>
+
+    <pre><code class="language-rust">use crate::app::models::User;
+use crate::framework::database::Factory;
+use fake::{Fake, Faker};
+use chrono::Utc;
+
+#[derive(Factory)]
+#[model(User)]
+pub struct UserFactory {
+    pub name: String,
+    pub email: String,
+    pub password: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+impl Default for UserFactory {
+    fn default() -> Self {
+        Self {
+            name: Faker.name().name().to_string(),
+            email: Faker.internet().email().to_string(),
+            password: "password".to_string(),
+            created_at: Utc::now().timestamp(),
+            updated_at: Utc::now().timestamp(),
+        }
+    }
+}</code></pre>
+
+    <h2>Using Factories</h2>
+    <p>Create model instances using factories:</p>
+
+    <h3>Single Instance</h3>
+    <pre><code class="language-rust">// Create a user with default values
+let user = UserFactory::create().await?;
+
+// Create a user with custom values
+let user = UserFactory::new()
+    .name("John Doe")
+    .email("john@example.com")
+    .create()
+    .await?;</code></pre>
+
+    <h3>Multiple Instances</h3>
+    <pre><code class="language-rust">// Create multiple users
+let users = UserFactory::create_many(5).await?;
+
+// Create users with custom values
+let users = UserFactory::new()
+    .password("custom_password")
+    .create_many(3)
+    .await?;</code></pre>
+
+    <h2>Factory States</h2>
+    <p>Define different states for your factories:</p>
+
+    <pre><code class="language-rust">impl UserFactory {
+    pub fn admin() -> Self {
+        Self {
+            name: "Admin User".to_string(),
+            email: "admin@example.com".to_string(),
+            password: "admin_password".to_string(),
+            ..Default::default()
+        }
+    }
+
+    pub fn verified() -> Self {
+        Self {
+            email_verified_at: Some(Utc::now().timestamp()),
+            ..Default::default()
+        }
+    }
+}</code></pre>
+
+    <p>Use states to create specific instances:</p>
+
+    <pre><code class="language-rust">// Create an admin user
+let admin = UserFactory::admin().create().await?;
+
+// Create a verified user
+let verified_user = UserFactory::verified().create().await?;</code></pre>
+
+    <h2>Relationships</h2>
+    <p>Create models with relationships:</p>
+
+    <pre><code class="language-rust">#[derive(Factory)]
+#[model(Post)]
+pub struct PostFactory {
+    pub title: String,
+    pub content: String,
+    pub user_id: i64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+impl Default for PostFactory {
+    fn default() -> Self {
+        Self {
+            title: Faker.lorem().sentence(3).to_string(),
+            content: Faker.lorem().paragraph(3).to_string(),
+            user_id: 0, // Will be set when creating
+            created_at: Utc::now().timestamp(),
+            updated_at: Utc::now().timestamp(),
+        }
+    }
+}
+
+// Create a user with posts
+let user = UserFactory::create().await?;
+let posts = PostFactory::new()
+    .user_id(user.id)
+    .create_many(3)
+    .await?;</code></pre>
+
+    <h2>Sequences</h2>
+    <p>Use sequences for unique values:</p>
+
+    <pre><code class="language-rust">use std::sync::atomic::{AtomicU32, Ordering};
+
+static COUNTER: AtomicU32 = AtomicU32::new(1);
+
+impl UserFactory {
+    pub fn sequential_email() -> Self {
+        let count = COUNTER.fetch_add(1, Ordering::Relaxed);
+        Self {
+            email: format!("user{}@example.com", count),
+            ..Default::default()
+        }
+    }
+}</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+        <li>Use realistic data that matches your validation rules</li>
+        <li>Keep factory definitions simple and focused</li>
+        <li>Use states for common variations</li>
+        <li>Handle relationships properly</li>
+        <li>Use sequences for unique fields</li>
+        <li>Keep test data consistent with production constraints</li>
+    </ul>
 </div>
 {% endblock %} 

@@ -2,6 +2,149 @@
 
 {% block content %}
 <div class="prose prose-slate max-w-none">
-    {{ content }}
+    <h1>Seeders</h1>
+    
+    <p>Seeders allow you to populate your database with test data. They use factories to create records and are essential for development and testing.</p>
+
+    <h2>Creating Seeders</h2>
+    <p>Generate a new seeder using the CLI:</p>
+
+    <pre><code class="language-bash">cargo kit make:seeder Users</code></pre>
+
+    <p>This creates a new seeder in <code>src/database/seeders/users_seeder.rs</code>:</p>
+
+    <pre><code class="language-rust">use crate::framework::database::Seeder;
+use crate::database::factories::UserFactory;
+
+pub struct UsersSeeder;
+
+#[async_trait]
+impl Seeder for UsersSeeder {
+    async fn run(&self) -> Result<(), DatabaseError> {
+        // Create admin user
+        let admin = UserFactory::admin()
+            .create()
+            .await?;
+
+        // Create regular users
+        let users = UserFactory::create_many(10).await?;
+
+        Ok(())
+    }
+}</code></pre>
+
+    <h2>Running Seeders</h2>
+    <p>Run your seeders using the CLI:</p>
+
+    <pre><code class="language-bash"># Run all seeders
+cargo kit db:seed
+
+# Run a specific seeder
+cargo kit db:seed --class=Users</code></pre>
+
+    <h2>Database Seeder</h2>
+    <p>The main database seeder orchestrates all other seeders:</p>
+
+    <pre><code class="language-rust">use crate::framework::database::DatabaseSeeder;
+use crate::database::seeders::{
+    UsersSeeder,
+    PostsSeeder,
+    CategoriesSeeder,
+};
+
+impl DatabaseSeeder {
+    pub fn seeders() -> Vec<Box<dyn Seeder>> {
+        vec![
+            Box::new(CategoriesSeeder),
+            Box::new(UsersSeeder),
+            Box::new(PostsSeeder),
+        ]
+    }
+}</code></pre>
+
+    <h2>Complex Seeding</h2>
+    <p>Create related data in your seeders:</p>
+
+    <pre><code class="language-rust">pub struct BlogSeeder;
+
+#[async_trait]
+impl Seeder for BlogSeeder {
+    async fn run(&self) -> Result<(), DatabaseError> {
+        // Create categories
+        let categories = CategoryFactory::create_many(5).await?;
+
+        // Create users with posts
+        for _ in 0..10 {
+            let user = UserFactory::create().await?;
+
+            // Create 3-7 posts for each user
+            let post_count = rand::thread_rng().gen_range(3..8);
+            for _ in 0..post_count {
+                // Randomly assign a category
+                let category = categories.choose(&mut rand::thread_rng()).unwrap();
+
+                PostFactory::new()
+                    .user_id(user.id)
+                    .category_id(category.id)
+                    .create()
+                    .await?;
+            }
+        }
+
+        Ok(())
+    }
+}</code></pre>
+
+    <h2>Development vs Production</h2>
+    <p>Use environment-specific seeding:</p>
+
+    <pre><code class="language-rust">pub struct UsersSeeder;
+
+#[async_trait]
+impl Seeder for UsersSeeder {
+    async fn run(&self) -> Result<(), DatabaseError> {
+        if cfg!(debug_assertions) {
+            // Development: Create many test users
+            UserFactory::create_many(50).await?;
+        } else {
+            // Production: Create only essential users
+            UserFactory::admin()
+                .name("Admin User")
+                .email("admin@example.com")
+                .create()
+                .await?;
+        }
+
+        Ok(())
+    }
+}</code></pre>
+
+    <h2>Testing with Seeders</h2>
+    <p>Use seeders in your tests:</p>
+
+    <pre><code class="language-rust">#[tokio::test]
+async fn test_user_posts() {
+    // Setup test database
+    setup_test_db().await;
+
+    // Run specific seeders
+    UsersSeeder.run().await.unwrap();
+    PostsSeeder.run().await.unwrap();
+
+    // Run your tests
+    let user = User::find(1).await.unwrap();
+    let posts = Post::by_user(user.id).await.unwrap();
+    assert!(!posts.is_empty());
+}</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+        <li>Order seeders properly to handle dependencies</li>
+        <li>Use factories for generating data</li>
+        <li>Keep production seeds minimal and essential</li>
+        <li>Use environment checks for different seeding strategies</li>
+        <li>Handle errors gracefully</li>
+        <li>Document any specific requirements or dependencies</li>
+    </ul>
 </div>
 {% endblock %} 

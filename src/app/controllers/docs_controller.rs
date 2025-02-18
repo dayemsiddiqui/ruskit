@@ -1,8 +1,6 @@
 use askama::Template;
-use askama_axum::Response;
-use crate::framework::TemplateExt;
+use askama_axum::{Response, IntoResponse};
 use axum::extract::Path;
-use askama::Html;
 
 #[derive(Template)]
 #[template(path = "docs.html")]
