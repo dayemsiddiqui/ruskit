@@ -1,5 +1,5 @@
 pub mod pages;
-pub mod api;
+pub mod user_controller;
 
 pub use pages::*;
-pub use api::*;
+pub use user_controller::*;
