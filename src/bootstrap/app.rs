@@ -5,11 +5,15 @@ use crate::framework::{
         presets::{Cors, TrimStrings}
     },
     views::{Metadata, set_global_metadata},
-    database::{self, config::DatabaseConfig},
+    database::{self, config::DatabaseConfig, migration::MigrationManager},
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
+use crate::app::models;
+use std::path::Path;
+use std::fs;
+use sqlx::sqlite::SqlitePool;
 
 /// Global application state
 static APP: Lazy<Arc<RwLock<Application>>> = Lazy::new(|| {
@@ -17,6 +21,7 @@ static APP: Lazy<Arc<RwLock<Application>>> = Lazy::new(|| {
 });
 
 /// Application configuration
+#[derive(Clone)]
 pub struct Application {
     /// Global middleware stack
     middleware_stack: MiddlewareStack,
@@ -79,39 +84,71 @@ impl Application {
 }
 
 /// Initialize the application
-pub async fn bootstrap() {
-    // Initialize database with SQLite configuration
-    let db_config = DatabaseConfig::from_env();
-    database::initialize(Some(db_config))
-        .await
-        .expect("Failed to initialize database");
+pub async fn bootstrap() -> Result<Application, Box<dyn std::error::Error>> {
+    // Register all models
+    models::register_models();
+
+    // Initialize database
+    println!("Initializing database...");
+    let db_config = database::config::DatabaseConfig::from_env();
+    println!("Initializing database at path: {}", db_config.database_path());
+    
+    // Create database directory if it doesn't exist
+    if let Some(parent) = Path::new(&db_config.database_path()).parent() {
+        println!("Creating database directory: {}", parent.display());
+        fs::create_dir_all(parent)?;
+    }
+    
+    println!("Connecting to database with URL: {}", db_config.connection_url());
+    let pool = SqlitePool::connect(&db_config.connection_url()).await?;
+    println!("Successfully connected to database");
+    
+    // Enable foreign key constraints
+    println!("Enabling foreign key constraints");
+    sqlx::query("PRAGMA foreign_keys = ON")
+        .execute(&pool)
+        .await?;
+    
+    // Store the pool globally
+    database::set_pool(pool.clone())?;
+    println!("Database pool initialized successfully");
+
+    // Run migrations
+    println!("Running migrations...");
+    let manager = MigrationManager::new().await?;
+    manager.run(manager.get_all_model_migrations()).await?;
+    println!("Migrations completed successfully");
 
     let app = Application::instance().await;
     let mut app = app.write().await;
 
-    // Configure global metadata
-    app.metadata(|| {
-        Metadata::new("Ruskit")
-            .with_description("A modern web framework for Rust with the elegance of Laravel")
-            .with_keywords("rust, web framework, ruskit, laravel")
-            .with_author("Ruskit Team")
-    }).await;
-
     // Configure global middleware
     app.middleware(|stack| {
-        // Example: Add default global middleware
         stack.add(Middleware::Cors(Cors::new("*")));
-        stack.add(Middleware::TrimStrings(TrimStrings));
+        stack.add(Middleware::TrimStrings(TrimStrings::new()));
     }).await;
 
     // Configure middleware groups
     app.middleware_groups(|groups| {
-        // Example: Add default middleware groups
-        groups.push((
-            "api".to_string(),
-            vec![Middleware::Cors(Cors::new("http://api.example.com"))]
-        ));
+        groups.push(("api".to_string(), vec![
+            Middleware::Cors(Cors::new("*")),
+            Middleware::TrimStrings(TrimStrings::new()),
+        ]));
     }).await;
+
+    // Configure global metadata
+    app.metadata(|| {
+        Metadata::new("Ruskit")
+            .with_description("A modern web framework for Rust")
+            .with_keywords("rust, web, framework")
+            .with_author("Your Name")
+            .with_og_title("Ruskit")
+            .with_og_description("A modern web framework for Rust")
+            .with_og_image("https://example.com/og-image.jpg")
+    }).await;
+
+    let app_clone = app.clone();
+    Ok(app_clone)
 }
 
 /// Get the application's middleware stack

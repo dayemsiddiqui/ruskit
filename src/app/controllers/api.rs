@@ -4,6 +4,7 @@ use axum::{
 };
 use serde_json::{json, Value};
 use crate::app::models::User;
+use crate::framework::database::model::Model;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Returns the welcome message for the API

@@ -1,8 +1,13 @@
 use sqlx::{SqlitePool, Row};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::framework::database::{DatabaseError, config};
+use crate::framework::database::{
+    get_pool,
+    DatabaseError,
+    config,
+};
 use crate::framework::database::model::{Model, discover_and_register_models, get_all_model_migrations};
 use crate::app::models::*;
+use sqlx::query;
 
 pub struct Migration {
     pub name: String,

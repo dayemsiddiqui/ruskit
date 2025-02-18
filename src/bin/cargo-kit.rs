@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use ruskit::framework::database::{
     migration::MigrationManager,
+    initialize,
 };
 use std::fs;
 use std::path::Path;
@@ -40,6 +41,21 @@ enum Commands {
         #[arg(short, long)]
         model: String,
     },
+    /// Create a new factory for a model
+    #[command(name = "make:factory")]
+    MakeFactory {
+        /// Name of the model to create factory for
+        name: String,
+    },
+    /// Create a new seeder
+    #[command(name = "make:seeder")]
+    MakeSeeder {
+        /// Name of the seeder to create
+        name: String,
+    },
+    /// Seed the database with sample data
+    #[command(name = "db:seed")]
+    DbSeed,
 }
 
 #[derive(Subcommand)]
@@ -91,6 +107,43 @@ async fn main() {
                 std::process::exit(1);
             }
         },
+        Commands::MakeFactory { name } => {
+            println!("Creating factory for {}...", name);
+            if let Err(e) = make_factory(&name) {
+                eprintln!("Error creating factory: {}", e);
+                std::process::exit(1);
+            }
+        },
+        Commands::MakeSeeder { name } => {
+            println!("Creating seeder {}...", name);
+            if let Err(e) = make_seeder(&name) {
+                eprintln!("Error creating seeder: {}", e);
+                std::process::exit(1);
+            }
+        },
+        Commands::DbSeed => {
+            use ruskit::framework::database::seeder::DatabaseSeeder;
+            
+            println!("Initializing database...");
+            if let Err(e) = initialize(None).await {
+                eprintln!("Error initializing database: {}", e);
+                std::process::exit(1);
+            }
+
+            println!("Running migrations...");
+            let manager = MigrationManager::new().await.unwrap();
+            if let Err(e) = manager.run(manager.get_all_model_migrations()).await {
+                eprintln!("Error running migrations: {}", e);
+                std::process::exit(1);
+            }
+            
+            println!("Seeding database...");
+            if let Err(e) = DatabaseSeeder::run_all().await {
+                eprintln!("Error seeding database: {}", e);
+                std::process::exit(1);
+            }
+            println!("Database seeded successfully!");
+        }
     }
 }
 
@@ -333,5 +386,118 @@ fn make_migration(name: &str, model: &str) -> Result<(), Box<dyn std::error::Err
         }
     }
     
+    Ok(())
+}
+
+fn make_factory(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let factories_dir = Path::new("src/app/factories");
+    if !factories_dir.exists() {
+        fs::create_dir_all(factories_dir)?;
+    }
+
+    let model_name = name.to_string();
+    let factory_file = factories_dir.join(format!("{}_factory.rs", model_name.to_lowercase()));
+
+    let factory_content = format!(
+        r#"use crate::app::models::{model_name};
+use crate::framework::database::factory::Factory;
+use crate::framework::database::DatabaseError;
+use fake::{{faker::internet::en::*, faker::name::en::*, Fake}};
+use serde_json::json;
+use std::time::{{SystemTime, UNIX_EPOCH}};
+
+impl Factory for {model_name} {{
+    fn definition() -> serde_json::Value {{
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+
+        json!({{
+            // TODO: Add your fake data here
+            "created_at": now,
+            "updated_at": now
+        }})
+    }}
+}}"#
+    );
+
+    fs::write(&factory_file, factory_content)?;
+    println!("Created factory file: {}", factory_file.display());
+
+    // Update mod.rs
+    let mod_file = factories_dir.join("mod.rs");
+    let mut mod_content = String::new();
+    
+    if mod_file.exists() {
+        mod_content = fs::read_to_string(&mod_file)?;
+    }
+
+    let mod_line = format!("pub mod {}_factory;", model_name.to_lowercase());
+    if !mod_content.contains(&mod_line) {
+        if !mod_content.is_empty() {
+            mod_content.push('\n');
+        }
+        mod_content.push_str(&mod_line);
+    }
+
+    fs::write(mod_file, mod_content)?;
+    Ok(())
+}
+
+fn make_seeder(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let seeders_dir = Path::new("src/app/seeders");
+    if !seeders_dir.exists() {
+        fs::create_dir_all(seeders_dir)?;
+    }
+
+    let seeder_name = if name.ends_with("Seeder") {
+        name.to_string()
+    } else {
+        format!("{}Seeder", name)
+    };
+    
+    let seeder_file = seeders_dir.join(format!("{}.rs", seeder_name.to_lowercase()));
+
+    let seeder_content = format!(
+        r#"use crate::framework::database::seeder::{{Seeder, DatabaseSeeder}};
+use crate::framework::database::DatabaseError;
+use once_cell::sync::Lazy;
+
+pub struct {seeder_name};
+
+#[async_trait::async_trait]
+impl Seeder for {seeder_name} {{
+    async fn run(&self) -> Result<(), DatabaseError> {{
+        // TODO: Add your seeding logic here
+        Ok(())
+    }}
+}}
+
+static SEEDER: Lazy<()> = Lazy::new(|| {{
+    DatabaseSeeder::register(Box::new({seeder_name}));
+}});"#
+    );
+
+    fs::write(&seeder_file, seeder_content)?;
+    println!("Created seeder file: {}", seeder_file.display());
+
+    // Update mod.rs
+    let mod_file = seeders_dir.join("mod.rs");
+    let mut mod_content = String::new();
+    
+    if mod_file.exists() {
+        mod_content = fs::read_to_string(&mod_file)?;
+    }
+
+    let mod_line = format!("pub mod {};", seeder_name.to_lowercase());
+    if !mod_content.contains(&mod_line) {
+        if !mod_content.is_empty() {
+            mod_content.push('\n');
+        }
+        mod_content.push_str(&mod_line);
+    }
+
+    fs::write(mod_file, mod_content)?;
     Ok(())
 } 

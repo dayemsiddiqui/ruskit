@@ -128,6 +128,8 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
             let columns: Vec<String> = map.keys().map(|k| k.to_string()).collect();
             let values: Vec<_> = (0..columns.len()).map(|_| "?").collect();
             
+            let mut tx = pool.begin().await?;
+            
             let query = format!(
                 "INSERT INTO {} ({}) VALUES ({})",
                 Self::table_name(),
@@ -140,17 +142,24 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
                 query_builder = query_builder.bind(value);
             }
             
-            query_builder.execute(pool.as_ref()).await?;
+            query_builder.execute(&mut *tx).await?;
             
             // Get the last inserted record
-            let last_id = sqlx::query("SELECT last_insert_rowid()")
-                .fetch_one(pool.as_ref())
-                .await?
-                .try_get::<i64, _>(0)?;
+            let last_id = sqlx::query_scalar::<_, i64>("SELECT last_insert_rowid()")
+                .fetch_one(&mut *tx)
+                .await?;
                 
-            Self::find(last_id).await?.ok_or(DatabaseError::ConnectionError(
-                sqlx::Error::RowNotFound
+            let result = sqlx::query_as::<_, Self>(&format!(
+                "SELECT * FROM {} WHERE {} = ?",
+                Self::table_name(),
+                Self::primary_key()
             ))
+            .bind(last_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            
+            tx.commit().await?;
+            Ok(result)
         } else {
             Err(DatabaseError::ConnectionError(
                 sqlx::Error::Configuration("Invalid attributes".into())

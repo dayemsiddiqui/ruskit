@@ -14,7 +14,11 @@ use crate::app::controllers::{
 
 // Define routes with middleware
 pub async fn routes() -> Router {
-    bootstrap().await;
+    // Initialize the application
+    if let Err(e) = bootstrap().await {
+        eprintln!("Failed to bootstrap application: {}", e);
+        std::process::exit(1);
+    }
     
     let router = Router::new()
         .route(

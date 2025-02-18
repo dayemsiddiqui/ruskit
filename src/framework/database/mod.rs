@@ -5,13 +5,17 @@ use thiserror::Error;
 use std::fs;
 use std::path::Path;
 use std::os::unix::fs::PermissionsExt;
+use std::sync::RwLock;
+use once_cell::sync::Lazy;
 
 pub mod model;
 pub mod query_builder;
 pub mod migration;
 pub mod config;
+pub mod seeder;
+pub mod factory;
 
-static DB_POOL: OnceCell<Arc<Pool<Sqlite>>> = OnceCell::new();
+static POOL: Lazy<RwLock<Option<Arc<SqlitePool>>>> = Lazy::new(|| RwLock::new(None));
 
 #[derive(Error, Debug)]
 pub enum DatabaseError {
@@ -19,6 +23,8 @@ pub enum DatabaseError {
     ConnectionError(#[from] sqlx::Error),
     #[error("Database not initialized")]
     NotInitialized,
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
 }
 
 /// Initialize the database connection pool
@@ -91,15 +97,22 @@ pub async fn initialize(config: Option<config::DatabaseConfig>) -> Result<(), Da
             .await?;
     }
     
-    DB_POOL.set(Arc::new(pool))
-        .map_err(|_| DatabaseError::ConnectionError(sqlx::Error::Configuration("Pool already initialized".into())))?;
+    POOL.write().unwrap().replace(Arc::new(pool));
     println!("Database pool initialized successfully");
     Ok(())
 }
 
 /// Get a reference to the database pool
-pub fn get_pool() -> Result<Arc<Pool<Sqlite>>, DatabaseError> {
-    DB_POOL.get()
+pub fn get_pool() -> Result<Arc<SqlitePool>, DatabaseError> {
+    POOL.read()
+        .unwrap()
+        .as_ref()
         .cloned()
         .ok_or(DatabaseError::NotInitialized)
+}
+
+pub fn set_pool(pool: SqlitePool) -> Result<(), DatabaseError> {
+    let mut pool_guard = POOL.write().unwrap();
+    *pool_guard = Some(Arc::new(pool));
+    Ok(())
 } 

@@ -1,14 +1,14 @@
 use clap::{Parser, Subcommand};
 use console::style;
 use std::{path::Path, fs, process::{self, Stdio}};
-use tokio::{process::{Command, Child}, fs::File, sync::broadcast};
+use tokio::{process::{Command, Child}, sync::broadcast};
 use tokio::sync::mpsc;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use walkdir::WalkDir;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
-use nix::unistd::{self, Pid};
-use nix::sys::signal::{self, Signal};
 use std::sync::Arc;
+use std::time::Duration;
+use notify_debouncer_mini::new_debouncer;
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
 static CHILD_PID: AtomicI32 = AtomicI32::new(0);

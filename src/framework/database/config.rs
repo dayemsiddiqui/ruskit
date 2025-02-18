@@ -43,18 +43,11 @@ impl Default for DatabaseConfig {
 
 impl DatabaseConfig {
     pub fn connection_url(&self) -> String {
-        match self.default.as_str() {
-            "sqlite" => {
-                // For SQLite, we need three slashes for absolute paths
-                if self.connections.sqlite.database.starts_with('/') {
-                    format!("sqlite:///{}", self.connections.sqlite.database)
-                } else {
-                    format!("sqlite://{}", self.connections.sqlite.database)
-                }
-            }
-            // Add more connection types here
-            _ => panic!("Unsupported database connection type"),
-        }
+        format!("sqlite://{}", self.database_path())
+    }
+
+    pub fn database_path(&self) -> String {
+        self.connections.sqlite.database.clone()
     }
 
     pub fn from_env() -> Self {

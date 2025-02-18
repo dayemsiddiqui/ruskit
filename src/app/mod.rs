@@ -1,13 +1,10 @@
 pub mod controllers;
 pub mod models;
-pub mod middleware;
-pub mod services;
-pub mod providers;
-pub mod repositories;
-pub mod http;
-pub mod console;
+pub mod factories;
+pub mod seeders;
 
 // Re-export commonly used items
 pub use controllers::*;
 pub use models::*;
-pub use middleware::*; 
+pub use factories::*;
+pub use seeders::*; 
