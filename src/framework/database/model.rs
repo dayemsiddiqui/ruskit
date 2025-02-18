@@ -25,8 +25,15 @@ pub fn get_all_model_migrations() -> Vec<Migration> {
         migrations.extend(migrations_fn());
     }
     
-    // Sort migrations by name to ensure consistent order
-    migrations.sort_by(|a, b| a.name.cmp(&b.name));
+    // Sort migrations by timestamp prefix to ensure chronological order
+    migrations.sort_by(|a, b| {
+        let a_timestamp = a.name.split('_').next().unwrap_or("0")
+            .parse::<u64>().unwrap_or(0);
+        let b_timestamp = b.name.split('_').next().unwrap_or("0")
+            .parse::<u64>().unwrap_or(0);
+        a_timestamp.cmp(&b_timestamp)
+    });
+    
     migrations
 }
 

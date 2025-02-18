@@ -4,6 +4,7 @@ use ruskit::framework::database::{
 };
 use std::fs;
 use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Parser)]
 #[command(name = "cargo-kit")]
@@ -29,6 +30,15 @@ enum Commands {
     MakeModel {
         /// Name of the model to create
         name: String,
+    },
+    /// Create a new migration for an existing model
+    #[command(name = "make:migration")]
+    MakeMigration {
+        /// Name of the migration (e.g., "add_email_to_users")
+        name: String,
+        /// Name of the model this migration is for
+        #[arg(short, long)]
+        model: String,
     },
 }
 
@@ -74,6 +84,13 @@ async fn main() {
                 std::process::exit(1);
             }
         },
+        Commands::MakeMigration { name, model } => {
+            println!("Creating migration {} for model {}...", name, model);
+            if let Err(e) = make_migration(&name, &model) {
+                eprintln!("Error creating migration: {}", e);
+                std::process::exit(1);
+            }
+        },
     }
 }
 
@@ -87,7 +104,13 @@ fn make_model(name: &str, with_migration: bool) -> Result<(), Box<dyn std::error
     let table_name = inflector::string::pluralize::to_plural(&model_name.to_lowercase());
     let model_file = models_dir.join(format!("{}.rs", model_name.to_lowercase()));
 
-    // Generate model content
+    // Get current timestamp for migration ordering
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    // Generate model content with timestamped migration name
     let model_content = format!(
         r#"use serde::{{Deserialize, Serialize}};
 use sqlx::FromRow;
@@ -116,7 +139,7 @@ impl Model for {model_name} {{
     fn migrations() -> Vec<Migration> {{
         vec![
             Migration::new(
-                "create_{table_name}_table",
+                "{timestamp}_create_{table_name}_table",
                 "CREATE TABLE {table_name} (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     -- TODO: Add your columns here
@@ -219,5 +242,49 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
 
+    Ok(())
+}
+
+fn make_migration(name: &str, model: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    
+    let model_file = format!("src/app/models/{}.rs", model.to_lowercase());
+    let path = Path::new(&model_file);
+    
+    if !path.exists() {
+        return Err(format!("Model file {} does not exist", model_file).into());
+    }
+    
+    // Read the current model file
+    let mut content = fs::read_to_string(path)?;
+    
+    // Find the migrations vector
+    if let Some(migrations_start) = content.find("fn migrations() -> Vec<Migration> {") {
+        if let Some(vec_start) = content[migrations_start..].find("vec![") {
+            let vec_end = content[migrations_start + vec_start..].find("]")
+                .ok_or("Could not find end of migrations vector")?;
+            
+            // Insert the new migration at the end of the vector
+            let insert_pos = migrations_start + vec_start + vec_end;
+            let migration = format!(
+                r#",
+            Migration::new(
+                "{timestamp}_{name}",
+                "-- Add your UP migration SQL here",
+                "-- Add your DOWN migration SQL here"
+            )"#
+            );
+            
+            content.insert_str(insert_pos, &migration);
+            fs::write(path, content)?;
+            
+            println!("Created migration {timestamp}_{name}");
+            println!("Please edit {} to add your migration SQL", model_file);
+        }
+    }
+    
     Ok(())
 } 

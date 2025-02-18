@@ -36,7 +36,12 @@ impl Model for User {
                 )",
                 "DROP TABLE users"
             )
-        ]
+        ,
+            Migration::new(
+                "1739885809_add_email_to_users",
+                "-- Add your UP migration SQL here",
+                "-- Add your DOWN migration SQL here"
+            )]
     }
 }
 
