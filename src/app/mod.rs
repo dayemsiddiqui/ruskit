@@ -2,6 +2,7 @@ pub mod controllers;
 pub mod models;
 pub mod factories;
 pub mod seeders;
+pub mod dtos;
 
 // Re-export commonly used items
 pub use controllers::*;
