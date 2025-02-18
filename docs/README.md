@@ -1,85 +1,51 @@
 # Ruskit Documentation
 
-Welcome to the Ruskit documentation! Ruskit is a web application framework with expressive, elegant syntax inspired by Laravel, built for Rust. We believe development must be an enjoyable and creative experience. Ruskit takes the pain out of web development by easing common tasks used in many web projects.
+Welcome to the Ruskit documentation! Ruskit is a modern web framework for Rust that combines the elegance of Laravel with the performance and safety of Rust.
 
 ## Table of Contents
 
-1. [Getting Started](./getting-started.md) (Coming Soon)
-2. [Routing](./routing.md)
-3. [Controllers](./controllers.md) (Coming Soon)
-4. [Requests & Responses](./requests-responses.md) (Coming Soon)
-5. [Views](./views.md) (Coming Soon)
-6. [Database](./database.md) (Coming Soon)
-7. [Authentication](./authentication.md) (Coming Soon)
-8. [Authorization](./authorization.md) (Coming Soon)
-9. [Validation](./validation.md) (Coming Soon)
-10. [Error Handling](./error-handling.md) (Coming Soon)
-11. [Testing](./testing.md) (Coming Soon)
+1. [Getting Started](getting-started.md)
+2. [Routing](routing.md)
+3. [Views and Templates](views.md)
+   - Template basics
+   - Metadata system
+   - SEO and social sharing
+4. [Middleware](middleware.md)
+5. [Validation](validation.md)
 
-## Quick Start
+## Key Features
 
-### Installation
+### Type-Safe Templates
 
-Add Ruskit to your project:
+Ruskit uses Askama for type-safe templating, ensuring that your templates are checked at compile time.
 
-```toml
-[dependencies]
-ruskit = "0.1.0"  # Coming Soon
-```
+### Metadata Management
 
-### Basic Usage
+A powerful metadata system for managing page titles, descriptions, and social sharing tags:
+- Global defaults
+- Per-page overrides
+- SEO optimization
+- OpenGraph support
 
-Create a new route in your `web.rs`:
+### Middleware System
 
-```rust
-use axum::{
-    Router,
-    routing::get,
-    response::Json,
-};
-use serde_json::{json, Value};
+Flexible middleware system with:
+- Global middleware
+- Route-specific middleware
+- Middleware groups
+- Common presets (CORS, TrimStrings, etc.)
 
-// Define a route handler
-async fn hello() -> Json<Value> {
-    Json(json!({ "message": "Hello, Ruskit!" }))
-}
+### Validation
 
-// Register your routes
-pub fn routes() -> Router {
-    Router::new()
-        .route("/hello", get(hello))
-}
-```
-
-### Run Your Application
-
-```rust
-#[tokio::main]
-async fn main() {
-    let app = web::routes();
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    
-    println!("Server running on http://{}", addr);
-    
-    axum::serve(
-        TcpListener::bind(addr).await.unwrap(),
-        app
-    ).await.unwrap();
-}
-```
-
-## Features
-
-- 🚀 **Fast & Reliable**: Built on top of Axum and Tokio
-- 🔒 **Secure**: Security-first approach to web development
-- 📦 **Modular**: Use what you need, leave what you don't
-- 🛠️ **Developer Friendly**: Intuitive APIs and excellent documentation
-- ⚡ **High Performance**: Leveraging Rust's performance capabilities
-- 🧪 **Testing**: First-class testing support
+Built-in validation system with:
+- Type-safe validation rules
+- Custom validators
+- Error messages
+- Form validation
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./contributing.md) (Coming Soon) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## License
 

@@ -1,7 +1,10 @@
-use crate::framework::middleware::{
-    Middleware,
-    MiddlewareStack,
-    presets::{Cors, TrimStrings}
+use crate::framework::{
+    middleware::{
+        Middleware,
+        MiddlewareStack,
+        presets::{Cors, TrimStrings}
+    },
+    views::{Metadata, set_global_metadata},
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -18,6 +21,8 @@ pub struct Application {
     middleware_stack: MiddlewareStack,
     /// Middleware groups
     middleware_groups: Vec<(String, Vec<Middleware>)>,
+    /// Global metadata
+    metadata: Option<Metadata>,
 }
 
 impl Application {
@@ -25,6 +30,7 @@ impl Application {
         Self {
             middleware_stack: MiddlewareStack::new(),
             middleware_groups: Vec::new(),
+            metadata: None,
         }
     }
 
@@ -49,6 +55,17 @@ impl Application {
         configure(&mut self.middleware_groups);
     }
 
+    /// Configure global metadata
+    pub async fn metadata<F>(&mut self, configure: F)
+    where
+        F: FnOnce() -> Metadata,
+    {
+        self.metadata = Some(configure());
+        if let Some(metadata) = &self.metadata {
+            set_global_metadata(metadata.clone());
+        }
+    }
+
     /// Get the global middleware stack
     pub fn middleware_stack(&self) -> MiddlewareStack {
         self.middleware_stack.clone()
@@ -64,6 +81,14 @@ impl Application {
 pub async fn bootstrap() {
     let app = Application::instance().await;
     let mut app = app.write().await;
+
+    // Configure global metadata
+    app.metadata(|| {
+        Metadata::new("Ruskit")
+            .with_description("A modern web framework for Rust with the elegance of Laravel")
+            .with_keywords("rust, web framework, ruskit, laravel")
+            .with_author("Ruskit Team")
+    }).await;
 
     // Configure global middleware
     app.middleware(|stack| {

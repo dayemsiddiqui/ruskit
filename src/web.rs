@@ -5,25 +5,50 @@ use axum::{
     extract::Path,
 };
 use askama::Template;
-use askama_axum::{Response, IntoResponse};
+use askama_axum::Response;
 use serde_json::{json, Value};
 
-use crate::framework::middleware::{
-    WithMiddleware,
-    presets::{Cors, TrimStrings},
+use crate::framework::{
+    middleware::{
+        WithMiddleware,
+        presets::{Cors, TrimStrings},
+    },
+    views::{Metadata, set_global_metadata, TemplateExt, HasMetadata},
 };
 use crate::bootstrap::app::bootstrap;
 
-// Define templates
-#[derive(Template)]
+/// Home page template
+#[derive(Template, Default)]
 #[template(path = "home.html")]
-struct HomeTemplate;
+pub struct HomeTemplate;
 
-// Route handlers
+/// About page template
+#[derive(Template, Default)]
+#[template(path = "about.html")]
+pub struct AboutTemplate {
+    first_name: String,
+    last_name: String,
+}
+
+// Example of how to use metadata in a route handler
 async fn home() -> Response {
-    let template = HomeTemplate;
-    template.into_response()
+    HomeTemplate::default().into_response()
 }   
+
+// Example of overriding metadata for a specific route
+async fn about() -> Response {
+    let mut about_template = AboutTemplate::with_metadata(
+        Metadata::new("About Us")
+            .with_description("Learn more about our team")
+            .with_og_title("About Us")
+            .with_og_description("Meet John Doe, a key member of our team")
+    );
+    
+    about_template.first_name = "John".to_string();
+    about_template.last_name = "Doe".to_string();
+    
+    about_template.into_response()
+}
 
 // Route handlers
 async fn index() -> Json<Value> {
@@ -53,7 +78,8 @@ pub async fn routes() -> Router {
         .route(
             "/", 
             get(home).middleware(Cors::new("http://specific.example.com"))
-        );
+        )
+        .route("/about", get(about));
 
     let api_router = Router::new()
         .route("/", get(index))

@@ -3,7 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Ruskit{% endblock %}</title>
+    <title>{% block title %}{{ self.metadata().title }}{% endblock %}</title>
+    {% match self.metadata().description %}
+        {% when Some with (desc) %}
+            <meta name="description" content="{{ desc }}">
+        {% when None %}
+    {% endmatch %}
+    {% match self.metadata().keywords %}
+        {% when Some with (kw) %}
+            <meta name="keywords" content="{{ kw }}">
+        {% when None %}
+    {% endmatch %}
+    {% match self.metadata().author %}
+        {% when Some with (author) %}
+            <meta name="author" content="{{ author }}">
+        {% when None %}
+    {% endmatch %}
+    {% match self.metadata().og_title %}
+        {% when Some with (title) %}
+            <meta property="og:title" content="{{ title }}">
+        {% when None %}
+    {% endmatch %}
+    {% match self.metadata().og_description %}
+        {% when Some with (desc) %}
+            <meta property="og:description" content="{{ desc }}">
+        {% when None %}
+    {% endmatch %}
+    {% match self.metadata().og_image %}
+        {% when Some with (img) %}
+            <meta property="og:image" content="{{ img }}">
+        {% when None %}
+    {% endmatch %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         window.tailwind.config = {

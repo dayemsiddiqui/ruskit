@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <h1 class="text-2xl font-bold mb-4">{{ self.metadata().title }}</h1>
+    {% match self.metadata().description %}
+        {% when Some with (desc) %}
+            <p class="text-gray-700 mb-4">{{ desc }}</p>
+        {% when None %}
+    {% endmatch %}
+
+    <h1 class="text-2xl font-bold mb-4">
+        {{ self.first_name }} {{ self.last_name }}
+    </h1>
+
+    <div class="prose">
+        <p class="text-gray-600">
+            We are a passionate team dedicated to building modern web applications with Rust.
+            Our goal is to provide developers with elegant, type-safe, and performant tools
+            that make web development a joy.
+        </p>
+    </div>
+</div>
+{% endblock %} 
