@@ -1,3 +1,17 @@
 [tasks.kit]
 command = "cargo"
-args = ["install", "--path", ".", "--force"] 
+args = ["install", "--path", ".", "--force"]
+
+[tasks.install-watch]
+command = "cargo"
+args = ["install", "cargo-watch"]
+
+[tasks.watch-templates]
+dependencies = ["install-watch"]
+command = "cargo"
+args = ["watch", "-w", "templates", "-w", "src", "-x", "build"]
+
+[tasks.dev]
+dependencies = ["install-watch"]
+command = "cargo"
+args = ["watch", "-w", "templates", "-w", "src", "-x", "run"] 

@@ -19,6 +19,7 @@ async-trait = "0.1"
 hyper = { version = "1.0", features = ["full"] }
 askama = "0.12"
 askama_axum = "0.4"
+askama_escape = "0.1"
 clap = { version = "4.5.1", features = ["derive"] }
 notify = "6.1.1"
 notify-debouncer-mini = "0.4.1"
@@ -38,3 +39,4 @@ thiserror = "1.0"
 Inflector = "0.11.4"
 fake = { version = "2.9", features = ["derive"] }
 inventory = "0.3"
+pulldown-cmark = "0.9"

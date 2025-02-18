@@ -1,6 +1,7 @@
 use askama::Template;
 use askama_axum::Response;
 use crate::framework::views::{Metadata, TemplateExt, HasMetadata};
+use axum::response::Html;
 
 /// Home page template
 #[derive(Template, Default)]
@@ -14,6 +15,11 @@ pub struct AboutTemplate {
     pub first_name: String,
     pub last_name: String,
 }
+
+/// Landing page template
+#[derive(Template)]
+#[template(path = "landing.html")]
+pub struct LandingTemplate;
 
 /// Renders the home page
 pub async fn home() -> Response {
@@ -33,4 +39,10 @@ pub async fn about() -> Response {
     about_template.last_name = "Doe".to_string();
     
     about_template.into_response()
+}
+
+/// Renders the landing page
+pub async fn landing() -> Html<String> {
+    let template = LandingTemplate;
+    Html(template.render().unwrap())
 } 

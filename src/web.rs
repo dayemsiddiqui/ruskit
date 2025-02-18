@@ -8,8 +8,9 @@ use crate::framework::middleware::{
 };
 use crate::bootstrap::app::bootstrap;
 use crate::app::controllers::{
-    pages::{home, about},
+    pages::{landing, about},
     user_controller::UserController,
+    docs_controller::DocsController,
 };
 
 // Define routes with middleware
@@ -23,9 +24,11 @@ pub async fn routes() -> Router {
     let router = Router::new()
         .route(
             "/", 
-            get(home).middleware(Cors::new("http://specific.example.com"))
+            get(landing).middleware(Cors::new("http://specific.example.com"))
         )
-        .route("/about", get(about));
+        .route("/about", get(about))
+        .route("/docs", get(DocsController::index))
+        .route("/docs/:page", get(DocsController::show));
 
     let api_router = Router::new()
         .route(
