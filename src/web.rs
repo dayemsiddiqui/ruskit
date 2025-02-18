@@ -13,7 +13,7 @@ use crate::framework::{
         WithMiddleware,
         presets::{Cors, TrimStrings},
     },
-    views::{Metadata, set_global_metadata, TemplateExt, HasMetadata},
+    views::{Metadata, TemplateExt, HasMetadata},
 };
 use crate::bootstrap::app::bootstrap;
 
@@ -22,12 +22,12 @@ use crate::bootstrap::app::bootstrap;
 #[template(path = "home.html")]
 pub struct HomeTemplate;
 
-/// About page template
+/// About page template with custom fields
 #[derive(Template, Default)]
 #[template(path = "about.html")]
 pub struct AboutTemplate {
-    first_name: String,
-    last_name: String,
+    pub first_name: String,
+    pub last_name: String,
 }
 
 // Example of how to use metadata in a route handler
