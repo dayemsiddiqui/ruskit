@@ -7,13 +7,13 @@
     <meta name="description" content="{% block description %}Ruskit combines the elegance of Laravel with the performance and safety of Rust{% endblock %}">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --background: #0a0a0a;
-            --text: #ffffff;
-            --text-muted: #9ca3af;
-            --card-bg: #18181b;
-            --border: #27272a;
+            --primary: #646cff;
+            --primary-dark: #5058d9;
+            --background: #ffffff;
+            --text: #213547;
+            --text-muted: #4b5563;
+            --card-bg: #f9fafb;
+            --border: #e5e7eb;
         }
 
         * {
@@ -27,6 +27,7 @@
             background: var(--background);
             color: var(--text);
             line-height: 1.5;
+            min-height: 100vh;
         }
 
         .container {
@@ -36,8 +37,12 @@
         }
 
         .navbar {
-            padding: 1.5rem 0;
+            padding: 1rem 0;
             border-bottom: 1px solid var(--border);
+            background: var(--background);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .navbar .container {
@@ -55,11 +60,12 @@
         }
 
         .nav-links a {
-            color: var(--text);
+            color: var(--text-muted);
             text-decoration: none;
             margin-left: 2rem;
             font-weight: 500;
             transition: color 0.2s;
+            font-size: 0.875rem;
         }
 
         .nav-links a:hover {
@@ -71,6 +77,172 @@
             border-radius: 0.5rem;
             background: var(--card-bg);
             border: 1px solid var(--border);
+        }
+
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .button-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .button-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .button-secondary {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .button-secondary:hover {
+            background: var(--border);
+        }
+
+        .features {
+            padding: 4rem 0;
+            background: var(--card-bg);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: var(--background);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+        }
+
+        .footer {
+            padding: 4rem 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .footer-section a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .nav-links a {
+                margin-left: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.125rem;
+                padding: 0 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links a:not(.github-link) {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .button {
+                padding: 0.625rem 1.25rem;
+            }
         }
 
         {% block additional_styles %}{% endblock %}
@@ -85,8 +257,8 @@
             <div class="logo">Ruskit</div>
             <div class="nav-links">
                 <a href="#features">Features</a>
-                <a href="#docs">Documentation</a>
-                <a href="https://github.com/yourusername/ruskit" class="github-link">GitHub</a>
+                <a href="/docs">Documentation</a>
+                <a href="https://github.com/dayemsiddiqui/ruskit" class="github-link">GitHub</a>
             </div>
         </div>
     </nav>
@@ -98,13 +270,13 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>Ruskit</h4>
-                    <p>Modern web framework for Rust</p>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Modern web framework for Rust</p>
                 </div>
                 <div class="footer-section">
                     <h4>Resources</h4>
-                    <a href="#docs">Documentation</a>
-                    <a href="#github">GitHub</a>
-                    <a href="#contributing">Contributing</a>
+                    <a href="/docs">Documentation</a>
+                    <a href="https://github.com/dayemsiddiqui/ruskit">GitHub</a>
+                    <a href="/docs/contributing">Contributing</a>
                 </div>
                 <div class="footer-section">
                     <h4>Community</h4>
