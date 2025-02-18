@@ -8,6 +8,12 @@ use askama::Template;
 use askama_axum::{Response, IntoResponse};
 use serde_json::{json, Value};
 
+use crate::framework::middleware::{
+    WithMiddleware,
+    presets::{Cors, TrimStrings},
+};
+use crate::bootstrap::app::bootstrap;
+
 // Define templates
 #[derive(Template)]
 #[template(path = "home.html")]
@@ -39,12 +45,29 @@ async fn users_store() -> Json<Value> {
     Json(json!({ "message": "Create new user" }))
 }
 
-// Define routes
-pub fn routes() -> Router {
-    Router::new()
-        .route("/", get(home))
-        .route("/api", get(index))
-        .route("/api/users", get(users_index))
-        .route("/api/users/{id}", get(users_show))
-        .route("/api/users", post(users_store))
+// Define routes with middleware
+pub async fn routes() -> Router {
+    bootstrap().await;
+    
+    let router = Router::new()
+        .route(
+            "/", 
+            get(home).middleware(Cors::new("http://specific.example.com"))
+        );
+
+    let api_router = Router::new()
+        .route("/", get(index))
+        .route(
+            "/users", 
+            get(users_index)
+                .middleware(TrimStrings::new())
+                .middleware(Cors::new("http://users.example.com"))
+        )
+        .route("/users/{id}", get(users_show))
+        .route(
+            "/users", 
+            post(users_store).middleware(TrimStrings::new())
+        );
+
+    router.nest("/api", api_router)
 } 
