@@ -6,7 +6,6 @@ use ts_rs::TS;
 #[derive(Serialize, TS)]
 #[ts(export)]
 pub struct AboutPageProps {
-    pub title: String,
-    pub description: String,
     pub tech_stack: Vec<String>,
+    pub why_choose_us: Vec<String>, 
 }

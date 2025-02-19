@@ -1,4 +1,15 @@
 use axum_inertia::{InertiaConfig as AxumInertiaConfig, vite};
+use serde::Serialize;
+use serde_json::Value;
+
+pub trait InertiaProps: Serialize {
+    fn into_props(self) -> Value where Self: Sized {
+        serde_json::to_value(self).expect("Failed to serialize props")
+    }
+}
+
+// Blanket implementation for all types that implement Serialize
+impl<T: Serialize> InertiaProps for T {}
 
 #[derive(Clone)]
 pub struct InertiaConfig {

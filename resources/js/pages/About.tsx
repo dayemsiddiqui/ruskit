@@ -2,7 +2,7 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import { AboutPageProps } from '../types/generated';
 
-export default function About({ title, description, tech_stack }: AboutPageProps) {
+export default function About({ tech_stack, why_choose_us }: AboutPageProps) {
     return (
         <>
             <Head title="About Us" />
@@ -11,9 +11,9 @@ export default function About({ title, description, tech_stack }: AboutPageProps
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                         <div className="px-6 py-8 sm:p-10">
                             <div className="border-b border-gray-200 pb-8">
-                                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">{title}</h1>
+                                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">About Us</h1>
                                 <p className="mt-4 text-lg text-gray-600">
-                                    {description}
+                                    We are a team of developers who are passionate about building web applications.
                                 </p>
                             </div>
                             
@@ -34,24 +34,14 @@ export default function About({ title, description, tech_stack }: AboutPageProps
                                 <div className="bg-gray-50 rounded-xl p-6">
                                     <h2 className="text-xl font-semibold text-gray-900">Why Choose Us?</h2>
                                     <ul className="mt-4 space-y-3 text-gray-600">
-                                        <li className="flex items-start">
-                                            <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            High Performance
-                                        </li>
-                                        <li className="flex items-start">
-                                            <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Type Safety
-                                        </li>
-                                        <li className="flex items-start">
-                                            <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Modern UI/UX
-                                        </li>
+                                        {why_choose_us.map((reason, index) => (
+                                            <li key={`reason-${index}`} className="flex items-start">
+                                                <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                {reason}
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
                             </div>
