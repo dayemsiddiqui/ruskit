@@ -1,4 +1,5 @@
 [tasks.kit]
+workspace = false
 command = "cargo"
 args = ["install", "--path", ".", "--force"]
 

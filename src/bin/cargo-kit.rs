@@ -937,13 +937,12 @@ fn make_page_dto(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let file_name = dto_dir.join(format!("{}.rs", name.to_lowercase()));
     
     let dto_content = format!(r#"use serde::Serialize;
-use ts_rs::TS;
+use ts_export_derive::auto_ts_export;
 
-#[derive(Serialize, TS)]
-#[ts(export)]
-pub struct {name}Response {{
+#[auto_ts_export]
+pub struct {name}Props {{
     pub title: String,
-    // TODO: Add your response fields here
+    // TODO: Add your page props here
 }}"#, name=name);
 
     fs::write(&file_name, dto_content)?;
@@ -957,8 +956,13 @@ pub struct {name}Response {{
     }
 
     let mod_line = format!("pub mod {};\n", name.to_lowercase());
+    let use_line = format!("pub use {}::{}Props;\n", name.to_lowercase(), name);
+    
     if !mod_content.contains(&mod_line) {
         mod_content.push_str(&mod_line);
+    }
+    if !mod_content.contains(&use_line) {
+        mod_content.push_str(&use_line);
     }
 
     fs::write(mod_file, mod_content)?;
