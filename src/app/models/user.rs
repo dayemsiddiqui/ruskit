@@ -2,11 +2,12 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
 use crate::framework::database::{
-    model::Model,
+    model::{Model, HasMany},
     query_builder::QueryBuilder,
     DatabaseError,
     migration::Migration,
 };
+use crate::app::models::post::Post;
 use async_trait::async_trait;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Validate)]
@@ -66,5 +67,10 @@ impl User {
             .limit(limit)
             .get::<Self>()
             .await
+    }
+
+    /// Get all posts by this user
+    pub fn posts(&self) -> HasMany<User, Post> {
+        HasMany::new("user_id")
     }
 }

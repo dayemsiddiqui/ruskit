@@ -5,14 +5,20 @@ use crate::app::models::Post;
 #[derive(Serialize)]
 pub struct PostResponse {
     pub id: i64,
-    // Add your fields here
+    pub user_id: i64,
+    pub title: String,
+    pub content: String,
     pub created_at: i64,
     pub updated_at: i64,
 }
 
 #[derive(Deserialize, Validate)]
 pub struct CreatePostRequest {
-    // Add your validation fields here
+    #[validate(length(min = 1, max = 255))]
+    pub title: String,
+    #[validate(length(min = 1))]
+    pub content: String,
+    pub user_id: i64,
 }
 
 #[derive(Serialize)]
@@ -32,7 +38,9 @@ impl From<Post> for PostResponse {
     fn from(item: Post) -> Self {
         Self {
             id: item.id,
-            // Map your fields here
+            user_id: item.user_id,
+            title: item.title,
+            content: item.content,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
@@ -49,7 +57,9 @@ impl From<CreatePostRequest> for Post {
             
         Self {
             id: 0,
-            // Map your fields here
+            user_id: req.user_id,
+            title: req.title,
+            content: req.content,
             created_at: now,
             updated_at: now,
         }

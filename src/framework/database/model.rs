@@ -9,6 +9,7 @@ use once_cell::sync::Lazy;
 use std::fs;
 use std::path::Path;
 use serde_json::Value;
+use std::marker::PhantomData;
 
 type MigrationFn = fn() -> Vec<Migration>;
 
@@ -68,6 +69,91 @@ pub fn discover_and_register_models() -> std::io::Result<()> {
     }
     
     Ok(())
+}
+
+pub struct BelongsTo<Parent: Model, Child: Model> {
+    parent_type: PhantomData<Parent>,
+    child_type: PhantomData<Child>,
+    foreign_key: &'static str,
+}
+
+pub struct HasMany<Parent: Model, Child: Model> {
+    parent_type: PhantomData<Parent>,
+    child_type: PhantomData<Child>,
+    foreign_key: &'static str,
+}
+
+pub struct HasOne<Parent: Model, Child: Model> {
+    parent_type: PhantomData<Parent>,
+    child_type: PhantomData<Child>,
+    foreign_key: &'static str,
+}
+
+impl<Parent: Model, Child: Model> BelongsTo<Parent, Child> {
+    pub fn new(foreign_key: &'static str) -> Self {
+        Self {
+            parent_type: PhantomData,
+            child_type: PhantomData,
+            foreign_key,
+        }
+    }
+
+    pub async fn get(&self, model: &Child) -> Result<Option<Parent>, DatabaseError> {
+        let foreign_key_value = model.get_field_value(self.foreign_key)?;
+        Parent::find(foreign_key_value).await
+    }
+}
+
+impl<Parent: Model, Child: Model> HasMany<Parent, Child> {
+    pub fn new(foreign_key: &'static str) -> Self {
+        Self {
+            parent_type: PhantomData,
+            child_type: PhantomData,
+            foreign_key,
+        }
+    }
+
+    pub async fn get(&self, model: &Parent) -> Result<Vec<Child>, DatabaseError> {
+        let pool = get_pool()?;
+        let query = format!(
+            "SELECT * FROM {} WHERE {} = ?",
+            Child::table_name(),
+            self.foreign_key
+        );
+        
+        let results = sqlx::query_as::<sqlx::Sqlite, Child>(&query)
+            .bind(model.id())
+            .fetch_all(pool.as_ref())
+            .await?;
+            
+        Ok(results)
+    }
+}
+
+impl<Parent: Model, Child: Model> HasOne<Parent, Child> {
+    pub fn new(foreign_key: &'static str) -> Self {
+        Self {
+            parent_type: PhantomData,
+            child_type: PhantomData,
+            foreign_key,
+        }
+    }
+
+    pub async fn get(&self, model: &Parent) -> Result<Option<Child>, DatabaseError> {
+        let pool = get_pool()?;
+        let query = format!(
+            "SELECT * FROM {} WHERE {} = ? LIMIT 1",
+            Child::table_name(),
+            self.foreign_key
+        );
+        
+        let result = sqlx::query_as::<sqlx::Sqlite, Child>(&query)
+            .bind(model.id())
+            .fetch_optional(pool.as_ref())
+            .await?;
+            
+        Ok(result)
+    }
 }
 
 #[async_trait]
@@ -206,5 +292,13 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
         .await?;
 
         Ok(row)
+    }
+
+    /// Get a field value by name (used for relationships)
+    fn get_field_value(&self, field: &str) -> Result<i64, DatabaseError> {
+        let value = serde_json::to_value(self)?;
+        value.get(field)
+            .and_then(|v| v.as_i64())
+            .ok_or_else(|| DatabaseError::Other(format!("Field {} not found or invalid type", field)))
     }
 } 
