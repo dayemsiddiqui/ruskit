@@ -28,7 +28,7 @@ pub fn auto_ts_export(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
         #[doc(hidden)]
         const #const_ident: () = {
-            ::inventory::submit!(crate::app::dtos::TsExporter {
+            ::inventory::submit!(crate::framework::typescript::TsExporter {
                 export_fn: <#name as ::ts_rs::TS>::export_to_string,
             });
         };

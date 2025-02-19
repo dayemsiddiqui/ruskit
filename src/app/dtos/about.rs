@@ -7,5 +7,3 @@ pub struct AboutPageProps {
     pub tech_stack: Vec<String>,
     pub why_choose_us: Vec<String>, 
 }
-
-
