@@ -27,7 +27,7 @@ export default defineConfig({
         outDir: 'public/dist',
         manifest: true,
         rollupOptions: {
-            input: 'resources/js/app.jsx'
+            input: 'resources/js/app.tsx'
         }
     }
 }); 

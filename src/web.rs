@@ -25,7 +25,7 @@ pub async fn routes() -> Router {
 
     let inertia_config = vite::Development::default()
         .port(3000)
-        .main("resources/js/app.jsx")
+        .main("resources/js/app.tsx")
         .lang("en")
         .title("Ruskit")
         .react() 
