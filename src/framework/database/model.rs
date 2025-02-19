@@ -160,6 +160,23 @@ impl<Child: Model> HasMany<Child> {
             
         Ok(results)
     }
+
+    pub async fn create(&self, mut model: Child) -> Result<Child, DatabaseError> {
+        let pool = get_pool()?;
+        let query = format!(
+            "UPDATE {} SET {} = ? WHERE id = ?",
+            Child::table_name(),
+            self.foreign_key
+        );
+        
+        let created = Child::create(model).await?;
+        sqlx::query(&query)
+            .bind(created.id())
+            .execute(pool.as_ref())
+            .await?;
+            
+        Ok(created)
+    }
 }
 
 impl<Parent: Model, Child: Model> HasOne<Parent, Child> {

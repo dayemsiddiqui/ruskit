@@ -1,8 +1,10 @@
 use axum::{
     response::Json,
     extract::Path,
+    http::StatusCode,
 };
 use crate::app::models::Post;
+use crate::app::models::User;
 use crate::framework::database::model::Model;
 use crate::app::dtos::post::{CreatePostRequest, PostResponse, PostListResponse};
 
@@ -26,14 +28,20 @@ impl PostController {
             Ok(None) => Json(None),
             Err(e) => panic!("Database error: {}", e), // In a real app, use proper error handling
         }
-    }
+        }
 
     /// Creates a new post
-    pub async fn store(Json(payload): Json<CreatePostRequest>) -> Json<PostResponse> {
-        let item: Post = payload.into();
-        match Post::create(item).await {
-            Ok(created) => Json(PostResponse::from(created)),
-            Err(e) => panic!("Database error: {}", e), // In a real app, use proper error handling
+    pub async fn store(Json(payload): Json<CreatePostRequest>) -> Result<Json<PostResponse>, (StatusCode, String)> {
+        let user = match User::find(payload.user_id).await {
+            Ok(Some(user)) => user,
+            _ => return Err((StatusCode::NOT_FOUND, "User not found".to_string())),
+        };
+
+        let post: Post = payload.into();
+
+        match user.posts().create(post).await {
+            Ok(created) => Ok(Json(PostResponse::from(created))),
+            Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", e))),
         }
     }
 }
