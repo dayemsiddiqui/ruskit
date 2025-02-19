@@ -982,13 +982,13 @@ fn make_page_controller(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     
     let controller_content = format!(r#"use axum::response::IntoResponse;
 use axum_inertia::Inertia;
-use crate::app::dtos::{}::{name}Response;
+use crate::app::dtos::{}::{name}Props;
 
 pub struct {controller_name};
 
 impl {controller_name} {{
     pub async fn show(inertia: Inertia) -> impl IntoResponse {{
-        inertia.render("{name}", {name}Response {{
+        inertia.render("{name}", {name}Props {{
             title: String::from("{name}"),
         }})
     }}
@@ -1026,9 +1026,9 @@ fn make_page_component(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     
     let component_content = format!(r#"import React from 'react';
 import {{ Head }} from '@inertiajs/react';
-import type {{ {name}Response }} from '../types/generated';
+import type {{ {name}Props }} from '../types/generated';
 
-interface Props extends {name}Response {{}}
+interface Props extends {name}Props {{}}
 
 export default function {name}({{ title }}: Props) {{
     return (
