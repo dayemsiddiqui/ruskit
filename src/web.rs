@@ -11,6 +11,7 @@ use crate::app::controllers::{
     user_controller::UserController,
     docs_controller::DocsController,
     inertia_controller::InertiaController,
+    pages::landing,
 };
 use axum_inertia::vite;
 
@@ -31,7 +32,7 @@ pub async fn routes() -> Router {
         .into_config();
     
     let inertia_router = Router::new()
-        .route("/", get(InertiaController::home))
+        .route("/", get(landing))
         .route("/about", get(InertiaController::about))
         .route("/docs", get(DocsController::index))
         .route("/docs/:page", get(DocsController::show))
