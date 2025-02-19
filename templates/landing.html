@@ -308,14 +308,7 @@
                 </div>
                 <div class="command-line">
                     <span class="prompt">$</span>
-                    <span class="command">cargo make dev</span>
-                </div>
-                <div class="command-line output">
-                    Running on http://localhost:3000
-                </div>
-                <div class="command-line">
-                    <span class="prompt">$</span>
-                    <span class="command">cargo kit make:all <span class="highlight">Post</span></span>
+                    <span class="command">cargo kit make:model <span class="highlight">Post</span></span>
                 </div>
                 <div class="command-line output">
                     Created: src/app/models/post.rs
@@ -324,32 +317,287 @@
                     Created: src/app/controllers/post_controller.rs
                 </div>
                 <div class="command-line output">
-                    Created: src/app/dtos/post_dto.rs
+                    Created: src/app/dtos/post.rs
+                </div>
+                <div class="command-line output">
+                    Generated: resources/js/types/generated.ts
+                </div>
+                <div class="command-line output">
+                    🚀 Your Post model is ready with full type safety!
                 </div>
             </div>
         </div>
     </div>
 </header>
 
+<section id="type-safety" class="type-safety" style="padding: 8rem 0; background: var(--card-bg);">
+    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+        <div class="text-center" style="margin-bottom: 4rem;">
+            <h2 style="
+                font-size: 3rem;
+                font-weight: 700;
+                margin-bottom: 1.5rem;
+                background: linear-gradient(to right, var(--text), var(--text-muted));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                max-width: 800px;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+            ">End-to-End Type Safety with Ruskit</h2>
+            <p style="
+                color: var(--text-muted);
+                font-size: 1.25rem;
+                max-width: 700px;
+                margin: 0 auto;
+                line-height: 1.6;
+                text-align: center;
+            ">
+                Write your types once in Rust, use them everywhere. RustKit automatically generates TypeScript types 
+                from your Rust structs, ensuring complete type safety across your entire stack.
+            </p>
+        </div>
+
+        <div class="split-editor" style="
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        ">
+            <div class="editor-header" style="
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem 1.5rem;
+                background: #252525;
+                border-bottom: 1px solid #363636;
+            ">
+                <div class="editor-tabs" style="display: flex; gap: 1.5rem;">
+                    <div class="tab active" style="
+                        color: #e4e4e4;
+                        font-size: 0.875rem;
+                        font-family: 'Fira Code', monospace;
+                        position: relative;
+                    ">
+                        post.rs
+                        <div style="
+                            position: absolute;
+                            bottom: -1rem;
+                            left: 0;
+                            right: 0;
+                            height: 2px;
+                            background: var(--primary);
+                        "></div>
+                    </div>
+                    <div class="tab" style="
+                        color: #6b7280;
+                        font-size: 0.875rem;
+                        font-family: 'Fira Code', monospace;
+                    ">generated.ts</div>
+                </div>
+                <div style="
+                    color: #6b7280;
+                    font-size: 0.875rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                ">
+                    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    Type Generation
+                </div>
+            </div>
+            <div class="editor-body" style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1px;
+                background: #363636;
+                height: 500px;
+            ">
+                <div class="editor-pane rust-pane" style="background: #1e1e1e; padding: 1.5rem; position: relative;">
+                    <pre class="line-numbers"><code class="language-rust" style="
+                        font-family: 'Fira Code', monospace;
+                        font-size: 0.875rem;
+                        line-height: 1.7;
+                        display: block;
+                        white-space: pre;
+                        color: #d4d4d4;
+                        margin: 0;
+                        padding: 0;
+                        tab-size: 4;
+                    "><span class="rust-block" style="display: block; opacity: 0;"><span class="keyword">use</span> serde::Serialize;
+<span class="keyword">use</span> ts_rs::TS;
+
+<span class="attribute">#[derive(Serialize, TS)]</span>
+<span class="attribute">#[ts(export)]</span>
+<span class="keyword">pub</span> <span class="keyword">struct</span> <span class="type">Post</span> {
+    <span class="keyword">pub</span> id: <span class="type">i32</span>,
+    <span class="keyword">pub</span> title: <span class="type">String</span>,
+    <span class="keyword">pub</span> content: <span class="type">String</span>,
+    <span class="keyword">pub</span> status: <span class="type">PostStatus</span>,
+    <span class="keyword">pub</span> tags: <span class="type">Vec</span><<span class="type">String</span>>,
+    <span class="keyword">pub</span> author: <span class="type">User</span>,
+}</span>
+
+<span class="rust-block" style="display: block; opacity: 0;"><span class="attribute">#[derive(Serialize, TS)]</span>
+<span class="attribute">#[ts(export)]</span>
+<span class="keyword">pub</span> <span class="keyword">enum</span> <span class="type">PostStatus</span> {
+    Draft,
+    Published,
+    Archived,
+}</span>
+
+<span class="rust-block" style="display: block; opacity: 0;"><span class="attribute">#[derive(Serialize, TS)]</span>
+<span class="attribute">#[ts(export)]</span>
+<span class="keyword">pub</span> <span class="keyword">struct</span> <span class="type">User</span> {
+    <span class="keyword">pub</span> id: <span class="type">i32</span>,
+    <span class="keyword">pub</span> name: <span class="type">String</span>,
+    <span class="keyword">pub</span> role: <span class="type">UserRole</span>,
+}</span></code></pre>
+                </div>
+                <div class="editor-pane typescript-pane" style="background: #1e1e1e; padding: 1.5rem; position: relative;">
+                    <pre class="line-numbers"><code class="language-typescript" style="
+                        font-family: 'Fira Code', monospace;
+                        font-size: 0.875rem;
+                        line-height: 1.7;
+                        display: block;
+                        white-space: pre;
+                        color: #d4d4d4;
+                        margin: 0;
+                        padding: 0;
+                        tab-size: 4;
+                    "><span class="ts-block" style="display: block; opacity: 0;"><span class="comment">// Generated by RustKit</span>
+<span class="keyword">export</span> <span class="keyword">interface</span> <span class="type">Post</span> {
+    id: <span class="type">number</span>;
+    title: <span class="type">string</span>;
+    content: <span class="type">string</span>;
+    status: <span class="type">PostStatus</span>;
+    tags: <span class="type">string</span>[];
+    author: <span class="type">User</span>;
+}</span>
+
+<span class="ts-block" style="display: block; opacity: 0;"><span class="keyword">export</span> <span class="keyword">enum</span> <span class="type">PostStatus</span> {
+    Draft = <span class="string">"Draft"</span>,
+    Published = <span class="string">"Published"</span>,
+    Archived = <span class="string">"Archived"</span>,
+}</span>
+
+<span class="ts-block" style="display: block; opacity: 0;"><span class="keyword">export</span> <span class="keyword">interface</span> <span class="type">User</span> {
+    id: <span class="type">number</span>;
+    name: <span class="type">string</span>;
+    role: <span class="type">UserRole</span>;
+}</span></code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-list" style="
+            max-width: 900px;
+            margin: 5rem auto 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+        ">
+            <div class="feature" style="text-align: center;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.25rem;">Automatic Type Generation</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">Your Rust types are automatically converted to TypeScript definitions.</p>
+            </div>
+            <div class="feature" style="text-align: center;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.25rem;">Type-Safe Props</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">Pass data between Rust and React with complete type safety via Inertia.js.</p>
+            </div>
+            <div class="feature" style="text-align: center;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.25rem;">IDE Support</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">Get full autocomplete and type hints in your editor for both Rust and TypeScript.</p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rust-block {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .ts-block {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        /* First Rust block */
+        .rust-block:nth-child(1) {
+            animation-delay: 0.5s;
+        }
+
+        /* First TS block */
+        .ts-block:nth-child(1) {
+            animation-delay: 1s;
+        }
+
+        /* Second Rust block */
+        .rust-block:nth-child(2) {
+            animation-delay: 1.5s;
+        }
+
+        /* Second TS block */
+        .ts-block:nth-child(2) {
+            animation-delay: 2s;
+        }
+
+        /* Third Rust block */
+        .rust-block:nth-child(3) {
+            animation-delay: 2.5s;
+        }
+
+        /* Third TS block */
+        .ts-block:nth-child(3) {
+            animation-delay: 3s;
+        }
+
+        /* Syntax highlighting */
+        .language-rust .keyword { color: #569cd6; }
+        .language-rust .string { color: #ce9178; }
+        .language-rust .function { color: #dcdcaa; }
+        .language-rust .type { color: #4ec9b0; }
+        .language-rust .attribute { color: #c586c0; }
+        
+        .language-typescript .keyword { color: #569cd6; }
+        .language-typescript .string { color: #ce9178; }
+        .language-typescript .type { color: #4ec9b0; }
+        .language-typescript .comment { color: #6a9955; }
+    </style>
+</section>
+
 <section id="features" class="features">
     <div class="container">
         <h2>Why Choose Ruskit?</h2>
         <div class="feature-grid">
             <div class="feature-card">
-                <h3>Type-Safe Templates</h3>
-                <p>Built with Askama for compile-time template checking, ensuring your views are always valid.</p>
+                <h3>Laravel-like Developer Experience</h3>
+                <p>Enjoy Laravel's elegant syntax and rapid development patterns in Rust. From models to controllers, everything feels familiar yet powerful.</p>
             </div>
             <div class="feature-card">
-                <h3>Powerful Routing</h3>
-                <p>Intuitive and flexible routing system with middleware support and type-safe handlers.</p>
+                <h3>End-to-End Type Safety</h3>
+                <p>Automatic TypeScript type generation from Rust structs ensures complete type safety between your backend and frontend. No more runtime surprises!</p>
             </div>
             <div class="feature-card">
-                <h3>Built-in Validation</h3>
-                <p>Comprehensive validation system with type-safe rules and custom validators.</p>
+                <h3>Rust Performance</h3>
+                <p>Get the speed and memory safety of Rust while maintaining the developer velocity of Laravel. Best of both worlds!</p>
             </div>
             <div class="feature-card">
-                <h3>SEO Optimized</h3>
-                <p>Advanced metadata management system for perfect SEO and social sharing.</p>
+                <h3>Modern Frontend Stack</h3>
+                <p>React, TypeScript, and Tailwind CSS with hot reloading and type-safe props through Inertia.js integration.</p>
             </div>
         </div>
     </div>
