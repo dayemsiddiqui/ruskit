@@ -851,118 +851,46 @@ impl From<Create{name}Request> for {name} {{
 fn create_new_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("Creating new Ruskit project: {}", style(name).cyan());
     
-    // Create project directory
-    fs::create_dir_all(name)?;
+    // Get the path to our template directory
+    let template_path = std::env::current_exe()?
+        .parent()
+        .ok_or("Could not find parent directory")?
+        .parent()
+        .ok_or("Could not find parent directory")?
+        .parent()
+        .ok_or("Could not find parent directory")?
+        .join("init/template");
     
-    // Create Cargo.toml
-    let cargo_toml = format!(r#"[package]
-name = "{}"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-ruskit = "0.1.0"
-tokio = {{ version = "1.0", features = ["full"] }}
-"#, name);
-    
-    fs::write(format!("{}/Cargo.toml", name), cargo_toml)?;
-    
-    // Create src directory and main.rs
-    fs::create_dir_all(format!("{}/src", name))?;
-    fs::create_dir_all(format!("{}/src/app", name))?;
-    fs::create_dir_all(format!("{}/src/app/controllers", name))?;
-    fs::create_dir_all(format!("{}/src/app/models", name))?;
-    fs::create_dir_all(format!("{}/src/app/views", name))?;
-    fs::create_dir_all(format!("{}/templates", name))?;
-    
-    // Create main.rs with basic setup
-    let main_rs = r#"use ruskit::bootstrap;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app = bootstrap::bootstrap().await?;
-    app.serve().await?;
-    Ok(())
-}
-"#;
-    
-    fs::write(format!("{}/src/main.rs", name), main_rs)?;
-    
-    // Create a basic controller
-    let home_controller = r#"use ruskit::framework::views::*;
-use askama::Template;
-
-#[derive(Template)]
-#[template(path = "home.html")]
-pub struct HomeView {
-    pub metadata: &'static Metadata,
-}
-
-pub async fn index() -> HomeView {
-    HomeView {
-        metadata: get_global_metadata(),
+    if !template_path.exists() {
+        return Err(format!("Template directory not found at: {}", template_path.display()).into());
     }
-}
-"#;
     
-    fs::write(format!("{}/src/app/controllers/home.rs", name), home_controller)?;
+    // Check if cargo-generate is installed
+    let cargo_generate_check = std::process::Command::new("cargo")
+        .arg("generate")
+        .arg("--help")
+        .output();
     
-    // Create mod.rs for controllers
-    let controllers_mod = r#"pub mod home;
-pub use home::*;
-"#;
+    if cargo_generate_check.is_err() {
+        println!("{}", style("cargo-generate is not installed. Installing...").yellow());
+        std::process::Command::new("cargo")
+            .arg("install")
+            .arg("cargo-generate")
+            .status()?;
+    }
     
-    fs::write(format!("{}/src/app/controllers/mod.rs", name), controllers_mod)?;
+    // Run cargo-generate with our local template
+    let status = std::process::Command::new("cargo")
+        .arg("generate")
+        .arg("--path")
+        .arg(&template_path)
+        .arg("--name")
+        .arg(name)
+        .status()?;
     
-    // Create a basic template
-    let home_template = r#"{% extends "base.html" %}
-
-{% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold mb-4">Welcome to Ruskit!</h1>
-    <p class="text-lg text-gray-600">
-        Start building your web application with Ruskit - the modern web framework for Rust.
-    </p>
-</div>
-{% endblock %}
-"#;
-    
-    fs::write(format!("{}/templates/home.html", name), home_template)?;
-    
-    // Create base template
-    let base_template = r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ metadata.title }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50">
-    <nav class="bg-white shadow-lg">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="text-xl font-bold">{{ metadata.title }}</div>
-                <div>
-                    <a href="/" class="px-4 py-2 text-gray-700 hover:text-gray-900">Home</a>
-                    <a href="/docs" class="px-4 py-2 text-gray-700 hover:text-gray-900">Docs</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    {% block content %}{% endblock %}
-
-    <footer class="bg-white mt-8 py-4">
-        <div class="container mx-auto px-4 text-center text-gray-600">
-            Built with Ruskit
-        </div>
-    </footer>
-</body>
-</html>
-"#;
-    
-    fs::write(format!("{}/templates/base.html", name), base_template)?;
+    if !status.success() {
+        return Err("Failed to generate project".into());
+    }
     
     println!("\n{} Project created successfully!", style("✓").green());
     println!("\nNext steps:");
