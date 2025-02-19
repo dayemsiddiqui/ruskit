@@ -1,9 +1,8 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
+import { AboutPageProps } from '../types/generated';
 
-interface AboutProps {}
-
-export default function About({}: AboutProps) {
+export default function About({ title, description, tech_stack }: AboutPageProps) {
     return (
         <>
             <Head title="About Us" />
@@ -12,9 +11,9 @@ export default function About({}: AboutProps) {
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                         <div className="px-6 py-8 sm:p-10">
                             <div className="border-b border-gray-200 pb-8">
-                                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">About Us</h1>
+                                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">{title}</h1>
                                 <p className="mt-4 text-lg text-gray-600">
-                                    Welcome to our innovative web application built with Rust and React
+                                    {description}
                                 </p>
                             </div>
                             
@@ -22,29 +21,16 @@ export default function About({}: AboutProps) {
                                 <div className="bg-gray-50 rounded-xl p-6">
                                     <h2 className="text-xl font-semibold text-gray-900">Our Tech Stack</h2>
                                     <ul className="mt-4 space-y-3 text-gray-600">
-                                        <li className="flex items-center">
-                                            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                Rust
-                                            </span>
-                                        </li>
-                                        <li className="flex items-center">
-                                            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                React
-                                            </span>
-                                        </li>
-                                        <li className="flex items-center">
-                                            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                TypeScript
-                                            </span>
-                                        </li>
-                                        <li className="flex items-center">
-                                            <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                Tailwind CSS
-                                            </span>
-                                        </li>
+                                        {tech_stack.map((tech, index) => (
+                                            <li key={`tech-${index}`} className="flex items-center">
+                                                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                    {tech}
+                                                </span>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
-                                
+
                                 <div className="bg-gray-50 rounded-xl p-6">
                                     <h2 className="text-xl font-semibold text-gray-900">Why Choose Us?</h2>
                                     <ul className="mt-4 space-y-3 text-gray-600">
