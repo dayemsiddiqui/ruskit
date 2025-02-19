@@ -8,4 +8,5 @@ pub mod typescript;
 
 pub use middleware::*;
 pub use views::*;
-pub use database::*; 
+pub use database::*;
+pub use typescript::export_all_types; 

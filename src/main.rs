@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use ruskit::web;
 use tokio::net::TcpListener;
 use std::fs;
+use ruskit::framework::export_all_types;
 
 fn generate_typescript_types() -> std::io::Result<()> {
     // Ensure the types directory exists
@@ -12,7 +13,7 @@ fn generate_typescript_types() -> std::io::Result<()> {
     fs::write(output_file, "")?;
 
     // Generate types for all DTOs
-    if let Err(e) = ruskit::app::dtos::export_all_types(output_file) {
+    if let Err(e) = export_all_types(output_file) {
         eprintln!("Error generating TypeScript types: {}", e);
     }
 

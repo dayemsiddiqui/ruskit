@@ -5,4 +5,3 @@ pub mod post;
 pub use about::AboutPageProps;
 pub use user::{UserResponse, CreateUserRequest, UserListResponse};
 pub use post::{PostResponse, CreatePostRequest, PostListResponse};
-pub use crate::framework::typescript::export_all_types;
