@@ -150,6 +150,9 @@
 .command-line:nth-child(6) { animation-delay: 4.5s; }
 .command-line:nth-child(7) { animation-delay: 5s; }
 .command-line:nth-child(8) { animation-delay: 6s; }
+.command-line:nth-child(9) { animation-delay: 6.5s; }
+.command-line:nth-child(10) { animation-delay: 7s; }
+.command-line:nth-child(11) { animation-delay: 7.5s; }
 
 .cursor {
     display: inline-block;
@@ -290,6 +293,10 @@
             <div class="terminal-content">
                 <div class="command-line">
                     <span class="prompt">$</span>
+                    <span class="command">cargo install ruskit</span>
+                </div> 
+                <div class="command-line">
+                    <span class="prompt">$</span>
                     <span class="command">cargo kit new blog</span>
                 </div>
                 <div class="command-line output">
@@ -301,21 +308,23 @@
                 </div>
                 <div class="command-line">
                     <span class="prompt">$</span>
-                    <span class="command">cargo kit make:model <span class="highlight">Post</span></span>
+                    <span class="command">cargo make dev</span>
+                </div>
+                <div class="command-line output">
+                    Running on http://localhost:3000
+                </div>
+                <div class="command-line">
+                    <span class="prompt">$</span>
+                    <span class="command">cargo kit make:all <span class="highlight">Post</span></span>
                 </div>
                 <div class="command-line output">
                     Created: src/app/models/post.rs
                 </div>
-                <div class="command-line">
-                    <span class="prompt">$</span>
-                    <span class="command">cargo kit make:controller <span class="highlight">Post</span></span>
-                </div>
                 <div class="command-line output">
                     Created: src/app/controllers/post_controller.rs
                 </div>
-                <div class="command-line">
-                    <span class="prompt">$</span>
-                    <span class="command">cargo kit serve<span class="cursor"></span></span>
+                <div class="command-line output">
+                    Created: src/app/dtos/post_dto.rs
                 </div>
             </div>
         </div>
