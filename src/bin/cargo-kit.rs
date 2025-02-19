@@ -89,6 +89,12 @@ enum Commands {
         /// Name of the page to create (e.g., "Dashboard")
         name: String,
     },
+    /// Create a new Inertia props type
+    #[command(name = "inertia:prop")]
+    InertiaProp {
+        /// Name of the props to create (e.g., "Dashboard")
+        name: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -266,6 +272,21 @@ async fn main() {
             println!("   .route(\"/{}\", get({}Controller::show))", name.to_lowercase(), name);
             println!("2. Customize the page component in resources/js/pages/{}.tsx", name);
             println!("3. Add your data to the DTO in src/app/dtos/{}.rs", name.to_lowercase());
+        },
+        Commands::InertiaProp { name } => {
+            println!("Creating Inertia props type for {}...", style(&name).cyan());
+            
+            // Create DTO
+            println!("\nCreating props type...");
+            if let Err(e) = make_page_dto(&name) {
+                eprintln!("Error creating props type: {}", e);
+                std::process::exit(1);
+            }
+            
+            println!("\n{}", style(format!("Successfully created Inertia props type for {}!", name)).green());
+            println!("\nNext steps:");
+            println!("1. Add your props in src/app/dtos/{}.rs", name.to_lowercase());
+            println!("2. Import the type in your component: import type {{ {}Props }} from '../types/generated';", name);
         },
     }
 }
