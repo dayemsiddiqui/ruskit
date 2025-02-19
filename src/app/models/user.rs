@@ -70,7 +70,7 @@ impl User {
     }
 
     /// Get all posts by this user
-    pub fn posts(&self) -> HasMany<User, Post> {
-        HasMany::new("user_id")
+    pub fn posts(&self) -> HasMany<Post> {
+        HasMany::new::<Self>()
     }
 }

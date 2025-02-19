@@ -71,16 +71,14 @@ pub fn discover_and_register_models() -> std::io::Result<()> {
     Ok(())
 }
 
-pub struct BelongsTo<Parent: Model, Child: Model> {
+pub struct BelongsTo<Parent: Model> {
     parent_type: PhantomData<Parent>,
-    child_type: PhantomData<Child>,
-    foreign_key: &'static str,
+    foreign_key: String,
 }
 
-pub struct HasMany<Parent: Model, Child: Model> {
-    parent_type: PhantomData<Parent>,
+pub struct HasMany<Child: Model> {
     child_type: PhantomData<Child>,
-    foreign_key: &'static str,
+    foreign_key: String,
 }
 
 pub struct HasOne<Parent: Model, Child: Model> {
@@ -89,31 +87,65 @@ pub struct HasOne<Parent: Model, Child: Model> {
     foreign_key: &'static str,
 }
 
-impl<Parent: Model, Child: Model> BelongsTo<Parent, Child> {
-    pub fn new(foreign_key: &'static str) -> Self {
+impl<Parent: Model> BelongsTo<Parent> {
+    pub fn new<Child: Model>() -> Self {
+        // Get the parent table name and remove trailing 's' if present
+        let parent_table = Parent::table_name();
+        let singular = if parent_table.ends_with('s') {
+            &parent_table[..parent_table.len() - 1]
+        } else {
+            parent_table
+        };
+        
+        // Construct foreign key (e.g., "user_id" from "users")
+        let foreign_key = format!("{}_id", singular);
+        
         Self {
             parent_type: PhantomData,
-            child_type: PhantomData,
             foreign_key,
         }
     }
 
-    pub async fn get(&self, model: &Child) -> Result<Option<Parent>, DatabaseError> {
-        let foreign_key_value = model.get_field_value(self.foreign_key)?;
+    pub fn with_key(foreign_key: impl Into<String>) -> Self {
+        Self {
+            parent_type: PhantomData,
+            foreign_key: foreign_key.into(),
+        }
+    }
+
+    pub async fn get(&self, model: &impl Model) -> Result<Option<Parent>, DatabaseError> {
+        let foreign_key_value = model.get_field_value(&self.foreign_key)?;
         Parent::find(foreign_key_value).await
     }
 }
 
-impl<Parent: Model, Child: Model> HasMany<Parent, Child> {
-    pub fn new(foreign_key: &'static str) -> Self {
+impl<Child: Model> HasMany<Child> {
+    pub fn new<Parent: Model>() -> Self {
+        // Get the parent table name and remove trailing 's' if present
+        let parent_table = Parent::table_name();
+        let singular = if parent_table.ends_with('s') {
+            &parent_table[..parent_table.len() - 1]
+        } else {
+            parent_table
+        };
+        
+        // Construct foreign key (e.g., "user_id" from "users")
+        let foreign_key = format!("{}_id", singular);
+        
         Self {
-            parent_type: PhantomData,
             child_type: PhantomData,
             foreign_key,
         }
     }
 
-    pub async fn get(&self, model: &Parent) -> Result<Vec<Child>, DatabaseError> {
+    pub fn with_key(foreign_key: impl Into<String>) -> Self {
+        Self {
+            child_type: PhantomData,
+            foreign_key: foreign_key.into(),
+        }
+    }
+
+    pub async fn get(&self, model: &impl Model) -> Result<Vec<Child>, DatabaseError> {
         let pool = get_pool()?;
         let query = format!(
             "SELECT * FROM {} WHERE {} = ?",

@@ -57,8 +57,8 @@ impl Model for Post {
 
 impl Post {
     /// Get the user who created this post
-    pub fn user(&self) -> BelongsTo<User, Post> {
-        BelongsTo::new("user_id")
+    pub fn user(&self) -> BelongsTo<User> {
+        BelongsTo::new::<Self>()
     }
 
     /// Get recent records
