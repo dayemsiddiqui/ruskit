@@ -1,0 +1,173 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Axum Extractors - Ruskit Documentation{% endblock %}
+
+{% block description %}Learn about Axum extractors in Ruskit and how to use them effectively with controllers and DTOs{% endblock %}
+
+{% block content %}
+<div class="prose">
+    <h1>Axum Extractors</h1>
+
+    <p>Axum extractors are powerful tools that help you extract and validate data from incoming HTTP requests. In Ruskit, extractors are commonly used with controllers and DTOs to handle request data efficiently and safely.</p>
+
+    <h2>Overview</h2>
+
+    <p>Extractors in Ruskit:</p>
+    <ul>
+        <li>Extract data from HTTP requests</li>
+        <li>Integrate with DTOs for validation</li>
+        <li>Support various data sources (path, query, body, etc.)</li>
+        <li>Handle authentication and state</li>
+        <li>Can be combined using tuple extractors</li>
+    </ul>
+
+    <h2>Common Extractors</h2>
+
+    <h3>Path Parameters</h3>
+
+    <p>Extract values from URL path segments:</p>
+
+    <pre><code class="language-rust">use axum::extract::Path;
+
+// Single parameter
+pub async fn show(Path(id): Path<i64>) -> Json<PostResponse> {
+    // Access id directly
+}
+
+// Multiple parameters
+#[derive(Deserialize)]
+struct PathParams {
+    user_id: i64,
+    post_id: i64,
+}
+
+pub async fn show_user_post(
+    Path(params): Path<PathParams>
+) -> Json<PostResponse> {
+    // Access params.user_id and params.post_id
+}</code></pre>
+
+    <h3>Query Parameters</h3>
+
+    <p>Extract and validate URL query parameters:</p>
+
+    <pre><code class="language-rust">use axum::extract::Query;
+use serde::Deserialize;
+
+#[derive(Deserialize, Validate)]
+pub struct ListParams {
+    #[validate(range(min = 1))]
+    page: Option<i32>,
+    #[validate(range(min = 1, max = 100))]
+    per_page: Option<i32>,
+    #[validate(length(min = 1))]
+    search: Option<String>,
+}
+
+pub async fn index(
+    Query(params): Query<ListParams>
+) -> Json<PostListResponse> {
+    let page = params.page.unwrap_or(1);
+    let per_page = params.per_page.unwrap_or(15);
+    // Use parameters for pagination and filtering
+}</code></pre>
+
+    <h3>JSON Body</h3>
+
+    <p>Extract and validate JSON request bodies using DTOs:</p>
+
+    <pre><code class="language-rust">use axum::Json;
+use crate::app::dtos::post::CreatePostRequest;
+
+pub async fn store(
+    Json(payload): Json<CreatePostRequest>
+) -> Result<Json<PostResponse>, ApiError> {
+    // payload is validated through DTO validation rules
+    let post: Post = payload.into();
+    let created = Post::create(post).await?;
+    Ok(Json(PostResponse::from(created)))
+}</code></pre>
+
+    <h3>Form Data</h3>
+
+    <p>Extract and validate form data:</p>
+
+    <pre><code class="language-rust">use axum::Form;
+use serde::Deserialize;
+
+#[derive(Deserialize, Validate)]
+pub struct LoginForm {
+    #[validate(email)]
+    email: String,
+    #[validate(length(min = 8))]
+    password: String,
+}
+
+pub async fn login(
+    Form(form): Form<LoginForm>
+) -> Result<Json<AuthResponse>, ApiError> {
+    // Handle login with validated form data
+}</code></pre>
+
+    <h3>State</h3>
+
+    <p>Access application state:</p>
+
+    <pre><code class="language-rust">use axum::extract::State;
+use crate::framework::state::AppState;
+
+pub async fn index(
+    State(state): State<AppState>
+) -> Result<Json<Config>, ApiError> {
+    // Access shared application state
+}</code></pre>
+
+    <h2>Combining Extractors</h2>
+
+    <p>Use tuple extractors to combine multiple extractors:</p>
+
+    <pre><code class="language-rust">use axum::{Json, extract::{State, Path}};
+use crate::framework::middleware::auth::Auth;
+
+pub async fn update(
+    State(state): State<AppState>,
+    Auth(user): Auth,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdatePostRequest>,
+) -> Result<Json<PostResponse>, ApiError> {
+    // Access state, authenticated user, path parameter, and request body
+}</code></pre>
+
+    <h2>Custom Extractors</h2>
+
+    <p>Create custom extractors for reusable functionality:</p>
+
+    <pre><code class="language-rust">use async_trait::async_trait;
+use axum::{
+    extract::FromRequestParts,
+    http::request::Parts,
+};
+
+pub struct CurrentUser(pub User);
+
+#[async_trait]
+impl<S> FromRequestParts<S> for CurrentUser
+where
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Extract and validate user from request
+        // Return CurrentUser or rejection
+    }
+}</code></pre>
+
+
+
+    
+
+
+    
+</div>
+{% endblock %} 

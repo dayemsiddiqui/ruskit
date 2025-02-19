@@ -89,6 +89,11 @@ impl Default for DocsTemplate {
                             path: "/docs/dtos".to_string(),
                             is_active: false,
                         },
+                        DocItem {
+                            title: "Extractors".to_string(),
+                            path: "/docs/extractors".to_string(),
+                            is_active: false,
+                        },
                     ],
                 },
                 DocSection {
@@ -214,6 +219,14 @@ pub struct CommandsTemplate {
     pub current_page: String,
 }
 
+#[derive(Template, Default)]
+#[template(path = "docs/extractors.html")]
+pub struct ExtractorsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
 pub struct DocsController;
 
 impl DocsController {
@@ -292,6 +305,11 @@ impl DocsController {
                 current_page: page.clone(),
             }.into_response(),
             "commands" => CommandsTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "extractors" => ExtractorsTemplate { 
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
