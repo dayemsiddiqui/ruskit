@@ -868,9 +868,15 @@ fn create_new_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let status = std::process::Command::new("cargo-generate")
         .arg("generate")
         .arg("--git")
-        .arg("https://github.com/np-taken/ruskit-template")
+        .arg("https://github.com/dayemsiddiqui/ruskit")  // Use the main repository as template
+        .arg("--branch")
+        .arg("main")  // Specify the main branch
         .arg("--name")
         .arg(name)
+        .arg("--force")
+        .env("CARGO_GENERATE_VALUE_PROJECT_NAME", name)
+        .env("CARGO_GENERATE_VALUE_CRATE_NAME", name.to_lowercase())
+        .env("CARGO_GENERATE_VALUE_BIN_NAME", name.to_lowercase())
         .status()?;
     
     if !status.success() {
@@ -880,7 +886,7 @@ fn create_new_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n{} Project created successfully!", style("✓").green());
     println!("\nNext steps:");
     println!("  cd {}", name);
-    println!("  cargo kit dev    # Start the development server");
+    println!("  cargo make dev    # Start the development server");
     
     Ok(())
 } 

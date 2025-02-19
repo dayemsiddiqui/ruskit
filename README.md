@@ -29,23 +29,24 @@ Before you begin, ensure you have the following installed:
 
 ## Quick Start
 
-Create a new Ruskit project:
+First, install the Ruskit CLI tool:
 
 ```bash
-cargo install ruskit-cli
-ruskit new my-project
+# Install the Ruskit CLI tool
+cargo install ruskit
 ```
 
-Navigate to project directory:
+Then create a new Ruskit project:
 
 ```bash
+# Create a new project
+cargo kit new my-project
+
+# Navigate to project directory
 cd my-project
-```
 
-Start the development server:
-
-```bash
-cargo kit dev
+# Start the development server
+cargo make dev
 ```
 
 ## Development Tools
