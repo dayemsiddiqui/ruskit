@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    "ts-collector",
+    "ts_export_derive"
+]
+
 [package]
 name = "ruskit"
 version = "0.1.4"
@@ -51,3 +57,4 @@ inventory = "0.3"
 pulldown-cmark = "0.9"
 axum-inertia = "0.6.0"
 ts-rs = { version = "7.1", features = ["format"] }
+ts_export_derive = { path = "ts_export_derive" }

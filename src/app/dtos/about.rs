@@ -1,11 +1,11 @@
 // DTO for the About page
 
-use serde::Serialize;
-use ts_rs::TS;
+use ts_export_derive::auto_ts_export;
 
-#[derive(Serialize, TS)]
-#[ts(export)]
+#[auto_ts_export]
 pub struct AboutPageProps {
     pub tech_stack: Vec<String>,
     pub why_choose_us: Vec<String>, 
 }
+
+
