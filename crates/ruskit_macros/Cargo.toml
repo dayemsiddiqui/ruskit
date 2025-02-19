@@ -2,6 +2,14 @@
 name = "ruskit_macros"
 version = "0.1.0"
 edition = "2021"
+description = "Procedural macros for the Ruskit web framework"
+authors = ["Dayem Siddiqui <dayemsiddiqui@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/yourusername/ruskit"
+documentation = "https://docs.rs/ruskit_macros"
+homepage = "https://ruskit.rs"
+keywords = ["web", "framework", "macros", "proc-macro"]
+categories = ["web-programming::http-server", "development-tools::procedural-macro-helpers"]
 
 [lib]
 proc-macro = true

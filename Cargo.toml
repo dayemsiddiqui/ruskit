@@ -2,6 +2,15 @@
 name = "ruskit"
 version = "0.1.0"
 edition = "2021"
+description = "A modern web framework for Rust inspired by Laravel"
+authors = ["Dayem Siddiqui <dayemsiddiqui@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/dayemsiddiqui/ruskit"
+documentation = "https://docs.rs/ruskit"
+homepage = "https://ruskit.rs"
+keywords = ["web", "framework", "http", "mvc", "laravel"]
+categories = ["web-programming::http-server", "web-programming::frameworks"]
+readme = "README.md"
 default-run = "ruskit"
 
 [[bin]]
