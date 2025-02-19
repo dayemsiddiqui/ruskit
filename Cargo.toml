@@ -1,6 +1,6 @@
 [package]
 name = "ruskit"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A modern web framework for Rust inspired by Laravel"
 authors = ["Dayem Siddiqui <dayemsiddiqui@gmail.com>"]
