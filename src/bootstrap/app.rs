@@ -6,6 +6,7 @@ use crate::framework::{
     },
     views::{Metadata, set_global_metadata},
     database::{self},
+    inertia::InertiaConfig,
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -29,6 +30,8 @@ pub struct Application {
     middleware_groups: Vec<(String, Vec<Middleware>)>,
     /// Global metadata
     metadata: Option<Metadata>,
+    /// Inertia configuration
+    inertia_config: Option<InertiaConfig>,
 }
 
 impl Application {
@@ -37,6 +40,7 @@ impl Application {
             middleware_stack: MiddlewareStack::new(),
             middleware_groups: Vec::new(),
             metadata: None,
+            inertia_config: None,
         }
     }
 
@@ -72,6 +76,14 @@ impl Application {
         }
     }
 
+    /// Configure Inertia
+    pub async fn inertia<F>(&mut self, configure: F)
+    where
+        F: FnOnce() -> InertiaConfig,
+    {
+        self.inertia_config = Some(configure());
+    }
+
     /// Get the global middleware stack
     pub fn middleware_stack(&self) -> MiddlewareStack {
         self.middleware_stack.clone()
@@ -80,6 +92,11 @@ impl Application {
     /// Get the middleware groups
     pub fn groups(&self) -> Vec<(String, Vec<Middleware>)> {
         self.middleware_groups.clone()
+    }
+
+    /// Get the Inertia configuration
+    pub fn inertia_config(&self) -> Option<InertiaConfig> {
+        self.inertia_config.clone()
     }
 }
 

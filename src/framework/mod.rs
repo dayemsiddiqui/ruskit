@@ -1,8 +1,9 @@
+pub mod database;
 pub mod middleware;
 pub mod routing;
-pub mod views;
 pub mod validation;
-pub mod database;
+pub mod views;
+pub mod inertia;
 
 pub use middleware::*;
 pub use views::*;

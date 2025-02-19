@@ -8,10 +8,11 @@ use crate::framework::middleware::{
 };
 use crate::bootstrap::app::bootstrap;
 use crate::app::controllers::{
-    pages::{landing, about},
     user_controller::UserController,
     docs_controller::DocsController,
+    inertia_controller::InertiaController,
 };
+use axum_inertia::vite;
 
 // Define routes with middleware
 pub async fn routes() -> Router {
@@ -20,15 +21,21 @@ pub async fn routes() -> Router {
         eprintln!("Failed to bootstrap application: {}", e);
         std::process::exit(1);
     }
+
+    let inertia_config = vite::Development::default()
+        .port(3000)
+        .main("resources/js/app.jsx")
+        .lang("en")
+        .title("Ruskit")
+        .react() 
+        .into_config();
     
-    let router = Router::new()
-        .route(
-            "/", 
-            get(landing).middleware(Cors::new("http://specific.example.com"))
-        )
-        .route("/about", get(about))
+    let inertia_router = Router::new()
+        .route("/", get(InertiaController::home))
+        .route("/about", get(InertiaController::about))
         .route("/docs", get(DocsController::index))
-        .route("/docs/:page", get(DocsController::show));
+        .route("/docs/:page", get(DocsController::show))
+        .with_state(inertia_config);
 
     let api_router = Router::new()
         .route(
@@ -43,5 +50,7 @@ pub async fn routes() -> Router {
             post(UserController::store).middleware(TrimStrings::new())
         );
 
-    router.nest("/api", api_router)
+    Router::new()
+        .nest("/", inertia_router)
+        .nest("/api", api_router)
 } 

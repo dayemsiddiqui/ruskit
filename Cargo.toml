@@ -49,3 +49,4 @@ Inflector = "0.11.4"
 fake = { version = "2.9", features = ["derive"] }
 inventory = "0.3"
 pulldown-cmark = "0.9"
+axum-inertia = "0.6.0"
