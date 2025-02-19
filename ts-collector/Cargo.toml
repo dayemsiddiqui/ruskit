@@ -1,0 +1,13 @@
+[package]
+name = "ts-collector"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "visit-mut"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+ts-rs = "7.1"

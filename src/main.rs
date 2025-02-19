@@ -1,15 +1,30 @@
 use std::net::SocketAddr;
 use ruskit::web;
 use tokio::net::TcpListener;
-use ts_rs::TS;
+use std::fs;
+
+fn generate_typescript_types() -> std::io::Result<()> {
+    // Ensure the types directory exists
+    fs::create_dir_all("resources/js/types")?;
+    
+    // Create or truncate the generated.ts file
+    let output_file = "resources/js/types/generated.ts";
+    fs::write(output_file, "")?;
+
+    // Generate types for all DTOs
+    if let Err(e) = ruskit::app::dtos::export_all_types(output_file) {
+        eprintln!("Error generating TypeScript types: {}", e);
+    }
+
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() {
-    // Ensure the types directory exists and generate TypeScript types
-    std::fs::create_dir_all("resources/js/types").unwrap();
-    
     // Generate TypeScript types
-    ruskit::app::dtos::about::AboutPageProps::export_to("resources/js/types/generated.ts").unwrap();
+    if let Err(e) = generate_typescript_types() {
+        eprintln!("Error generating TypeScript types: {}", e);
+    }
 
     // Get the router
     let app = web::routes().await;
