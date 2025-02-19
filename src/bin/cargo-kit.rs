@@ -851,23 +851,8 @@ impl From<Create{name}Request> for {name} {{
 fn create_new_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("Creating new Ruskit project: {}", style(name).cyan());
     
-    // Get the path to our template directory
-    let template_path = std::env::current_exe()?
-        .parent()
-        .ok_or("Could not find parent directory")?
-        .parent()
-        .ok_or("Could not find parent directory")?
-        .parent()
-        .ok_or("Could not find parent directory")?
-        .join("init/template");
-    
-    if !template_path.exists() {
-        return Err(format!("Template directory not found at: {}", template_path.display()).into());
-    }
-    
     // Check if cargo-generate is installed
-    let cargo_generate_check = std::process::Command::new("cargo")
-        .arg("generate")
+    let cargo_generate_check = std::process::Command::new("cargo-generate")
         .arg("--help")
         .output();
     
@@ -879,11 +864,11 @@ fn create_new_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
             .status()?;
     }
     
-    // Run cargo-generate with our local template
-    let status = std::process::Command::new("cargo")
+    // Run cargo-generate with the GitHub template
+    let status = std::process::Command::new("cargo-generate")
         .arg("generate")
-        .arg("--path")
-        .arg(&template_path)
+        .arg("--git")
+        .arg("https://github.com/np-taken/ruskit-template")
         .arg("--name")
         .arg(name)
         .status()?;
