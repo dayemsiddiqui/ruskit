@@ -1,11 +1,11 @@
 [package]
 name = "ruskit_macros"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Procedural macros for the Ruskit web framework"
 authors = ["Dayem Siddiqui <dayemsiddiqui@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/yourusername/ruskit"
+repository = "https://github.com/dayemsiddiqui/ruskit"
 documentation = "https://docs.rs/ruskit_macros"
 homepage = "https://ruskit.rs"
 keywords = ["web", "framework", "macros", "proc-macro"]
