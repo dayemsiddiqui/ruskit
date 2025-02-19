@@ -6,6 +6,103 @@
 
     <p>Ruskit provides a set of CLI commands to help you scaffold and manage your application. These commands are available through the <code>cargo kit</code> command-line interface.</p>
 
+    <h2>Command Overview</h2>
+    <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left">Command</th>
+                    <th class="px-4 py-2 text-left">Description</th>
+                    <th class="px-4 py-2 text-left">Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="bg-slate-100">
+                    <td class="px-4 py-2 font-semibold" colspan="3">Database Commands</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>migrate</code></td>
+                    <td class="px-4 py-2">Run all pending database migrations</td>
+                    <td class="px-4 py-2"><code>cargo kit migrate</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>migrate:fresh</code></td>
+                    <td class="px-4 py-2">Drop all tables and re-run all migrations</td>
+                    <td class="px-4 py-2"><code>cargo kit migrate:fresh</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>db:seed</code></td>
+                    <td class="px-4 py-2">Seed the database with sample data</td>
+                    <td class="px-4 py-2"><code>cargo kit db:seed</code></td>
+                </tr>
+                <tr class="bg-slate-100">
+                    <td class="px-4 py-2 font-semibold" colspan="3">Development Commands</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>dev</code></td>
+                    <td class="px-4 py-2">Start development server with hot reload</td>
+                    <td class="px-4 py-2"><code>cargo kit dev</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>serve</code></td>
+                    <td class="px-4 py-2">Start production server</td>
+                    <td class="px-4 py-2"><code>cargo kit serve</code></td>
+                </tr>
+                <tr class="bg-slate-100">
+                    <td class="px-4 py-2 font-semibold" colspan="3">Make Commands</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:model</code></td>
+                    <td class="px-4 py-2">Create a new model with migration</td>
+                    <td class="px-4 py-2"><code>cargo kit make:model User</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:migration</code></td>
+                    <td class="px-4 py-2">Create a new migration for a model</td>
+                    <td class="px-4 py-2"><code>cargo kit make:migration add_email --model User</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:factory</code></td>
+                    <td class="px-4 py-2">Create a new factory for a model</td>
+                    <td class="px-4 py-2"><code>cargo kit make:factory User</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:seeder</code></td>
+                    <td class="px-4 py-2">Create a new database seeder</td>
+                    <td class="px-4 py-2"><code>cargo kit make:seeder Users</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:controller</code></td>
+                    <td class="px-4 py-2">Create a new controller</td>
+                    <td class="px-4 py-2"><code>cargo kit make:controller User</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:dto</code></td>
+                    <td class="px-4 py-2">Create a new DTO</td>
+                    <td class="px-4 py-2"><code>cargo kit make:dto User</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>make:all</code></td>
+                    <td class="px-4 py-2">Create model, DTO, and controller</td>
+                    <td class="px-4 py-2"><code>cargo kit make:all Post</code></td>
+                </tr>
+                <tr class="bg-slate-100">
+                    <td class="px-4 py-2 font-semibold" colspan="3">Inertia Commands</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>inertia:page</code></td>
+                    <td class="px-4 py-2">Create a complete Inertia page</td>
+                    <td class="px-4 py-2"><code>cargo kit inertia:page Dashboard</code></td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>inertia:prop</code></td>
+                    <td class="px-4 py-2">Create just the props type</td>
+                    <td class="px-4 py-2"><code>cargo kit inertia:prop Settings</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     <h2>Available Commands</h2>
 
     <h3>Database Commands</h3>
@@ -69,6 +166,30 @@
         </li>
     </ul>
 
+    <h3>Inertia Commands</h3>
+    <ul>
+        <li>
+            <code>cargo kit inertia:page &lt;Name&gt;</code> - Create a complete Inertia page
+            <pre><code class="language-bash">cargo kit inertia:page Dashboard</code></pre>
+            <p>This command will:</p>
+            <ol>
+                <li>Create a props type in <code>src/app/dtos/dashboard.rs</code></li>
+                <li>Create a controller in <code>src/app/controllers/dashboard_controller.rs</code></li>
+                <li>Create a React component in <code>resources/js/pages/Dashboard.tsx</code></li>
+            </ol>
+        </li>
+        <li>
+            <code>cargo kit inertia:prop &lt;Name&gt;</code> - Create just the props type
+            <pre><code class="language-bash">cargo kit inertia:prop Settings</code></pre>
+            <p>Useful when:</p>
+            <ul>
+                <li>Adding props to an existing page</li>
+                <li>Creating shared props used by multiple components</li>
+                <li>Defining the contract first before implementing the UI</li>
+            </ul>
+        </li>
+    </ul>
+
     <h2>Command Behavior</h2>
 
     <h3>Model Generation</h3>
@@ -114,6 +235,14 @@
         <li>Creates a new seeder in <code>src/app/seeders</code></li>
         <li>Includes basic seeder structure</li>
         <li>Updates <code>mod.rs</code> to include the new seeder</li>
+    </ul>
+
+    <h3>Inertia Page Generation</h3>
+    <ul>
+        <li>Creates a props type with TypeScript export</li>
+        <li>Creates a controller with Inertia rendering</li>
+        <li>Creates a React component with TypeScript types</li>
+        <li>Sets up all necessary imports and routing</li>
     </ul>
 
     <h2>Best Practices</h2>
