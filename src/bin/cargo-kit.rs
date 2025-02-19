@@ -83,6 +83,12 @@ enum Commands {
     /// Seed the database with sample data
     #[command(name = "db:seed")]
     DbSeed,
+    /// Create a new Inertia page with controller and DTO
+    #[command(name = "inertia:page")]
+    InertiaPage {
+        /// Name of the page to create (e.g., "Dashboard")
+        name: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -229,7 +235,38 @@ async fn main() {
                 std::process::exit(1);
             }
             println!("Database seeded successfully!");
-        }
+        },
+        Commands::InertiaPage { name } => {
+            println!("Creating Inertia page components for {}...", style(&name).cyan());
+            
+            // Create DTO first
+            println!("\n1. Creating DTO...");
+            if let Err(e) = make_page_dto(&name) {
+                eprintln!("Error creating DTO: {}", e);
+                std::process::exit(1);
+            }
+            
+            // Create controller next
+            println!("\n2. Creating controller...");
+            if let Err(e) = make_page_controller(&name) {
+                eprintln!("Error creating controller: {}", e);
+                std::process::exit(1);
+            }
+            
+            // Create React component last
+            println!("\n3. Creating React component...");
+            if let Err(e) = make_page_component(&name) {
+                eprintln!("Error creating React component: {}", e);
+                std::process::exit(1);
+            }
+            
+            println!("\n{}", style(format!("Successfully created Inertia page components for {}!", name)).green());
+            println!("\nNext steps:");
+            println!("1. Add your route in src/web.rs:");
+            println!("   .route(\"/{}\", get({}Controller::show))", name.to_lowercase(), name);
+            println!("2. Customize the page component in resources/js/pages/{}.tsx", name);
+            println!("3. Add your data to the DTO in src/app/dtos/{}.rs", name.to_lowercase());
+        },
     }
 }
 
@@ -887,6 +924,126 @@ fn create_new_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("\nNext steps:");
     println!("  cd {}", name);
     println!("  cargo make dev    # Start the development server");
+    
+    Ok(())
+}
+
+fn make_page_dto(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let dto_dir = Path::new("src/app/dtos");
+    if !dto_dir.exists() {
+        fs::create_dir_all(dto_dir)?;
+    }
+    
+    let file_name = dto_dir.join(format!("{}.rs", name.to_lowercase()));
+    
+    let dto_content = format!(r#"use serde::Serialize;
+use ts_rs::TS;
+
+#[derive(Serialize, TS)]
+#[ts(export)]
+pub struct {name}Response {{
+    pub title: String,
+    // TODO: Add your response fields here
+}}"#, name=name);
+
+    fs::write(&file_name, dto_content)?;
+
+    // Update mod.rs
+    let mod_file = dto_dir.join("mod.rs");
+    let mut mod_content = String::new();
+    
+    if mod_file.exists() {
+        mod_content = fs::read_to_string(&mod_file)?;
+    }
+
+    let mod_line = format!("pub mod {};\n", name.to_lowercase());
+    if !mod_content.contains(&mod_line) {
+        mod_content.push_str(&mod_line);
+    }
+
+    fs::write(mod_file, mod_content)?;
+    println!("Created DTO file: {}", file_name.display());
+    
+    Ok(())
+}
+
+fn make_page_controller(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let controller_dir = Path::new("src/app/controllers");
+    if !controller_dir.exists() {
+        fs::create_dir_all(controller_dir)?;
+    }
+    
+    let controller_name = format!("{}Controller", name);
+    let file_name = controller_dir.join(format!("{}_controller.rs", name.to_lowercase()));
+    
+    let controller_content = format!(r#"use axum::response::IntoResponse;
+use axum_inertia::Inertia;
+use crate::app::dtos::{}::{name}Response;
+
+pub struct {controller_name};
+
+impl {controller_name} {{
+    pub async fn show(inertia: Inertia) -> impl IntoResponse {{
+        inertia.render("{name}", {name}Response {{
+            title: String::from("{name}"),
+        }})
+    }}
+}}"#, name.to_lowercase(), name=name, controller_name=controller_name);
+
+    fs::write(&file_name, controller_content)?;
+
+    // Update mod.rs
+    let mod_file = controller_dir.join("mod.rs");
+    let mut mod_content = String::new();
+    
+    if mod_file.exists() {
+        mod_content = fs::read_to_string(&mod_file)?;
+    }
+
+    let mod_name = format!("{}_controller", name.to_lowercase());
+    let mod_line = format!("pub mod {};\npub use {}::*;\n", mod_name, mod_name);
+    if !mod_content.contains(&mod_line) {
+        mod_content.push_str(&mod_line);
+    }
+
+    fs::write(mod_file, mod_content)?;
+    println!("Created controller file: {}", file_name.display());
+    
+    Ok(())
+}
+
+fn make_page_component(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let pages_dir = Path::new("resources/js/pages");
+    if !pages_dir.exists() {
+        fs::create_dir_all(pages_dir)?;
+    }
+    
+    let file_name = pages_dir.join(format!("{}.tsx", name));
+    
+    let component_content = format!(r#"import React from 'react';
+import {{ Head }} from '@inertiajs/react';
+import type {{ {name}Response }} from '../types/generated';
+
+interface Props extends {name}Response {{}}
+
+export default function {name}({{ title }}: Props) {{
+    return (
+        <>
+            <Head title={{title}} />
+            <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+                        {{title}}
+                    </h1>
+                    {{/* Add your page content here */}}
+                </div>
+            </div>
+        </>
+    );
+}}"#, name=name);
+
+    fs::write(&file_name, component_content)?;
+    println!("Created React component: {}", file_name.display());
     
     Ok(())
 } 
