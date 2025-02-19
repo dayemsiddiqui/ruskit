@@ -72,6 +72,16 @@ impl Default for DocsTemplate {
                     ],
                 },
                 DocSection {
+                    title: "Frontend".to_string(),
+                    items: vec![
+                        DocItem {
+                            title: "Frontend Development".to_string(),
+                            path: "/docs/frontend".to_string(),
+                            is_active: false,
+                        },
+                    ],
+                },
+                DocSection {
                     title: "Advanced".to_string(),
                     items: vec![
                         DocItem {
@@ -227,6 +237,14 @@ pub struct ExtractorsTemplate {
     pub current_page: String,
 }
 
+#[derive(Template, Default)]
+#[template(path = "docs/frontend.html")]
+pub struct FrontendTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
 pub struct DocsController;
 
 impl DocsController {
@@ -310,6 +328,11 @@ impl DocsController {
                 current_page: page.clone(),
             }.into_response(),
             "extractors" => ExtractorsTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "frontend" => FrontendTemplate { 
                 content: String::new(),
                 sections,
                 current_page: page.clone(),

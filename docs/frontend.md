@@ -1,132 +1,166 @@
 # Frontend Development with Ruskit
 
-Ruskit provides a modern frontend development experience using React, TypeScript, and Tailwind CSS. This guide will help you understand how to use these technologies effectively in your Ruskit application.
+Ruskit provides a modern frontend development experience using React, TypeScript, and Tailwind CSS, with full type safety between your Rust backend and React frontend.
 
 ## Table of Contents
 - [React with Inertia.js](#react-with-inertiajs)
-- [TypeScript Support](#typescript-support)
+- [Type-Safe Props](#type-safe-props)
+- [Creating Pages](#creating-pages)
 - [Tailwind CSS](#tailwind-css)
 - [Development Workflow](#development-workflow)
 
 ## React with Inertia.js
 
-Ruskit uses [Inertia.js](https://inertiajs.com/) to connect your React frontend with your Rust backend. This allows you to build single-page applications without building an API.
+Ruskit uses [Inertia.js](https://inertiajs.com/) to connect your React frontend with your Rust backend, providing a seamless single-page application experience without building an API.
 
-### Creating Pages
+### Type-Safe Props
 
-Pages in Ruskit are React components stored in the `resources/js/pages` directory. Here's an example of the About page:
+Ruskit automatically generates TypeScript types from your Rust DTOs using `ts-rs`. This ensures complete type safety between your backend and frontend.
 
-```tsx
-import React from 'react';
-import { Head } from '@inertiajs/react';
-import { AboutPageProps } from '../types';
+1. First, define your DTO in Rust with `Serialize` and `TS` derives:
 
-export default function About({ title, description }: AboutPageProps) {
-  return (
-    <>
-      <Head title={title} />
-      <div className="p-4">
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="mt-2 text-gray-600">{description}</p>
-      </div>
-    </>
-  );
+```rust
+use serde::Serialize;
+use ts_rs::TS;
+
+#[derive(Serialize, TS)]
+#[ts(export)]
+pub struct AboutPageProps {
+    pub title: String,
+    pub description: String,
+    pub tech_stack: Vec<String>,
+    pub why_choose_us: Vec<String>,
 }
 ```
 
-### Routing and Controllers
+2. The types are automatically generated in `resources/js/types/generated.ts`:
 
-Routes are defined in your Rust backend (`src/web.rs`) and connected to controller methods:
-
-```rust
-let inertia_router = Router::new()
-    .route("/", get(landing))
-    .route("/about", get(InertiaController::about))
-    .with_state(inertia_config);
+```typescript
+export interface AboutPageProps {
+    title: string;
+    description: string;
+    tech_stack: string[];
+    why_choose_us: string[];
+}
 ```
 
-The controller methods use Inertia to render pages with data:
+### Creating Pages
+
+Pages in Ruskit are React components stored in the `resources/js/pages` directory. Here's a complete example of creating a type-safe page:
+
+1. Create your controller method (`src/app/controllers/inertia_controller.rs`):
 
 ```rust
 use axum::response::IntoResponse;
 use axum_inertia::Inertia;
-use serde_json::json;
-
-pub struct InertiaController;
+use crate::app::dtos::about::AboutPageProps;
 
 impl InertiaController {
     pub async fn about(inertia: Inertia) -> impl IntoResponse {
-        inertia.render(
-            "About",
-            json!({
-                "title": "About",
-                "description": "Learn more about Ruskit"
-            })
-        )
+        inertia.render("About", AboutPageProps {
+            title: String::from("About"),
+            description: String::from("Learn more about Ruskit"),
+            tech_stack: vec![
+                String::from("Rust"),
+                String::from("React"),
+                String::from("TypeScript"),
+                String::from("Tailwind CSS")
+            ],
+            why_choose_us: vec![
+                String::from("Performance"),
+                String::from("Reliability"),
+                String::from("Scalability"),
+                String::from("Ease of Use")
+            ],
+        })
     }
 }
 ```
 
-### Type Safety
-
-The TypeScript type system ensures that the data passed from your Rust controllers matches what your React components expect:
-
-```typescript
-// resources/js/types/index.ts
-export interface AboutProps {
-    title: string;
-    description: string;
-}
-
-export type PageProps<T = {}> = T & SharedProps;
-export type AboutPageProps = PageProps<AboutProps>;
-```
-
-This creates a type-safe bridge between your Rust backend and React frontend:
-1. The Rust controller sends data using `serde_json::json!`
-2. The TypeScript types define the expected shape of that data
-3. Your React component receives properly typed props
-
-## TypeScript Support
-
-Ruskit includes full TypeScript support out of the box.
-
-### Configuration
-
-The TypeScript configuration is defined in `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true
-  },
-  "include": ["resources/js/**/*"]
-}
-```
-
-### Type Definitions
-
-For better type safety, define interfaces for your page props:
+2. Create your React page (`resources/js/pages/About.tsx`):
 
 ```tsx
-// resources/js/types/index.ts
-export interface User {
-  id: number;
-  name: string;
-  email: string;
+import React from 'react';
+import { Head } from '@inertiajs/react';
+import { AboutPageProps } from '../types/generated';
+
+interface Props {
+    title: string;
+    description: string;
+    tech_stack: string[];
+    why_choose_us: string[];
 }
 
-export interface PageProps {
-  auth: {
-    user: User | null;
-  };
+export default function About({ 
+    title, 
+    description, 
+    tech_stack,
+    why_choose_us 
+}: AboutPageProps) {
+    return (
+        <>
+            <Head title={title} />
+            <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+                        {title}
+                    </h1>
+                    <p className="mt-4 text-xl text-gray-500">
+                        {description}
+                    </p>
+                </div>
+
+                <div className="mt-16">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                        Our Tech Stack
+                    </h2>
+                    <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                        {tech_stack.map((tech, index) => (
+                            <li 
+                                key={index}
+                                className="bg-white p-4 rounded-lg shadow"
+                            >
+                                {tech}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <div className="mt-16">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                        Why Choose Us
+                    </h2>
+                    <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {why_choose_us.map((reason, index) => (
+                            <li 
+                                key={index}
+                                className="bg-white p-6 rounded-lg shadow"
+                            >
+                                {reason}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </>
+    );
 }
 ```
+
+3. Add the route (`src/web.rs`):
+
+```rust
+let inertia_router = Router::new()
+    .route("/about", get(InertiaController::about))
+    .with_state(inertia_config);
+```
+
+### Type Safety Benefits
+
+- **Compile-time Type Checking**: TypeScript will catch any mismatches between your Rust DTOs and React components
+- **Automatic Type Generation**: No need to manually maintain TypeScript interfaces
+- **IDE Support**: Get full autocomplete and type hints in your editor
+- **Refactoring Safety**: Renaming properties in your Rust DTOs will cause TypeScript errors if not updated in React
 
 ## Tailwind CSS
 
