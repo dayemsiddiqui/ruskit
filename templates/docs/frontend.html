@@ -29,10 +29,9 @@
     <div class="code-block">
         <h4>1. Define your DTO in Rust:</h4>
         <pre class="line-numbers"><code class="language-rust">use serde::Serialize;
-use ts_rs::TS;
+use ts_export_derive::auto_ts_export;
 
-#[derive(Serialize, TS)]
-#[ts(export)]
+#[auto_ts_export]
 pub struct AboutPageProps {
     pub title: String,
     pub description: String,
@@ -53,72 +52,94 @@ pub struct AboutPageProps {
 
     <h3 id="creating-pages">Creating Pages</h3>
     <p>
-        Pages in Ruskit are React components stored in the <code>resources/js/pages</code> directory. 
-        Here's a complete example of creating a type-safe page:
+        Ruskit provides CLI commands to quickly scaffold Inertia pages and props:
     </p>
 
     <div class="code-block">
-        <h4>1. Controller Method:</h4>
+    <h4>Generate a complete Inertia page:</h4>
+        <pre class="line-numbers"><code class="language-shell-session">$ cargo kit inertia:page Dashboard</code></pre>
+        <p>This will create:</p>
+        <ul>
+            <li>Props type in <code>src/app/dtos/dashboard.rs</code></li>
+            <li>Controller in <code>src/app/controllers/dashboard_controller.rs</code></li>
+            <li>React component in <code>resources/js/pages/Dashboard.tsx</code></li>
+        </ul>
+    </div>
+
+    <div class="code-block">
+        <h4>Generate just the props type:</h4>
+        <pre class="line-numbers"><code class="language-shell-session">$ cargo kit inertia:prop Settings</code></pre>
+        <p>Useful when:</p>
+        <ul>
+            <li>Adding props to an existing page</li>
+            <li>Creating shared props used by multiple components</li>
+            <li>Defining the contract before implementing the UI</li>
+        </ul>
+    </div>
+
+    <div class="code-block">
+        <h4>1. Generated Props Type:</h4>
+        <pre class="line-numbers"><code class="language-rust">use serde::Serialize;
+use ts_export_derive::auto_ts_export;
+
+#[auto_ts_export]
+pub struct DashboardProps {
+    pub title: String,
+    // TODO: Add your page props here
+}</code></pre>
+    </div>
+
+    <div class="code-block">
+        <h4>2. Generated Controller:</h4>
         <pre class="line-numbers"><code class="language-rust">use axum::response::IntoResponse;
 use axum_inertia::Inertia;
-use crate::app::dtos::about::AboutPageProps;
+use crate::app::dtos::dashboard::DashboardProps;
 
-impl InertiaController {
-    pub async fn about(inertia: Inertia) -> impl IntoResponse {
-        inertia.render("About", AboutPageProps {
-            title: String::from("About"),
-            description: String::from("Learn more about Ruskit"),
-            tech_stack: vec![
-                String::from("Rust"),
-                String::from("React"),
-                String::from("TypeScript"),
-                String::from("Tailwind CSS")
-            ],
-            why_choose_us: vec![
-                String::from("Performance"),
-                String::from("Reliability"),
-                String::from("Scalability"),
-                String::from("Ease of Use")
-            ],
+pub struct DashboardController;
+
+impl DashboardController {
+    pub async fn show(inertia: Inertia) -> impl IntoResponse {
+        inertia.render("Dashboard", DashboardProps {
+            title: String::from("Dashboard"),
         })
     }
 }</code></pre>
     </div>
 
     <div class="code-block">
-        <h4>2. React Component:</h4>
-        <pre class="line-numbers"><code class="language-typescript">import React from 'react'
-import { Head } from '@inertiajs/react'
-import { AboutPageProps } from '../types/generated'
+        <h4>3. Generated React Component:</h4>
+        <pre class="line-numbers"><code class="language-typescript">import React from 'react';
+import { Head } from '@inertiajs/react';
+import type { DashboardProps } from '../types/generated';
 
-export default function About({
-  title,
-  description,
-  tech_stack,
-  why_choose_us
-}: AboutPageProps) {
-  return (
-    <>
-      <Head title={title} />
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">{title}</h1>
-          <p className="mt-4 text-xl text-gray-500">{description}</p>
-        </div>
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900">Our Tech Stack</h2>
-          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {tech_stack.map((tech, index) => (
-              <li key={index} className="bg-white p-4 rounded-lg shadow">
-                {tech}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </>
-  )
+interface Props extends DashboardProps {}
+
+export default function Dashboard({ title }: Props) {
+    return (
+        <>
+            <Head title={title} />
+            <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+                        {title}
+                    </h1>
+                    {/* Add your page content here */}
+                </div>
+            </div>
+        </>
+    );
 }</code></pre>
+    </div>
+
+    <div class="info-block">
+        <h4>Next Steps After Generation</h4>
+        <ol>
+            <li>Add your route in <code>src/web.rs</code>:
+                <pre class="line-numbers"><code class="language-rust">.route("/dashboard", get(DashboardController::show))</code></pre>
+            </li>
+            <li>Add your props in the DTO file</li>
+            <li>Customize the React component with your UI</li>
+        </ol>
     </div>
 
     <h2 id="end-to-end-type-safety">End-to-End Type Safety</h2>

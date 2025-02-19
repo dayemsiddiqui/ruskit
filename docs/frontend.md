@@ -17,14 +17,13 @@ Ruskit uses [Inertia.js](https://inertiajs.com/) to connect your React frontend 
 
 Ruskit automatically generates TypeScript types from your Rust DTOs using `ts-rs`. This ensures complete type safety between your backend and frontend.
 
-1. First, define your DTO in Rust with `Serialize` and `TS` derives:
+1. First, define your DTO in Rust with the `auto_ts_export` macro:
 
 ```rust
 use serde::Serialize;
-use ts_rs::TS;
+use ts_export_derive::auto_ts_export;
 
-#[derive(Serialize, TS)]
-#[ts(export)]
+#[auto_ts_export]
 pub struct AboutPageProps {
     pub title: String,
     pub description: String,
@@ -46,57 +45,67 @@ export interface AboutPageProps {
 
 ### Creating Pages
 
-Pages in Ruskit are React components stored in the `resources/js/pages` directory. Here's a complete example of creating a type-safe page:
+Ruskit provides CLI commands to quickly scaffold Inertia pages and props:
 
-1. Create your controller method (`src/app/controllers/inertia_controller.rs`):
+```bash
+# Create a complete Inertia page (props, controller, and React component)
+cargo kit inertia:page Dashboard
 
+# Create just the props type for an existing page
+cargo kit inertia:prop Settings
+```
+
+The `inertia:page` command will:
+1. Create a props type in `src/app/dtos/dashboard.rs` with TypeScript export
+2. Create a controller in `src/app/controllers/dashboard_controller.rs`
+3. Create a React component in `resources/js/pages/Dashboard.tsx`
+4. Set up all necessary imports and exports
+
+The `inertia:prop` command will only create the props type file, which is useful when:
+- You want to add props to an existing page
+- You're creating a shared props type used by multiple components
+- You want to define the contract first before implementing the UI
+
+Here's what each generated file looks like:
+
+1. Props Type (`src/app/dtos/dashboard.rs`):
+```rust
+use serde::Serialize;
+use ts_export_derive::auto_ts_export;
+
+#[auto_ts_export]
+pub struct DashboardProps {
+    pub title: String,
+    // TODO: Add your page props here
+}
+```
+
+2. Controller (`src/app/controllers/dashboard_controller.rs`):
 ```rust
 use axum::response::IntoResponse;
 use axum_inertia::Inertia;
-use crate::app::dtos::about::AboutPageProps;
+use crate::app::dtos::dashboard::DashboardProps;
 
-impl InertiaController {
-    pub async fn about(inertia: Inertia) -> impl IntoResponse {
-        inertia.render("About", AboutPageProps {
-            title: String::from("About"),
-            description: String::from("Learn more about Ruskit"),
-            tech_stack: vec![
-                String::from("Rust"),
-                String::from("React"),
-                String::from("TypeScript"),
-                String::from("Tailwind CSS")
-            ],
-            why_choose_us: vec![
-                String::from("Performance"),
-                String::from("Reliability"),
-                String::from("Scalability"),
-                String::from("Ease of Use")
-            ],
+pub struct DashboardController;
+
+impl DashboardController {
+    pub async fn show(inertia: Inertia) -> impl IntoResponse {
+        inertia.render("Dashboard", DashboardProps {
+            title: String::from("Dashboard"),
         })
     }
 }
 ```
 
-2. Create your React page (`resources/js/pages/About.tsx`):
-
+3. React Component (`resources/js/pages/Dashboard.tsx`):
 ```tsx
 import React from 'react';
 import { Head } from '@inertiajs/react';
-import { AboutPageProps } from '../types/generated';
+import type { DashboardProps } from '../types/generated';
 
-interface Props {
-    title: string;
-    description: string;
-    tech_stack: string[];
-    why_choose_us: string[];
-}
+interface Props extends DashboardProps {}
 
-export default function About({ 
-    title, 
-    description, 
-    tech_stack,
-    why_choose_us 
-}: AboutPageProps) {
+export default function Dashboard({ title }: Props) {
     return (
         <>
             <Head title={title} />
@@ -105,41 +114,7 @@ export default function About({
                     <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
                         {title}
                     </h1>
-                    <p className="mt-4 text-xl text-gray-500">
-                        {description}
-                    </p>
-                </div>
-
-                <div className="mt-16">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                        Our Tech Stack
-                    </h2>
-                    <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                        {tech_stack.map((tech, index) => (
-                            <li 
-                                key={index}
-                                className="bg-white p-4 rounded-lg shadow"
-                            >
-                                {tech}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                <div className="mt-16">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                        Why Choose Us
-                    </h2>
-                    <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        {why_choose_us.map((reason, index) => (
-                            <li 
-                                key={index}
-                                className="bg-white p-6 rounded-lg shadow"
-                            >
-                                {reason}
-                            </li>
-                        ))}
-                    </ul>
+                    {/* Add your page content here */}
                 </div>
             </div>
         </>
@@ -147,13 +122,13 @@ export default function About({
 }
 ```
 
-3. Add the route (`src/web.rs`):
-
-```rust
-let inertia_router = Router::new()
-    .route("/about", get(InertiaController::about))
-    .with_state(inertia_config);
-```
+After generating the files, you'll need to:
+1. Add your route in `src/web.rs`:
+   ```rust
+   .route("/dashboard", get(DashboardController::show))
+   ```
+2. Add your props in the DTO file
+3. Customize the React component with your UI
 
 ### Type Safety Benefits
 

@@ -22,4 +22,5 @@ command = "npm"
 args = ["run", "dev"]
 
 [tasks.dev]
+workspace = false
 run_task = { name = ["watch-assets", "watch-server"], parallel = true } 
