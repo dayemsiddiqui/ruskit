@@ -4,10 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
     plugins: [
         react({
-            // Disable fast refresh in production
-            fastRefresh: process.env.NODE_ENV !== 'production',
-            // Include JSX runtime
-            jsxRuntime: 'automatic',
+            jsxRuntime: 'automatic'
         })
     ],
     root: '.',
@@ -29,5 +26,8 @@ export default defineConfig({
         rollupOptions: {
             input: 'resources/js/app.tsx'
         }
+    },
+    optimizeDeps: {
+        include: ['@inertiajs/react']
     }
 }); 

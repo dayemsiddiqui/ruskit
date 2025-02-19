@@ -8,10 +8,11 @@
     <!-- Vite Development -->
     {% if debug %}
     <script type="module" src="http://localhost:3000/@vite/client"></script>
-    <script type="module" src="http://localhost:3000/resources/js/app.jsx"></script>
+    <script type="module" src="http://localhost:3000/resources/js/app.tsx"></script>
     {% else %}
     <!-- Production Build -->
-    <script type="module" src="/dist/{{ manifest['resources/js/app.jsx']['file'] }}"></script>
+    <script type="module" src="/dist/{{ manifest['resources/js/app.tsx']['file'] }}"></script>
+    <link rel="stylesheet" href="/dist/{{ manifest['resources/js/app.tsx']['css'][0] }}" />
     {% endif %}
 </head>
 <body>
