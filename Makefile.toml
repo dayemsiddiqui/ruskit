@@ -11,7 +11,14 @@ dependencies = ["install-watch"]
 command = "cargo"
 args = ["watch", "-w", "templates", "-w", "src", "-x", "build"]
 
-[tasks.dev]
+[tasks.watch-server]
 dependencies = ["install-watch"]
 command = "cargo"
-args = ["watch", "-w", "templates", "-w", "src", "-x", "run"] 
+args = ["watch", "-w", "templates", "-w", "src", "-x", "run"]
+
+[tasks.watch-assets]
+command = "npm"
+args = ["run", "dev"]
+
+[tasks.dev]
+run_task = { name = ["watch-assets", "watch-server"], parallel = true } 
