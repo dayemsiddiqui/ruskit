@@ -9,7 +9,7 @@ repository = "https://github.com/dayemsiddiqui/ruskit"
 documentation = "https://docs.rs/ruskit"
 homepage = "https://ruskit.rs"
 keywords = ["web", "framework", "http", "mvc", "laravel"]
-categories = ["web-programming::http-server", "web-programming::frameworks"]
+categories = ["web-programming", "network-programming"]
 readme = "README.md"
 default-run = "ruskit"
 
