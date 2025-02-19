@@ -5,29 +5,30 @@
 {% block description %}Learn about frontend development with Ruskit using React, TypeScript, and Tailwind CSS{% endblock %}
 
 {% block content %}
-<h1 class="heading">Frontend Development</h1>
+<div class="prose prose-slate max-w-none">
+    <h1>Frontend Development</h1>
 
-<p class="lead">
-    Ruskit provides a modern frontend development experience using React, TypeScript, and Tailwind CSS, 
-    with full type safety between your Rust backend and React frontend.
-</p>
+    <p class="lead">
+        Ruskit provides a modern frontend development experience using React, TypeScript, and Tailwind CSS, 
+        with full type safety between your Rust backend and React frontend.
+    </p>
 
-<h2 id="react-with-inertia">React with Inertia.js</h2>
-<p>
-    Ruskit uses <a href="https://inertiajs.com/" class="link">Inertia.js</a> 
-    to connect your React frontend with your Rust backend, providing a seamless single-page application 
-    experience without building an API.
-</p>
+    <h2 id="react-with-inertia">React with Inertia.js</h2>
+    <p>
+        Ruskit uses <a href="https://inertiajs.com/" class="link">Inertia.js</a> 
+        to connect your React frontend with your Rust backend, providing a seamless single-page application 
+        experience without building an API.
+    </p>
 
-<h3 id="type-safe-props">Type-Safe Props</h3>
-<p>
-    Ruskit automatically generates TypeScript types from your Rust DTOs using <code>ts-rs</code>. 
-    This ensures complete type safety between your backend and frontend.
-</p>
+    <h3 id="type-safe-props">Type-Safe Props</h3>
+    <p>
+        Ruskit automatically generates TypeScript types from your Rust DTOs using <code>ts-rs</code>. 
+        This ensures complete type safety between your backend and frontend.
+    </p>
 
-<div class="code-block">
-    <h4>1. Define your DTO in Rust:</h4>
-    <pre class="line-numbers"><code class="language-rust">use serde::Serialize;
+    <div class="code-block">
+        <h4>1. Define your DTO in Rust:</h4>
+        <pre class="line-numbers"><code class="language-rust">use serde::Serialize;
 use ts_rs::TS;
 
 #[derive(Serialize, TS)]
@@ -38,27 +39,27 @@ pub struct AboutPageProps {
     pub tech_stack: Vec<String>,
     pub why_choose_us: Vec<String>,
 }</code></pre>
-</div>
+    </div>
 
-<div class="code-block">
-    <h4>2. Generated TypeScript types:</h4>
-    <pre class="line-numbers"><code class="language-typescript">export interface AboutPageProps {
+    <div class="code-block">
+        <h4>2. Generated TypeScript types:</h4>
+        <pre class="line-numbers"><code class="language-typescript">export interface AboutPageProps {
     title: string;
     description: string;
     tech_stack: string[];
     why_choose_us: string[];
 }</code></pre>
-</div>
+    </div>
 
-<h3 id="creating-pages">Creating Pages</h3>
-<p>
-    Pages in Ruskit are React components stored in the <code>resources/js/pages</code> directory. 
-    Here's a complete example of creating a type-safe page:
-</p>
+    <h3 id="creating-pages">Creating Pages</h3>
+    <p>
+        Pages in Ruskit are React components stored in the <code>resources/js/pages</code> directory. 
+        Here's a complete example of creating a type-safe page:
+    </p>
 
-<div class="code-block">
-    <h4>1. Controller Method:</h4>
-    <pre class="line-numbers"><code class="language-rust">use axum::response::IntoResponse;
+    <div class="code-block">
+        <h4>1. Controller Method:</h4>
+        <pre class="line-numbers"><code class="language-rust">use axum::response::IntoResponse;
 use axum_inertia::Inertia;
 use crate::app::dtos::about::AboutPageProps;
 
@@ -82,111 +83,179 @@ impl InertiaController {
         })
     }
 }</code></pre>
-</div>
+    </div>
 
-<div class="code-block">
-    <h4>2. React Component:</h4>
-    <pre class="line-numbers"><code class="language-typescript">import React from 'react';
-import { Head } from '@inertiajs/react';
-import { AboutPageProps } from '../types/generated';
+    <div class="code-block">
+        <h4>2. React Component:</h4>
+        <pre class="line-numbers"><code class="language-typescript">import React from 'react'
+import { Head } from '@inertiajs/react'
+import { AboutPageProps } from '../types/generated'
 
-export default function About({ 
-    title, 
-    description, 
-    tech_stack,
-    why_choose_us 
+export default function About({
+  title,
+  description,
+  tech_stack,
+  why_choose_us
 }: AboutPageProps) {
-    return (
-        <>
-            <Head title={title} />
-            <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-                        {title}
-                    </h1>
-                    <p className="mt-4 text-xl text-gray-500">
-                        {description}
-                    </p>
-                </div>
-
-                <div className="mt-16">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                        Our Tech Stack
-                    </h2>
-                    <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                        {tech_stack.map((tech, index) => (
-                            <li key={index} className="bg-white p-4 rounded-lg shadow">
-                                {tech}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </>
-    );
+  return (
+    <>
+      <Head title={title} />
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">{title}</h1>
+          <p className="mt-4 text-xl text-gray-500">{description}</p>
+        </div>
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900">Our Tech Stack</h2>
+          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {tech_stack.map((tech, index) => (
+              <li key={index} className="bg-white p-4 rounded-lg shadow">
+                {tech}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </>
+  )
 }</code></pre>
-</div>
-
-<h3 id="type-safety-benefits">Type Safety Benefits</h3>
-<ul class="list">
-    <li><strong>Compile-time Type Checking:</strong> TypeScript will catch any mismatches between your Rust DTOs and React components</li>
-    <li><strong>Automatic Type Generation:</strong> No need to manually maintain TypeScript interfaces</li>
-    <li><strong>IDE Support:</strong> Get full autocomplete and type hints in your editor</li>
-    <li><strong>Refactoring Safety:</strong> Renaming properties in your Rust DTOs will cause TypeScript errors if not updated in React</li>
-</ul>
-
-<h2 id="tailwind">Tailwind CSS</h2>
-<p>
-    Ruskit uses Tailwind CSS for styling, providing a utility-first CSS framework that makes it easy to build
-    modern, responsive user interfaces.
-</p>
-
-<div class="code-block">
-    <h4>Example Button Component:</h4>
-    <pre class="line-numbers"><code class="language-typescript">export default function Button({ children }) {
-    return (
-        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-            {children}
-        </button>
-    );
-}</code></pre>
-</div>
-
-<h2 id="workflow">Development Workflow</h2>
-<div class="info-block">
-    <h4>Starting the Development Server</h4>
-    <pre class="line-numbers"><code class="language-bash">npm run dev</code></pre>
-    <p>This will start both the Rust backend and Vite development server.</p>
-</div>
-
-<h2 id="best-practices">Best Practices</h2>
-<div class="grid">
-    <div class="card">
-        <h4>Component Organization</h4>
-        <ul class="list">
-            <li>Keep components in <code>resources/js/components</code></li>
-            <li>Use TypeScript interfaces for prop types</li>
-            <li>Implement proper error boundaries</li>
-        </ul>
     </div>
-    <div class="card">
-        <h4>State Management</h4>
-        <ul class="list">
-            <li>Use Inertia.js for server-side state</li>
-            <li>React hooks for local state</li>
-            <li>Consider Zustand or Jotai for complex state</li>
-        </ul>
-    </div>
-</div>
 
-<h2 id="troubleshooting">Troubleshooting</h2>
-<div class="warning-block">
-    <h4>Common Issues</h4>
-    <ul class="list">
-        <li>Run <code>tsc --noEmit</code> to check for type errors</li>
-        <li>Make sure all dependencies have type definitions</li>
-        <li>Check your <code>tsconfig.json</code> configuration</li>
+    <h2 id="end-to-end-type-safety">End-to-End Type Safety</h2>
+    <p>
+        One of Ruskit's core features is complete end-to-end type safety between your Rust backend and TypeScript frontend.
+        This means that any changes to your Rust DTOs are automatically reflected in your TypeScript types, preventing type mismatches.
+    </p>
+
+    <h3>How It Works</h3>
+    <p>
+        When you build your project, Ruskit automatically:
+    </p>
+    <ol>
+        <li>Scans your Rust codebase for DTOs marked with <code>#[derive(TS)]</code></li>
+        <li>Generates corresponding TypeScript interfaces in <code>resources/js/types/generated.ts</code></li>
+        <li>Updates the TypeScript types whenever your Rust DTOs change</li>
+    </ol>
+
+    <h3>Benefits</h3>
+    <ul>
+        <li>Catch type errors at compile time, not runtime</li>
+        <li>Automatic TypeScript type generation - no manual type maintenance</li>
+        <li>Full IDE support with autocompletion and type hints</li>
+        <li>Refactoring safety - renaming props in Rust automatically flags TypeScript errors</li>
     </ul>
+
+    <div class="code-block">
+        <h4>Example: Type-Safe Data Flow</h4>
+        <pre class="line-numbers"><code class="language-rust">// 1. Define your DTO in Rust
+#[derive(Serialize, TS)]
+#[ts(export)]
+pub struct UserData {
+    pub id: i32,
+    pub username: String,
+    pub email: String,
+    pub role: UserRole,
+}
+
+#[derive(Serialize, TS)]
+#[ts(export)]
+pub enum UserRole {
+    Admin,
+    User,
+    Guest,
+}</code></pre>
+    </div>
+
+    <div class="code-block">
+        <h4>Generated TypeScript Types:</h4>
+        <pre class="line-numbers"><code class="language-typescript">// Automatically generated in resources/js/types/generated.ts
+export interface UserData {
+    id: number;
+    username: string;
+    email: string;
+    role: UserRole;
+}
+
+export enum UserRole {
+    Admin = "Admin",
+    User = "User",
+    Guest = "Guest",
+}</code></pre>
+    </div>
+
+    <div class="code-block">
+        <h4>Type-Safe Usage in React:</h4>
+        <pre class="line-numbers"><code class="language-typescript">import { UserData } from '../types/generated'
+
+interface Props {
+    user: UserData;
+}
+
+export function UserProfile({ user }: Props) {
+    return (
+        <div>
+            <h1>{user.username}</h1>
+            <p>{user.email}</p>
+            {user.role === 'Admin' && (
+                <AdminPanel />
+            )}
+        </div>
+    )
+}</code></pre>
+    </div>
+
+    <div class="info-block">
+        <h4>Type Safety Guarantees</h4>
+        <ul>
+            <li>TypeScript will error if you try to access non-existent properties</li>
+            <li>Enum values are type-safe and exhaustively checked</li>
+            <li>Nested objects and arrays maintain their type information</li>
+            <li>IDE provides accurate autocompletion for all properties</li>
+        </ul>
+    </div>
+
+    <h2 id="workflow">Development Workflow</h2>
+    <div class="info-block">
+        <h4>Starting the Development Server</h4>
+        <pre class="line-numbers"><code class="language-shell-session">$ cargo make dev</code></pre>
+        <p>This single command will start both the Rust backend and the Vite development server with hot reloading enabled.</p>
+    </div>
+
+    <div class="info-block">
+        <h4>Building for Production</h4>
+        <pre class="line-numbers"><code class="language-shell-session">$ npm run build</code></pre>
+        <p>This will build your frontend assets for production.</p>
+    </div>
+
+    <h2 id="best-practices">Best Practices</h2>
+    <div class="grid">
+        <div class="card">
+            <h4>Component Organization</h4>
+            <ul class="list">
+                <li>Keep components in <code>resources/js/components</code></li>
+                <li>Use TypeScript interfaces for prop types</li>
+                <li>Implement proper error boundaries</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h4>State Management</h4>
+            <ul class="list">
+                <li>Use Inertia.js for server-side state</li>
+                <li>React hooks for local state</li>
+                <li>Consider Zustand or Jotai for complex state</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <div class="warning-block">
+        <h4>Common Issues</h4>
+        <ul class="list">
+            <li>Run <code class="language-shell-session">tsc --noEmit</code> to check for type errors</li>
+            <li>Make sure all dependencies have type definitions</li>
+            <li>Check your <code>tsconfig.json</code> configuration</li>
+        </ul>
+    </div>
 </div>
 {% endblock %}
 
