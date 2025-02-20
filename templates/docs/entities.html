@@ -1,0 +1,36 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Entities - Ruskit Documentation{% endblock %}
+
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    {{ content }}
+</div>
+
+<div class="mt-8 border-t border-gray-200 pt-6">
+    <div class="flex justify-between">
+        <a href="/docs/models" class="text-primary-600 hover:text-primary-900">← Models</a>
+        <a href="/docs/validation" class="text-primary-600 hover:text-primary-900">Validation →</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block toc %}
+<div class="hidden xl:block">
+    <div class="sticky top-16 space-y-4">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h4 class="text-sm font-medium text-gray-900 mb-4">On this page</h4>
+            <nav class="space-y-2">
+                <a href="#entity-structure" class="block text-gray-500 hover:text-gray-900 text-sm">Entity Structure</a>
+                <a href="#generating-entities" class="block text-gray-500 hover:text-gray-900 text-sm">Generating Entities</a>
+                <a href="#entity-definition" class="block text-gray-500 hover:text-gray-900 text-sm">Entity Definition</a>
+                <a href="#derive-macros" class="block text-gray-500 hover:text-gray-900 text-sm">Derive Macros</a>
+                <a href="#field-attributes" class="block text-gray-500 hover:text-gray-900 text-sm">Field Attributes</a>
+                <a href="#best-practices" class="block text-gray-500 hover:text-gray-900 text-sm">Best Practices</a>
+                <a href="#example-entities" class="block text-gray-500 hover:text-gray-900 text-sm">Example Entities</a>
+                <a href="#common-patterns" class="block text-gray-500 hover:text-gray-900 text-sm">Common Patterns</a>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %} 

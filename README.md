@@ -7,7 +7,11 @@ Ruskit is a web application framework with expressive, elegant syntax inspired b
 - 🚀 Expressive routing system
 - 🔒 Built-in authentication and authorization
 - 📦 Powerful dependency injection container
-- 🗄️ Elegant database ORM
+- 🗄️ Elegant database ORM with:
+  - Clear separation of entities and models
+  - Automatic validation using derive macros
+  - Fluent relationship definitions (HasOne, HasMany, BelongsTo)
+  - Type-safe query builder
 - ⚡ High performance and memory safety
 - 🛠️ Developer-friendly CLI tools
 - 🔧 Configuration management
@@ -54,7 +58,7 @@ cargo make dev
 Ruskit comes with several CLI tools to help you develop your application:
 
 ```bash
-# Create a new model with migration
+# Create a new model (generates both entity and model files)
 cargo kit make:model Post
 
 # Create a new controller
@@ -63,7 +67,7 @@ cargo kit make:controller PostController
 # Create a new DTO
 cargo kit make:dto Post
 
-# Create all components (model, controller, DTO)
+# Create all components (entity, model, controller, DTO)
 cargo kit make:all Post
 
 # Run database migrations
@@ -71,6 +75,21 @@ cargo kit migrate
 
 # Start development server with hot reload
 cargo kit dev
+```
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── entities/        # Data structures and validation rules
+│   ├── models/          # Business logic and relationships
+│   ├── controllers/     # Request handlers
+│   ├── dtos/           # Data transfer objects
+│   ├── factories/       # Test data factories
+│   └── seeders/        # Database seeders
+├── framework/          # Core framework components
+└── web.rs             # Route definitions
 ```
 
 ## Documentation

@@ -64,9 +64,34 @@ impl Default for DocsTemplate {
                             path: "/docs/views".to_string(),
                             is_active: false,
                         },
+                    ],
+                },
+                DocSection {
+                    title: "Database & Models".to_string(),
+                    items: vec![
+                        DocItem {
+                            title: "Entities".to_string(),
+                            path: "/docs/entities".to_string(),
+                            is_active: false,
+                        },
                         DocItem {
                             title: "Models".to_string(),
                             path: "/docs/models".to_string(),
+                            is_active: false,
+                        },
+                        DocItem {
+                            title: "Migrations".to_string(),
+                            path: "/docs/migrations".to_string(),
+                            is_active: false,
+                        },
+                        DocItem {
+                            title: "Factories".to_string(),
+                            path: "/docs/factories".to_string(),
+                            is_active: false,
+                        },
+                        DocItem {
+                            title: "Seeders".to_string(),
+                            path: "/docs/seeders".to_string(),
                             is_active: false,
                         },
                     ],
@@ -102,26 +127,6 @@ impl Default for DocsTemplate {
                         DocItem {
                             title: "Extractors".to_string(),
                             path: "/docs/extractors".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-                DocSection {
-                    title: "Database".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Migrations".to_string(),
-                            path: "/docs/migrations".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Factories".to_string(),
-                            path: "/docs/factories".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Seeders".to_string(),
-                            path: "/docs/seeders".to_string(),
                             is_active: false,
                         },
                     ],
@@ -245,6 +250,14 @@ pub struct FrontendTemplate {
     pub current_page: String,
 }
 
+#[derive(Template, Default)]
+#[template(path = "docs/entities.html")]
+pub struct EntitiesTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
 pub struct DocsController;
 
 impl DocsController {
@@ -278,6 +291,11 @@ impl DocsController {
                 current_page: page.clone(),
             }.into_response(),
             "controllers" => ControllersTemplate { 
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "entities" => EntitiesTemplate { 
                 content: String::new(),
                 sections,
                 current_page: page.clone(),

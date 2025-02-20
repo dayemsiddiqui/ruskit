@@ -1,17 +1,43 @@
 # Ruskit Documentation
 
-Welcome to the Ruskit documentation! Ruskit is a modern web framework for Rust that combines the elegance of Laravel with the performance and safety of Rust.
+Welcome to the Ruskit documentation. Here you'll find comprehensive guides and documentation to help you start working with Ruskit quickly, as well as support if you get stuck.
 
-## Table of Contents
+## Getting Started
 
-1. [Getting Started](getting-started.md)
-2. [Routing](routing.md)
-3. [Views and Templates](views.md)
-   - Template basics
-   - Metadata system
-   - SEO and social sharing
-4. [Middleware](middleware.md)
-5. [Validation](validation.md)
+- [Installation](/docs/installation.md)
+- [Quick Start](/docs/quickstart.md)
+- [Directory Structure](/docs/structure.md)
+
+## The Basics
+
+- [Routing](/docs/routing.md)
+- [Middleware](/docs/middleware.md)
+- [Controllers](/docs/controllers.md)
+- [Views](/docs/views.md)
+- [Frontend Integration](/docs/frontend.md)
+
+## Database & Models
+
+- [Entities](/docs/entities.md) - NEW!
+- [Models](/docs/models.md)
+- [Migrations](/docs/migrations.md)
+- [Factories](/docs/factories.md)
+- [Seeders](/docs/seeders.md)
+
+## Data & Validation
+
+- [DTOs](/docs/dtos.md)
+- [Validation](/docs/validation.md)
+- [Extractors](/docs/extractors.md)
+
+## CLI & Commands
+
+- [Available Commands](/docs/commands.md)
+
+## Contributing
+
+- [Contributing Guide](/CONTRIBUTING.md)
+- [Code of Conduct](/CODE_OF_CONDUCT.md)
 
 ## Key Features
 
@@ -42,10 +68,6 @@ Built-in validation system with:
 - Custom validators
 - Error messages
 - Form validation
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## License
 

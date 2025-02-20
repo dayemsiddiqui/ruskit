@@ -1,115 +1,145 @@
-# Validation in Ruskit
+# Validation
 
-Ruskit provides a powerful validation system similar to Laravel, allowing you to validate incoming request data, form inputs, or any other data in your application.
+Ruskit provides a powerful validation system that combines compile-time validation field generation with runtime validation rules.
 
-## Basic Usage
+## Overview
 
-Here's a basic example of how to use validation in your request handlers:
+The validation system in Ruskit consists of two main components:
+
+1. **Entity-Level Validation Fields**
+   - Generated using the `GenerateValidationFields` derive macro
+   - Defines which fields can be validated
+   - Provides type-safe field access
+
+2. **Model-Level Validation Rules**
+   - Implemented through the `ValidationRules` trait
+   - Defines specific validation rules for each field
+   - Executed during model operations
+
+## Entity Validation Setup
+
+First, add the `GenerateValidationFields` derive macro to your entity:
 
 ```rust
-use ruskit::framework::validation::{Rules, Validate};
-use serde::Deserialize;
+use rustavel_derive::GenerateValidationFields;
 
-#[derive(Debug, Deserialize, Validate)]
-pub struct CreateUserRequest {
-    #[validate(email)]
-    pub email: String,
-    #[validate(length(min = 6))]
-    pub password: String,
-    #[validate(length(min = 2))]
+#[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
+pub struct User {
+    #[sqlx(default)]
+    pub id: i64,
     pub name: String,
-}
-
-impl Rules for CreateUserRequest {
-    fn rules() -> HashMap<&'static str, Vec<&'static str>> {
-        let mut rules = HashMap::new();
-        rules.insert("email", vec!["required", "email"]);
-        rules.insert("password", vec!["required", "min:6"]);
-        rules.insert("name", vec!["required", "min:2"]);
-        rules
-    }
-}
-
-// In your route handler:
-async fn create_user(
-    Json(payload): Json<CreateUserRequest>,
-) -> Result<impl Response, ValidationErrors> {
-    // Validate the request
-    validate!(payload)?;
-    
-    // If validation passes, continue with your logic
-    // ...
+    pub email: String,
+    pub created_at: i64,
+    pub updated_at: i64,
 }
 ```
 
-## Available Validation Rules
+## Model Validation Rules
+
+Then implement the `ValidationRules` trait in your model:
+
+```rust
+use crate::framework::database::model::{Rules, Validate, ValidationRules};
+
+impl ValidationRules for User {
+    fn validate_rules(&self) -> Result<(), ValidationError> {
+        self.name.validate(Rules::new().required().min(3).max(255))?;
+        self.email.validate(Rules::new().required().email())?;
+        Ok(())
+    }
+}
+```
+
+## Available Rules
 
 Ruskit provides several built-in validation rules:
 
-- `required`: The field must be present and not empty
-- `email`: The field must be a valid email address
-- `min:value`: The field must be at least the specified length
-- `max:value`: The field must not exceed the specified length
+```rust
+Rules::new()
+    .required()           // Field must not be empty
+    .email()             // Must be valid email format
+    .min(3)              // Minimum length
+    .max(255)            // Maximum length
+    .regex("[0-9]+")     // Must match regex pattern
+    .in_array(&["a", "b"]) // Must be one of these values
+```
 
 ## Custom Validation Rules
 
-You can create custom validation rules by implementing custom validators:
+You can create custom validation rules by implementing the `Rule` trait:
 
 ```rust
-#[derive(Debug, Deserialize, Validate)]
-pub struct CustomValidationExample {
-    #[validate(custom = "validate_even")]
-    number: i32,
-}
+pub struct PhoneNumber;
 
-fn validate_even(value: &i32) -> Result<(), ValidationError> {
-    if value % 2 == 0 {
-        Ok(())
-    } else {
-        Err(ValidationError::new("must be even"))
-    }
-}
-```
-
-## Handling Validation Errors
-
-When validation fails, it returns a `ValidationErrors` struct that contains all validation errors:
-
-```rust
-match validate!(request) {
-    Ok(_) => {
-        // Validation passed
-    }
-    Err(errors) => {
-        // Access validation errors
-        for (field, messages) in errors.errors() {
-            println!("Field '{}' has errors: {:?}", field, messages);
+impl Rule for PhoneNumber {
+    fn validate(&self, field: &str, value: &str) -> Result<(), ValidationError> {
+        if !value.chars().all(|c| c.is_numeric() || c == '+' || c == '-') {
+            return Err(ValidationError::new("invalid phone number"));
         }
+        Ok(())
+    }
+}
+
+// Use in validation rules
+impl ValidationRules for Contact {
+    fn validate_rules(&self) -> Result<(), ValidationError> {
+        self.phone.validate(Rules::new().required().add_rule(PhoneNumber))?;
+        Ok(())
     }
 }
 ```
 
-## Form Request Validation
+## Validation in Controllers
 
-For more complex validation scenarios, you can create dedicated Form Request types:
+Validation is automatically applied when creating or updating models:
+
+```rust
+impl UserController {
+    pub async fn store(Json(payload): Json<CreateUserRequest>) -> Result<Json<UserResponse>, ValidationError> {
+        let user: User = payload.into();
+        let validated_user = User::create_validated(user).await?;
+        Ok(Json(UserResponse::from(validated_user)))
+    }
+}
+```
+
+## DTO Validation
+
+You can also use validation in your DTOs:
 
 ```rust
 #[derive(Debug, Deserialize, Validate)]
-pub struct LoginRequest {
+pub struct CreateUserRequest {
+    #[validate(length(min = 3, max = 255))]
+    pub name: String,
     #[validate(email)]
     pub email: String,
-    #[validate(length(min = 6))]
-    pub password: String,
 }
 
-impl Rules for LoginRequest {
-    fn rules() -> HashMap<&'static str, Vec<&'static str>> {
-        let mut rules = HashMap::new();
-        rules.insert("email", vec!["required", "email"]);
-        rules.insert("password", vec!["required", "min:6"]);
-        rules
+impl CreateUserRequest {
+    pub fn validate(&self) -> Result<(), ValidationError> {
+        validator::Validate::validate(self)
     }
 }
 ```
 
-This validation system provides a familiar Laravel-like experience while leveraging Rust's type system and compile-time checks. 
+## Best Practices
+
+1. **Entity Validation**:
+   - Use `GenerateValidationFields` for all entities
+   - Keep validation fields in sync with database schema
+
+2. **Model Rules**:
+   - Implement `ValidationRules` for all models
+   - Keep validation rules close to business logic
+   - Use descriptive error messages
+
+3. **Custom Rules**:
+   - Create reusable validation rules
+   - Document rule requirements
+   - Test edge cases
+
+4. **Error Handling**:
+   - Return appropriate error responses
+   - Include field-specific error messages
+   - Log validation failures for debugging 

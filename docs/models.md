@@ -1,6 +1,6 @@
-# Models
+# Models and Entities
 
-Models in Ruskit represent the data structure and business logic of your application. They provide an abstraction layer for interacting with your database and implementing domain-specific functionality.
+Ruskit uses a clear separation between entities (data structures) and models (business logic). Entities represent your database tables and their fields, while models contain the business logic, relationships, and database operations.
 
 ## Generating Models
 
@@ -18,33 +18,30 @@ cargo kit migrate
 ```
 
 This will:
-1. Create a new model file in `src/app/models/`
-2. Add the model to `src/app/models/mod.rs`
-3. Generate a basic model structure with:
-   - Standard fields (id, created_at, updated_at)
-   - Model trait implementation
+1. Create a new entity file in `src/app/entities/`
+2. Create a new model file in `src/app/models/`
+3. Add the entity to `src/app/entities/mod.rs`
+4. Add the model to `src/app/models/mod.rs`
+5. Generate:
+   - Entity struct with validation fields
+   - Model implementation with business logic
    - Migration setup
    - Basic query methods
 
-The generated model will include TODO comments to help you add your custom fields and methods.
+## Entity Structure
 
-## Creating a Model Manually
-
-If you prefer to create a model manually, create a new file in `src/app/models/` and define your struct with the necessary derives:
+Entities define your data structure and validation rules:
 
 ```rust
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use crate::framework::database::{
-    model::Model,
-    query_builder::QueryBuilder,
-    DatabaseError,
-    migration::Migration,
-};
-use async_trait::async_trait;
+use rustavel_derive::GenerateValidationFields;
+use crate::framework::database::model::{Field, ModelValidation};
+use validator::ValidationError;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
 pub struct Post {
+    #[sqlx(default)]
     pub id: i64,
     pub title: String,
     pub content: String,
@@ -54,13 +51,48 @@ pub struct Post {
 }
 ```
 
-Then implement the `Model` trait:
+## Model Implementation
+
+Models contain your business logic, relationships, and database operations:
 
 ```rust
+use validator::ValidationError;
+use crate::framework::database::{
+    model::{Model, Rules, Validate, ValidationRules},
+    query_builder::QueryBuilder,
+    DatabaseError,
+    migration::Migration,
+};
+use crate::app::entities::Post;
+use async_trait::async_trait;
+
+impl Post {
+    /// Get recent records
+    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {
+        QueryBuilder::table(Self::table_name())
+            .order_by("created_at", "DESC")
+            .limit(limit)
+            .get::<Self>()
+            .await
+    }
+}
+
+impl ValidationRules for Post {
+    fn validate_rules(&self) -> Result<(), ValidationError> {
+        self.title.validate(Rules::new().required().min(3).max(255))?;
+        self.content.validate(Rules::new().required())?;
+        Ok(())
+    }
+}
+
 #[async_trait]
 impl Model for Post {
     fn table_name() -> &'static str {
         "posts"
+    }
+
+    fn id(&self) -> i64 {
+        self.id
     }
 
     fn migrations() -> Vec<Migration> {
@@ -83,6 +115,114 @@ impl Model for Post {
 }
 ```
 
+## Model Validation
+
+Ruskit provides a powerful validation system using the `GenerateValidationFields` derive macro and the `ValidationRules` trait:
+
+```rust
+// In your entity file:
+#[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
+pub struct User {
+    #[sqlx(default)]
+    pub id: i64,
+    pub name: String,
+    pub email: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+// In your model file:
+impl ValidationRules for User {
+    fn validate_rules(&self) -> Result<(), ValidationError> {
+        self.name.validate(Rules::new().required().min(3).max(255))?;
+        self.email.validate(Rules::new().required().email())?;
+        Ok(())
+    }
+}
+```
+
+The validation will be automatically applied when creating or updating records.
+
+## Relationships
+
+Ruskit provides three types of relationships: `HasOne`, `HasMany`, and `BelongsTo`. Here's how to use them:
+
+### HasMany Relationship
+
+Used when a model has multiple related records:
+
+```rust
+use crate::framework::database::model::HasMany;
+use crate::app::entities::Post;
+
+impl User {
+    /// Get all posts by this user
+    pub fn posts(&self) -> HasMany<Post> {
+        HasMany::new::<Self>()
+    }
+}
+
+// Usage:
+let user = User::find(1).await?;
+let posts = user.posts().get().await?;  // Get all posts
+let new_post = user.posts().create(post).await?;  // Create a new post
+```
+
+### BelongsTo Relationship
+
+Used when a model belongs to another model:
+
+```rust
+use crate::framework::database::model::BelongsTo;
+use crate::app::entities::User;
+
+impl Post {
+    /// Get the user who created this post
+    pub fn user(&self) -> BelongsTo<User> {
+        BelongsTo::new::<Self>()
+    }
+}
+
+// Usage:
+let post = Post::find(1).await?;
+let user = post.user().get().await?;  // Get the related user
+```
+
+### HasOne Relationship
+
+Used when a model has exactly one related record:
+
+```rust
+use crate::framework::database::model::HasOne;
+use crate::app::entities::{User, Profile};
+
+impl User {
+    /// Get user's profile
+    pub fn profile(&self) -> HasOne<Self, Profile> {
+        HasOne::new("user_id")
+    }
+}
+
+// Usage:
+let user = User::find(1).await?;
+let profile = user.profile().get().await?;  // Get the related profile
+```
+
+### Custom Foreign Keys
+
+You can specify custom foreign keys for any relationship:
+
+```rust
+// Custom foreign key for HasMany
+HasMany::with_key("author_id")
+
+// Custom foreign key for BelongsTo
+BelongsTo::with_key("author_id")
+
+// Custom foreign key for HasOne
+HasOne::new("author_id")
+```
+
 ## Basic Operations
 
 Every model automatically gets these basic operations:
@@ -95,46 +235,18 @@ let post = Post::find(1).await?;
 let all_posts = Post::all().await?;
 
 // Create a new record
-let new_post = Post::create(json!({
-    "title": "My First Post",
-    "content": "Hello World!",
-    "user_id": 1,
-    "created_at": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
-    "updated_at": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
-})).await?;
-```
+let post = Post {
+    id: 0,
+    title: "My First Post".to_string(),
+    content: "Hello World!".to_string(),
+    user_id: 1,
+    created_at: chrono::Utc::now().timestamp(),
+    updated_at: chrono::Utc::now().timestamp(),
+};
+let created_post = Post::create(post).await?;
 
-## Custom Query Methods
-
-You can add custom query methods to your models:
-
-```rust
-impl Post {
-    // Get posts by user
-    pub async fn by_user(user_id: i64) -> Result<Vec<Self>, DatabaseError> {
-        QueryBuilder::table(Self::table_name())
-            .where_clause("user_id", "=", user_id)
-            .get::<Self>()
-            .await
-    }
-
-    // Get recent posts
-    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {
-        QueryBuilder::table(Self::table_name())
-            .order_by("created_at", "DESC")
-            .limit(limit)
-            .get::<Self>()
-            .await
-    }
-
-    // Get published posts
-    pub async fn published() -> Result<Vec<Self>, DatabaseError> {
-        QueryBuilder::table(Self::table_name())
-            .where_clause("published", "=", true)
-            .get::<Self>()
-            .await
-    }
-}
+// Create with validation
+let validated_post = Post::create_validated(post).await?;
 ```
 
 ## Query Builder
@@ -154,77 +266,38 @@ let posts = QueryBuilder::table("posts")
     .await?;
 ```
 
-## Relationships
-
-You can define relationships between models:
-
-```rust
-impl Post {
-    // Get the author of the post
-    pub async fn author(&self) -> Result<User, DatabaseError> {
-        User::find(self.user_id).await?
-            .ok_or(DatabaseError::ConnectionError(
-                sqlx::Error::RowNotFound
-            ))
-    }
-
-    // Get comments for the post
-    pub async fn comments(&self) -> Result<Vec<Comment>, DatabaseError> {
-        Comment::by_post(self.id).await
-    }
-}
-```
-
-## Model Validation
-
-You can add validation to your models using the `validator` crate:
-
-```rust
-use validator::Validate;
-
-#[derive(Debug, Serialize, Deserialize, FromRow, Validate)]
-pub struct Post {
-    pub id: i64,
-    #[validate(length(min = 3, max = 100))]
-    pub title: String,
-    #[validate(length(min = 10))]
-    pub content: String,
-    pub user_id: i64,
-    pub created_at: i64,
-    pub updated_at: i64,
-}
-
-impl Post {
-    pub async fn create_validated(attrs: serde_json::Value) -> Result<Self, ValidationError> {
-        let post: Post = serde_json::from_value(attrs)?;
-        post.validate()?;
-        Ok(Self::create(attrs).await?)
-    }
-}
-```
-
 ## Best Practices
 
-1. **Naming Conventions**:
-   - Use singular names for model structs (`Post`, not `Posts`)
+1. **Separation of Concerns**:
+   - Keep data structure in entities
+   - Keep business logic in models
+   - Use relationships for model associations
+
+2. **Validation**:
+   - Use `GenerateValidationFields` for automatic validation field generation
+   - Implement `ValidationRules` for custom validation logic
+   - Validate data before saving to database
+
+3. **Naming Conventions**:
+   - Use singular names for entity and model structs (`Post`, not `Posts`)
    - Use snake_case for table names (`posts`, not `Posts`)
    - Use descriptive names for relationships and methods
 
-2. **Field Types**:
+4. **Field Types**:
    - Use appropriate types for your fields (e.g., `i64` for IDs and timestamps)
    - Consider using `Option<T>` for nullable fields
    - Use `bool` for boolean fields (SQLite stores them as INTEGER)
 
-3. **Timestamps**:
+5. **Timestamps**:
    - Always include `created_at` and `updated_at` fields
    - Use UNIX timestamps (seconds since epoch) for consistency
 
-4. **Security**:
+6. **Security**:
    - Never expose sensitive fields directly
    - Implement proper access control in your models
    - Validate input data before creating/updating records
 
-5. **Performance**:
+7. **Performance**:
    - Add indexes for frequently queried fields
    - Use appropriate field types for better performance
    - Consider adding caching for frequently accessed data 
