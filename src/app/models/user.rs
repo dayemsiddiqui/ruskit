@@ -1,5 +1,6 @@
 use crate::framework::prelude::*;
 use crate::app::entities::User;
+use fake::{Fake, Faker};
 
 impl User {
     /// Get recent records
@@ -27,6 +28,17 @@ impl Model for User {
 
     fn id(&self) -> i64 {
         self.id
+    }
+
+    fn factory_definition() -> Self {
+        let now = chrono::Utc::now().timestamp();
+        Self {
+            id: 0,
+            name: Faker.fake(),
+            email: Faker.fake(),
+            created_at: now.to_string(),
+            updated_at: now.to_string(),
+        }
     }
 
     fn migrations() -> Vec<Migration> {

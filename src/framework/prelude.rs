@@ -3,7 +3,6 @@ pub use crate::framework::database::model::{Model, ValidationRules, HasMany, Has
 pub use crate::framework::database::query_builder::QueryBuilder;
 pub use crate::framework::database::DatabaseError;
 pub use crate::framework::database::migration::Migration;
-pub use crate::framework::database::factory::Factory;
 
 // Re-export validation related items
 pub use validator::ValidationError;

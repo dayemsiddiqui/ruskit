@@ -1,14 +1,12 @@
 pub mod models;
 pub mod entities;
 pub mod controllers;
-pub mod factories;
 pub mod seeders;
 pub mod dtos;
 
 // Re-export commonly used items
 pub use controllers::*;
 pub use models::*;
-pub use factories::*;
 pub use seeders::*;
 
 // Initialize all modules that have static initializers

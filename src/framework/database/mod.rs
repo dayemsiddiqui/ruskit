@@ -10,7 +10,6 @@ pub mod query_builder;
 pub mod migration;
 pub mod config;
 pub mod seeder;
-pub mod factory;
 pub mod schema;
 pub mod schema_builder;
 
