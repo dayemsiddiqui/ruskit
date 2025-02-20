@@ -10,6 +10,9 @@ use std::fs;
 use std::path::Path;
 use serde_json::Value;
 use std::marker::PhantomData;
+use validator::ValidationError;
+use regex::Regex;
+use paste;
 
 type MigrationFn = fn() -> Vec<Migration>;
 
@@ -205,8 +208,121 @@ impl<Parent: Model, Child: Model> HasOne<Parent, Child> {
     }
 }
 
+// Validation rules
+#[derive(Clone)]
+pub enum Rule {
+    Required,
+    Email,
+    MinLength(usize),
+    MaxLength(usize),
+    Regex(String),
+}
+
+pub struct Rules(Vec<Rule>);
+
+impl Rules {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn required(mut self) -> Self {
+        self.0.push(Rule::Required);
+        self
+    }
+
+    pub fn email(mut self) -> Self {
+        self.0.push(Rule::Email);
+        self
+    }
+
+    pub fn min(mut self, length: usize) -> Self {
+        self.0.push(Rule::MinLength(length));
+        self
+    }
+
+    pub fn max(mut self, length: usize) -> Self {
+        self.0.push(Rule::MaxLength(length));
+        self
+    }
+
+    pub fn regex(mut self, pattern: &str) -> Self {
+        self.0.push(Rule::Regex(pattern.to_string()));
+        self
+    }
+}
+
+impl Rule {
+    fn validate(&self, field: &str, value: &str) -> Result<(), ValidationError> {
+        match self {
+            Rule::Required => {
+                if value.trim().is_empty() {
+                    return Err(ValidationError::new("required field"));
+                }
+            }
+            Rule::Email => {
+                let email_regex = Regex::new(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$").unwrap();
+                if !email_regex.is_match(value) {
+                    return Err(ValidationError::new("invalid email format"));
+                }
+            }
+            Rule::MinLength(min) => {
+                if value.len() < *min {
+                    return Err(ValidationError::new("too short"));
+                }
+            }
+            Rule::MaxLength(max) => {
+                if value.len() > *max {
+                    return Err(ValidationError::new("too long"));
+                }
+            }
+            Rule::Regex(pattern) => {
+                let regex = Regex::new(pattern).unwrap();
+                if !regex.is_match(value) {
+                    return Err(ValidationError::new("invalid format"));
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+pub struct Field<T> {
+    name: &'static str,
+    _type: PhantomData<T>,
+}
+
+impl<T> Field<T> {
+    pub const fn new(name: &'static str) -> Self {
+        Self {
+            name,
+            _type: PhantomData,
+        }
+    }
+}
+
+pub trait Validate {
+    fn validate(&self, rules: Rules) -> Result<(), ValidationError>;
+}
+
+impl Validate for String {
+    fn validate(&self, rules: Rules) -> Result<(), ValidationError> {
+        for rule in rules.0 {
+            rule.validate(self, self.as_str())?;
+        }
+        Ok(())
+    }
+}
+
+/// Trait for defining model-specific validation rules
+pub trait ModelValidation: Sized {
+    type Fields;
+    
+    fn fields() -> Self::Fields;
+    fn validate(&self) -> Result<(), ValidationError>;
+}
+
 #[async_trait]
-pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned + Send + Sync + Sized + Unpin {
+pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned + Send + Sync + Sized + Unpin + ModelValidation {
     /// Get the table name for the model
     fn table_name() -> &'static str;
 
@@ -350,4 +466,54 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
             .and_then(|v| v.as_i64())
             .ok_or_else(|| DatabaseError::Other(format!("Field {} not found or invalid type", field)))
     }
+
+    /// Create a new record with validation
+    async fn create_validated(model: Self) -> Result<Self, DatabaseError> {
+        model.validate().map_err(|e| DatabaseError::Other(e.to_string()))?;
+        Self::create(model).await
+    }
+}
+
+#[macro_export]
+macro_rules! define_fields {
+    ($name:ident { $($field:ident: $type:ty),* $(,)? }) => {
+        pub struct $name {
+            $(pub $field: Field<$type>,)*
+        }
+
+        impl $name {
+            pub fn new() -> Self {
+                Self {
+                    $($field: Field::new(stringify!($field)),)*
+                }
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! generate_validation_fields {
+    ($model:ident) => {
+        paste::paste! {
+            pub struct [<$model Fields>] {
+                $(pub $field: Field<$type>,)*
+            }
+
+            impl [<$model Fields>] {
+                pub fn new() -> Self {
+                    Self {
+                        $(pub $field: Field::new(stringify!($field)),)*
+                    }
+                }
+            }
+
+            impl ModelValidation for $model {
+                type Fields = [<$model Fields>];
+
+                fn fields() -> Self::Fields {
+                    [<$model Fields>]::new()
+                }
+            }
+        }
+    };
 } 

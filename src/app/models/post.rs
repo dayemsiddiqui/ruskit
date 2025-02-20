@@ -1,16 +1,17 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use validator::Validate;
+use validator::ValidationError;
 use crate::framework::database::{
-    model::{Model, BelongsTo},
+    model::{Model, BelongsTo, ModelValidation, Field, Rules, Validate},
     query_builder::QueryBuilder,
     DatabaseError,
     migration::Migration,
 };
 use crate::app::models::User;
 use async_trait::async_trait;
+use rustavel_derive::GenerateValidationFields;
 
-#[derive(Debug, Serialize, Deserialize, FromRow, Validate)]
+#[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
 pub struct Post {
     pub id: i64,
     pub user_id: i64,
@@ -18,6 +19,36 @@ pub struct Post {
     pub content: String,
     pub created_at: i64,
     pub updated_at: i64,
+}
+
+impl Post {
+    /// Get the user who created this post
+    pub fn user(&self) -> BelongsTo<User> {
+        BelongsTo::new::<Self>()
+    }
+
+    /// Get recent records
+    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {
+        QueryBuilder::table(Self::table_name())
+            .order_by("created_at", "DESC")
+            .limit(limit)
+            .get::<Self>()
+            .await
+    }
+}
+
+impl ModelValidation for Post {
+    type Fields = PostFields;
+
+    fn fields() -> Self::Fields {
+        PostFields::new()
+    }
+
+    fn validate(&self) -> Result<(), ValidationError> {
+        self.title.validate(Rules::new().required().max(255))?;
+        self.content.validate(Rules::new().required())?;
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -52,21 +83,5 @@ impl Model for Post {
                 "ALTER TABLE posts DROP COLUMN content; ALTER TABLE posts DROP COLUMN title"
             ),
         ]
-    }
-}
-
-impl Post {
-    /// Get the user who created this post
-    pub fn user(&self) -> BelongsTo<User> {
-        BelongsTo::new::<Self>()
-    }
-
-    /// Get recent records
-    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {
-        QueryBuilder::table(Self::table_name())
-            .order_by("created_at", "DESC")
-            .limit(limit)
-            .get::<Self>()
-            .await
     }
 }

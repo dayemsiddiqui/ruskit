@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "ts-collector",
-    "ts_export_derive"
+    "ts_export_derive",
+    "rustavel_derive"
 ]
 
 [package]
@@ -58,3 +59,5 @@ pulldown-cmark = "0.9"
 axum-inertia = "0.6.0"
 ts-rs = { version = "7.1", features = ["format"] }
 ts_export_derive = { path = "ts_export_derive" }
+rustavel_derive = { path = "./rustavel_derive" }
+paste = "1.0"
