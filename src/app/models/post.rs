@@ -1,5 +1,5 @@
 use crate::app::entities::{Post, User};
-use crate::app::prelude::*;
+use crate::framework::prelude::*;
 
 impl Post {
     /// Get the user who created this post

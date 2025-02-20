@@ -1,6 +1,6 @@
-use crate::app::prelude::*;
-use crate::app::entities::Post;
 use crate::app::entities::User;
+use crate::framework::prelude::*;
+use crate::app::entities::Post;
 
 impl User {
     /// Get recent records

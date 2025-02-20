@@ -1,5 +1,5 @@
 // Framework imports from prelude
-use crate::app::prelude::*;
+use crate::framework::prelude::*;
 // App-specific imports
 use crate::app::entities::{Post, User};
 use crate::app::dtos::post::{CreatePostRequest, PostResponse, PostListResponse};

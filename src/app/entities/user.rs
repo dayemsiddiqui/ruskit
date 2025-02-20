@@ -1,5 +1,5 @@
 // Framework imports from prelude
-use crate::app::prelude::*;
+use crate::framework::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
 pub struct User {
