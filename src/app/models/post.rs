@@ -1,25 +1,12 @@
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use validator::ValidationError;
 use crate::framework::database::{
-    model::{Model, BelongsTo, ModelValidation, Field, Rules, Validate, ValidationRules},
+    model::{Model, BelongsTo, Rules, Validate, ValidationRules},
     query_builder::QueryBuilder,
     DatabaseError,
     migration::Migration,
 };
-use crate::app::models::User;
+use crate::app::entities::{User, Post};
 use async_trait::async_trait;
-use rustavel_derive::GenerateValidationFields;
-
-#[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
-pub struct Post {
-    pub id: i64,
-    pub user_id: i64,
-    pub title: String,
-    pub content: String,
-    pub created_at: i64,
-    pub updated_at: i64,
-}
 
 impl Post {
     /// Get the user who created this post

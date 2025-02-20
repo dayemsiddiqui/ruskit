@@ -1,5 +1,6 @@
-pub mod controllers;
 pub mod models;
+pub mod entities;
+pub mod controllers;
 pub mod factories;
 pub mod seeders;
 pub mod dtos;

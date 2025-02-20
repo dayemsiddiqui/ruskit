@@ -1,26 +1,17 @@
-use crate::app::models::User;
+use crate::app::entities::User;
 use crate::framework::database::factory::Factory;
-use fake::{faker::internet::en::*, faker::name::en::*, Fake};
-use std::time::{SystemTime, UNIX_EPOCH};
+use fake::{Fake, Faker};
+
+pub struct UserFactory;
 
 impl Factory for User {
     fn definition() -> Self {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-
-        println!("Generating fake data...");
-        let name = Name().fake::<String>();
-        let email = SafeEmail().fake::<String>();
-        println!("Generated name: {}, email: {}", name, email);
-
         User {
-            id: 0, // This will be set by the database
-            name,
-            email,
-            created_at: now,
-            updated_at: now,
+            id: 0,
+            name: Faker.fake(),
+            email: Faker.fake(),
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
         }
     }
 } 

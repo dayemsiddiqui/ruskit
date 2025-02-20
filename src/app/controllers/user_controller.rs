@@ -1,17 +1,18 @@
 use axum::{
-    response::Json,
+    response::IntoResponse,
     extract::Path,
+    Json,
 };
-use crate::app::models::User;
-use crate::app::dtos::{CreateUserRequest, UserResponse, UserListResponse};
+use crate::app::entities::User;
 use crate::framework::database::model::Model;
+use crate::app::dtos::user::{CreateUserRequest, UserResponse, UserListResponse};
 
 /// User Controller handling all user-related endpoints
 pub struct UserController;
 
 impl UserController {
     /// Returns a list of users
-    pub async fn index() -> Json<UserListResponse> {
+    pub async fn index() -> impl IntoResponse {
         match User::all().await {
             Ok(users) => Json(UserListResponse::from(users)),
             Err(e) => panic!("Database error: {}", e), // In a real app, use proper error handling
@@ -19,10 +20,10 @@ impl UserController {
     }
 
     /// Returns details for a specific user
-    pub async fn show(Path(id): Path<i64>) -> Json<Option<UserResponse>> {
+    pub async fn show(Path(id): Path<i64>) -> impl IntoResponse {
         match User::find(id).await {
             Ok(Some(user)) => Json(Some(UserResponse::from(user))),
-            Ok(None) => Json(None),
+            Ok(None) => Json(None::<UserResponse>),
             Err(e) => panic!("Database error: {}", e), // In a real app, use proper error handling
         }
     }
@@ -32,6 +33,13 @@ impl UserController {
         let user: User = payload.into();
         match User::create(user).await {
             Ok(user) => Json(UserResponse::from(user)),
+            Err(e) => panic!("Database error: {}", e), // In a real app, use proper error handling
+        }
+    }
+
+    pub async fn recent() -> impl IntoResponse {
+        match User::recent(10).await {
+            Ok(users) => Json(UserListResponse::from(users)),
             Err(e) => panic!("Database error: {}", e), // In a real app, use proper error handling
         }
     }

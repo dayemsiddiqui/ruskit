@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use validator::Validate;
-use crate::app::models::Post;
+use crate::app::entities::Post;
 
 #[derive(Serialize)]
 pub struct PostResponse {
@@ -49,19 +49,13 @@ impl From<Post> for PostResponse {
 
 impl From<CreatePostRequest> for Post {
     fn from(req: CreatePostRequest) -> Self {
-        use std::time::{SystemTime, UNIX_EPOCH};
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-            
         Self {
             id: 0,
             user_id: req.user_id,
             title: req.title,
             content: req.content,
-            created_at: now,
-            updated_at: now,
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
         }
     }
 }
