@@ -4,9 +4,10 @@ Database migrations in Ruskit allow you to evolve your database schema over time
 
 ## Migration Commands
 
-- `cargo kit migrate` - Run pending migrations and generate entities
-- `cargo kit migrate:fresh` - Drop all tables, re-run migrations, and generate entities
+- `cargo kit migrate` - Run pending migrations
+- `cargo kit migrate:fresh` - Drop all tables and re-run migrations
 - `cargo kit make:migration` - Create a new migration file
+- `cargo kit entity:generate` - Generate entities from database schema
 
 ## Creating Migrations
 
@@ -63,14 +64,18 @@ impl Migration for CreateUsersTable {
 }
 ```
 
-## Auto-Generation Process
+## Entity Generation
 
-When you run migrations, Ruskit:
+After running migrations, you can generate entities from your database schema using:
 
-1. Executes pending migrations
-2. Inspects the database schema
-3. Generates entity files based on the schema
-4. Updates the entities module exports
+```bash
+cargo kit entity:generate
+```
+
+This command will:
+1. Inspect the database schema
+2. Generate entity files based on the schema
+3. Update the entities module exports
 
 The generated entities include:
 - Documentation about auto-generation

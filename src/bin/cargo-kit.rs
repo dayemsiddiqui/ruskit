@@ -32,6 +32,9 @@ enum Commands {
     /// Drop all tables and re-run all migrations
     #[command(name = "migrate:fresh")]
     MigrateFresh,
+    /// Generate entities from database schema
+    #[command(name = "entity:generate")]
+    EntityGenerate,
     /// Start development server with hot reload
     Dev,
     /// Start production server
@@ -132,6 +135,13 @@ async fn main() {
             println!("Dropping all tables and re-running migrations...");
             if let Err(e) = run_fresh().await {
                 eprintln!("Error refreshing database: {}", e);
+                std::process::exit(1);
+            }
+        },
+        Commands::EntityGenerate => {
+            println!("Generating entities from database schema...");
+            if let Err(e) = run_entity_generate().await {
+                eprintln!("Error generating entities: {}", e);
                 std::process::exit(1);
             }
         },
@@ -450,7 +460,6 @@ impl Model for {model_name} {{
 
 async fn run_migrate() -> Result<(), Box<dyn std::error::Error>> {
     use ruskit::app;
-    use ruskit::framework::database::schema;
     
     println!("Initializing application...");
     app::initialize();
@@ -458,18 +467,13 @@ async fn run_migrate() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize database connection
     println!("Initializing database...");
     let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
-    let pool = initialize(Some(db_config)).await?;
+    let _pool = initialize(Some(db_config)).await?;
     
     // Run migrations
     println!("Running migrations...");
     let manager = MigrationManager::new().await?;
     manager.run(manager.get_all_model_migrations()).await?;
     println!("Migrations completed successfully");
-
-    // Generate entities from database schema
-    println!("Generating entities from database schema...");
-    schema::generate_all_entities(&pool).await?;
-    println!("Entity generation completed successfully");
     
     Ok(())
 }
@@ -490,7 +494,7 @@ async fn run_fresh() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize database connection
     println!("Initializing database...");
     let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
-    let pool = initialize(Some(db_config)).await?;
+    let _pool = initialize(Some(db_config)).await?;
     
     // Drop all tables
     let manager = MigrationManager::new().await?;
@@ -502,11 +506,6 @@ async fn run_fresh() -> Result<(), Box<dyn std::error::Error>> {
     println!("Running fresh migrations...");
     manager.run(manager.get_all_model_migrations()).await?;
     println!("Fresh migrations completed successfully");
-
-    // Generate entities from database schema
-    println!("Generating entities from database schema...");
-    schema::generate_all_entities(&pool).await?;
-    println!("Entity generation completed successfully");
     
     Ok(())
 }
@@ -1133,6 +1132,26 @@ export default function {name}({{ title }}: Props) {{
 
     fs::write(&file_name, component_content)?;
     println!("Created React component: {}", file_name.display());
+    
+    Ok(())
+}
+
+async fn run_entity_generate() -> Result<(), Box<dyn std::error::Error>> {
+    use ruskit::app;
+    use ruskit::framework::database::schema;
+    
+    println!("Initializing application...");
+    app::initialize();
+    
+    // Initialize database connection
+    println!("Initializing database...");
+    let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
+    let pool = initialize(Some(db_config)).await?;
+    
+    // Generate entities from database schema
+    println!("Generating entities from database schema...");
+    schema::generate_all_entities(&pool).await?;
+    println!("Entity generation completed successfully");
     
     Ok(())
 } 
