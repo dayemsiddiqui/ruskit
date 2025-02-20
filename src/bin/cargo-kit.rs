@@ -337,7 +337,7 @@ pub struct {model_name} {{
         .unwrap()
         .as_secs();
 
-    // Generate model content with new fluent migration API
+    // Generate model content with factory definition included
     let model_content = format!(
         r#"use crate::framework::prelude::*;
 use crate::app::entities::{model_name};
@@ -368,6 +368,17 @@ impl Model for {model_name} {{
 
     fn id(&self) -> i64 {{
         self.id
+    }}
+
+    fn factory_definition() -> Self {{
+        let now = chrono::Utc::now().timestamp();
+        Self {{
+            id: 0,
+            // TODO: Add your fake data here using Faker
+            // Example: name: Faker.fake(),
+            created_at: now,
+            updated_at: now,
+        }}
     }}
 
     fn migrations() -> Vec<Migration> {{

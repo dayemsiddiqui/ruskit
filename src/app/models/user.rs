@@ -1,6 +1,5 @@
 use crate::framework::prelude::*;
 use crate::app::entities::User;
-use fake::{Fake, Faker};
 
 impl User {
     /// Get recent records

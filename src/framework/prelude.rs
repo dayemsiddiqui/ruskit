@@ -15,6 +15,9 @@ pub use sqlx::{FromRow, sqlite::SqliteRow};
 // Re-export async traits
 pub use async_trait::async_trait;
 
+// Re-export faker for model factories
+pub use fake::{Fake, Faker};
+
 // Re-export commonly used Axum items
 pub use axum::{
     extract::Path,
