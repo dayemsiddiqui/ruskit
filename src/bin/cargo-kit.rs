@@ -341,15 +341,8 @@ pub struct {model_name} {{
 
     // Generate model content
     let model_content = format!(
-        r#"use validator::ValidationError;
-use crate::framework::database::{{
-    model::{{Model, Rules, Validate, ValidationRules}},
-    query_builder::QueryBuilder,
-    DatabaseError,
-    migration::Migration,
-}};
+        r#"use crate::framework::prelude::*;
 use crate::app::entities::{model_name};
-use async_trait::async_trait;
 
 impl {model_name} {{
     /// Get recent records
@@ -685,13 +678,13 @@ fn make_seeder(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let seeder_file = seeders_dir.join(format!("{}.rs", seeder_name.to_lowercase()));
 
     let seeder_content = format!(
-        r#"use crate::framework::database::seeder::{{Seeder, DatabaseSeeder}};
-use crate::framework::database::DatabaseError;
+        r#"use crate::framework::prelude::*;
+use crate::framework::database::seeder::{{Seeder, DatabaseSeeder}};
 use once_cell::sync::Lazy;
 
 pub struct {seeder_name};
 
-#[async_trait::async_trait]
+#[async_trait]
 impl Seeder for {seeder_name} {{
     async fn run(&self) -> Result<(), DatabaseError> {{
         // TODO: Add your seeding logic here
@@ -751,14 +744,10 @@ fn make_controller(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let file_name = controller_dir.join(format!("{}_controller.rs", name.to_lowercase()));
     
     // Build imports based on what exists
-    let mut imports = String::from(r#"use axum::{
-    response::Json,
-    extract::Path,
-};"#);
+    let mut imports = String::from("use crate::framework::prelude::*;");
     
     if model_exists {
         imports.push_str(&format!("\nuse crate::app::models::{};", name));
-        imports.push_str("\nuse crate::framework::database::model::Model;");
     }
     
     if dto_exists {
@@ -866,7 +855,7 @@ fn make_dto(name: &str) -> Result<(), Box<dyn std::error::Error>> {
         .join(format!("{}.rs", name.to_lowercase()))
         .exists();
     
-    let mut imports = String::from("use serde::{Serialize, Deserialize};\nuse validator::Validate;");
+    let mut imports = String::from("use crate::framework::prelude::*;");
     
     if model_exists {
         imports.push_str(&format!("\nuse crate::app::models::{};", name));
@@ -1005,7 +994,7 @@ fn make_page_dto(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     
     let file_name = dto_dir.join(format!("{}.rs", name.to_lowercase()));
     
-    let dto_content = format!(r#"use serde::Serialize;
+    let dto_content = format!(r#"use crate::framework::prelude::*;
 use ts_export_derive::auto_ts_export;
 
 #[auto_ts_export]
@@ -1049,8 +1038,7 @@ fn make_page_controller(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let controller_name = format!("{}Controller", name);
     let file_name = controller_dir.join(format!("{}_controller.rs", name.to_lowercase()));
     
-    let controller_content = format!(r#"use axum::response::IntoResponse;
-use axum_inertia::Inertia;
+    let controller_content = format!(r#"use crate::framework::prelude::*;
 use crate::app::dtos::{}::{name}Props;
 
 pub struct {controller_name};

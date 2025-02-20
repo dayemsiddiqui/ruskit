@@ -22,4 +22,7 @@ pub use axum::{
     http::StatusCode,
     response::IntoResponse,
     Json,
-}; 
+};
+
+// Re-export Inertia
+pub use axum_inertia::Inertia; 

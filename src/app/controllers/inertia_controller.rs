@@ -1,5 +1,4 @@
-use axum::response::IntoResponse;
-use axum_inertia::Inertia;
+use crate::framework::prelude::*;
 use crate::app::dtos::about::AboutPageProps;
 
 pub struct InertiaController;
