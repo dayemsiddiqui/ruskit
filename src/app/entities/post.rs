@@ -1,5 +1,6 @@
-// Framework imports from prelude
-use crate::framework::prelude::*;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+use rustavel_derive::GenerateValidationFields;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
 pub struct Post {

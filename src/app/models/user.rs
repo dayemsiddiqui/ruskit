@@ -1,6 +1,5 @@
-use crate::app::entities::User;
 use crate::framework::prelude::*;
-use crate::app::entities::Post;
+use crate::app::entities::User;
 
 impl User {
     /// Get recent records
@@ -11,17 +10,11 @@ impl User {
             .get::<Self>()
             .await
     }
-
-    /// Get all posts by this user
-    pub fn posts(&self) -> HasMany<Post> {
-        HasMany::new::<Self>()
-    }
 }
 
 impl ValidationRules for User {
     fn validate_rules(&self) -> Result<(), ValidationError> {
-        self.name.validate(Rules::new().required().min(3).max(255))?;
-        self.email.validate(Rules::new().required().email())?;
+        // TODO: Add your validation rules here
         Ok(())
     }
 }

@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use ruskit::framework::database::{
     migration::MigrationManager,
     initialize,
+    schema,
 };
 use std::fs;
 use std::path::Path;
@@ -449,6 +450,7 @@ impl Model for {model_name} {{
 
 async fn run_migrate() -> Result<(), Box<dyn std::error::Error>> {
     use ruskit::app;
+    use ruskit::framework::database::schema;
     
     println!("Initializing application...");
     app::initialize();
@@ -456,13 +458,19 @@ async fn run_migrate() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize database connection
     println!("Initializing database...");
     let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
-    initialize(Some(db_config)).await?;
+    let pool = initialize(Some(db_config)).await?;
     
     // Run migrations
     println!("Running migrations...");
     let manager = MigrationManager::new().await?;
     manager.run(manager.get_all_model_migrations()).await?;
     println!("Migrations completed successfully");
+
+    // Generate entities from database schema
+    println!("Generating entities from database schema...");
+    schema::generate_all_entities(&pool).await?;
+    println!("Entity generation completed successfully");
+    
     Ok(())
 }
 
@@ -482,7 +490,7 @@ async fn run_fresh() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize database connection
     println!("Initializing database...");
     let db_config = ruskit::framework::database::config::DatabaseConfig::from_env();
-    initialize(Some(db_config)).await?;
+    let pool = initialize(Some(db_config)).await?;
     
     // Drop all tables
     let manager = MigrationManager::new().await?;
@@ -494,6 +502,12 @@ async fn run_fresh() -> Result<(), Box<dyn std::error::Error>> {
     println!("Running fresh migrations...");
     manager.run(manager.get_all_model_migrations()).await?;
     println!("Fresh migrations completed successfully");
+
+    // Generate entities from database schema
+    println!("Generating entities from database schema...");
+    schema::generate_all_entities(&pool).await?;
+    println!("Entity generation completed successfully");
+    
     Ok(())
 }
 

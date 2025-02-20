@@ -11,6 +11,7 @@ pub mod migration;
 pub mod config;
 pub mod seeder;
 pub mod factory;
+pub mod schema;
 
 use config::DatabaseConfig;
 use seeder::DatabaseSeeder;
@@ -55,7 +56,7 @@ impl From<std::io::Error> for DatabaseError {
 }
 
 /// Initialize the database connection pool
-pub async fn initialize(config: Option<DatabaseConfig>) -> Result<(), DatabaseError> {
+pub async fn initialize(config: Option<DatabaseConfig>) -> Result<Arc<SqlitePool>, DatabaseError> {
     let config = config.unwrap_or_else(|| DatabaseConfig::default());
     let database_path = config.database_path();
     let db_path = Path::new(&database_path);
@@ -82,9 +83,10 @@ pub async fn initialize(config: Option<DatabaseConfig>) -> Result<(), DatabaseEr
 
     println!("Database pool initialized successfully");
 
-    *POOL.lock().unwrap() = Some(Arc::new(pool));
+    let pool = Arc::new(pool);
+    *POOL.lock().unwrap() = Some(pool.clone());
 
-    Ok(())
+    Ok(pool)
 }
 
 /// Get a reference to the database pool
