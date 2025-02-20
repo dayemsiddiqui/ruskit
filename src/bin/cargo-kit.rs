@@ -292,6 +292,13 @@ async fn main() {
 }
 
 fn make_model(name: &str, with_migration: bool) -> Result<(), Box<dyn std::error::Error>> {
+    // Create entities directory if it doesn't exist
+    let entities_dir = Path::new("src/app/entities");
+    if !entities_dir.exists() {
+        fs::create_dir_all(entities_dir)?;
+    }
+
+    // Create models directory if it doesn't exist
     let models_dir = Path::new("src/app/models");
     if !models_dir.exists() {
         fs::create_dir_all(models_dir)?;
@@ -299,6 +306,31 @@ fn make_model(name: &str, with_migration: bool) -> Result<(), Box<dyn std::error
 
     let model_name = name.to_string();
     let table_name = inflector::string::pluralize::to_plural(&model_name.to_lowercase());
+    
+    // Create entity file
+    let entity_file = entities_dir.join(format!("{}.rs", model_name.to_lowercase()));
+    let entity_content = format!(
+        r#"use serde::{{Deserialize, Serialize}};
+use sqlx::FromRow;
+use rustavel_derive::GenerateValidationFields;
+use crate::framework::database::model::{{Field, ModelValidation}};
+use validator::ValidationError;
+
+#[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
+pub struct {model_name} {{
+    #[sqlx(default)]
+    pub id: i64,
+    // TODO: Add your fields here
+    pub created_at: i64,
+    pub updated_at: i64,
+}}"#
+    );
+
+    // Write entity file
+    fs::write(&entity_file, entity_content)?;
+    println!("Created entity file: {}", entity_file.display());
+
+    // Create model file
     let model_file = models_dir.join(format!("{}.rs", model_name.to_lowercase()));
 
     // Get current timestamp for migration ordering
@@ -307,34 +339,44 @@ fn make_model(name: &str, with_migration: bool) -> Result<(), Box<dyn std::error
         .unwrap()
         .as_secs();
 
-    // Generate model content with timestamped migration name
+    // Generate model content
     let model_content = format!(
-        r#"use serde::{{Deserialize, Serialize}};
-use sqlx::FromRow;
+        r#"use validator::ValidationError;
 use crate::framework::database::{{
-    model::Model,
+    model::{{Model, Rules, Validate, ValidationRules}},
     query_builder::QueryBuilder,
     DatabaseError,
     migration::Migration,
 }};
+use crate::app::entities::{model_name};
 use async_trait::async_trait;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct {model_name} {{
-    pub id: i64,
-    // TODO: Add your fields here
-    pub created_at: i64,
-    pub updated_at: i64,
+impl {model_name} {{
+    /// Get recent records
+    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {{
+        QueryBuilder::table(Self::table_name())
+            .order_by("created_at", "DESC")
+            .limit(limit)
+            .get::<Self>()
+            .await
+    }}
+}}
+
+impl ValidationRules for {model_name} {{
+    fn validate_rules(&self) -> Result<(), ValidationError> {{
+        // TODO: Add your validation rules here
+        Ok(())
+    }}
 }}
 
 #[async_trait]
 impl Model for {model_name} {{
-    fn id(&self) -> i64 {{
-        self.id
-    }}
-
     fn table_name() -> &'static str {{
         "{table_name}"
+    }}
+
+    fn id(&self) -> i64 {{
+        self.id
     }}
 
     fn migrations() -> Vec<Migration> {{
@@ -351,19 +393,6 @@ impl Model for {model_name} {{
             ),
         ]
     }}
-}}
-
-impl {model_name} {{
-    // TODO: Add your custom query methods here
-    
-    /// Get recent records
-    pub async fn recent(limit: i64) -> Result<Vec<Self>, DatabaseError> {{
-        QueryBuilder::table(Self::table_name())
-            .order_by("created_at", "DESC")
-            .limit(limit)
-            .get::<Self>()
-            .await
-    }}
 }}"#
     );
 
@@ -371,33 +400,52 @@ impl {model_name} {{
     fs::write(&model_file, model_content)?;
     println!("Created model file: {}", model_file.display());
 
-    // Update mod.rs to include the new model
-    let mod_file = models_dir.join("mod.rs");
-    let mut mod_content = String::new();
+    // Update entities/mod.rs
+    let entities_mod_file = entities_dir.join("mod.rs");
+    let mut entities_mod_content = String::new();
     
-    if mod_file.exists() {
-        mod_content = fs::read_to_string(&mod_file)?;
+    if entities_mod_file.exists() {
+        entities_mod_content = fs::read_to_string(&entities_mod_file)?;
     }
 
     // Add mod declaration if not exists
     let mod_line = format!("mod {};", model_name.to_lowercase());
-    if !mod_content.contains(&mod_line) {
-        if !mod_content.is_empty() {
-            mod_content.push('\n');
+    if !entities_mod_content.contains(&mod_line) {
+        if !entities_mod_content.is_empty() {
+            entities_mod_content.push('\n');
         }
-        mod_content.push_str(&mod_line);
+        entities_mod_content.push_str(&mod_line);
     }
 
     // Add pub use if not exists
     let use_line = format!("pub use {}::{};", model_name.to_lowercase(), model_name);
-    if !mod_content.contains(&use_line) {
-        if !mod_content.is_empty() {
-            mod_content.push('\n');
+    if !entities_mod_content.contains(&use_line) {
+        if !entities_mod_content.is_empty() {
+            entities_mod_content.push('\n');
         }
-        mod_content.push_str(&use_line);
+        entities_mod_content.push_str(&use_line);
     }
 
-    fs::write(mod_file, mod_content)?;
+    fs::write(entities_mod_file, entities_mod_content)?;
+
+    // Update models/mod.rs
+    let models_mod_file = models_dir.join("mod.rs");
+    let mut models_mod_content = String::new();
+    
+    if models_mod_file.exists() {
+        models_mod_content = fs::read_to_string(&models_mod_file)?;
+    }
+
+    // Add mod declaration if not exists
+    let mod_line = format!("mod {};", model_name.to_lowercase());
+    if !models_mod_content.contains(&mod_line) {
+        if !models_mod_content.is_empty() {
+            models_mod_content.push('\n');
+        }
+        models_mod_content.push_str(&mod_line);
+    }
+
+    fs::write(models_mod_file, models_mod_content)?;
 
     if with_migration {
         println!("Don't forget to run migrations with: cargo kit migrate");
