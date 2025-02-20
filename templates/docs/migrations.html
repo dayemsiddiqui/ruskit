@@ -1,143 +1,205 @@
 {% extends "docs_base.html" %}
 
+{% block title %}Database Migrations - Ruskit Documentation{% endblock %}
+
 {% block content %}
 <div class="prose prose-slate max-w-none">
     <h1>Database Migrations</h1>
 
-    <p>Ruskit provides a robust database migration system that ensures your database schema changes are versioned, ordered, and can be rolled out consistently across different environments.</p>
+    <p>Database migrations in Ruskit allow you to evolve your database schema over time. Each migration represents a set of changes to your database structure.</p>
 
-    <h2>Migration Commands</h2>
+    <h2 id="migration-commands">Migration Commands</h2>
 
-    <h3>Create a New Model with Migration</h3>
-    <pre><code class="language-bash">cargo kit make:model Post</code></pre>
-
-    <p>This will:</p>
-    <ol>
-        <li>Create a new model file at <code>src/app/models/post.rs</code></li>
-        <li>Add the model to <code>src/app/models/mod.rs</code></li>
-        <li>Create an initial migration with timestamp prefix (e.g., <code>1739885809_create_posts_table</code>)</li>
-        <li>Set up basic model structure with id, created_at, and updated_at fields</li>
-    </ol>
-
-    <h3>Add a New Migration to Existing Model</h3>
-    <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
-
-    <p>This will:</p>
-    <ol>
-        <li>Add a new migration to the specified model's migrations vector</li>
-        <li>Automatically prefix the migration with a timestamp (e.g., <code>1739885809_add_email_to_users</code>)</li>
-        <li>Create placeholders for UP and DOWN migrations</li>
-    </ol>
-
-    <h3>Run Migrations</h3>
-    <pre><code class="language-bash">cargo kit migrate</code></pre>
-
-    <p>This will:</p>
-    <ol>
-        <li>Discover all models in your application</li>
-        <li>Collect all migrations from these models</li>
-        <li>Sort migrations by timestamp to ensure consistent order</li>
-        <li>Run any migrations that haven't been executed yet</li>
-    </ol>
-
-    <h3>Fresh Migrations</h3>
-    <pre><code class="language-bash">cargo kit migrate:fresh</code></pre>
-
-    <p>This command will:</p>
-    <ol>
-        <li>Drop all tables in your database (including the migrations table)</li>
-        <li>Re-run all migrations from scratch</li>
-    </ol>
-
-    <p>This is useful when you want to:</p>
     <ul>
-        <li>Reset your database to a clean state</li>
-        <li>Test your migrations work correctly from a fresh start</li>
-        <li>Resolve issues with inconsistent migration states</li>
+        <li><code>cargo kit migrate</code> - Run pending migrations and generate entities</li>
+        <li><code>cargo kit migrate:fresh</code> - Drop all tables, re-run migrations, and generate entities</li>
+        <li><code>cargo kit make:migration</code> - Create a new migration file</li>
     </ul>
 
-    <p>Note: This command will delete all data in your database. Use with caution in production environments.</p>
+    <h2 id="creating-migrations">Creating Migrations</h2>
 
-    <h2>Migration Structure</h2>
+    <h3>New Table Migration</h3>
 
-    <p>Each migration consists of:</p>
-    <ol>
-        <li>A unique name with timestamp prefix (e.g., <code>1739885809_create_users_table</code>)</li>
-        <li>An UP migration (the changes to apply)</li>
-        <li>A DOWN migration (how to reverse the changes)</li>
-    </ol>
+    <pre><code class="language-bash">cargo kit make:migration create_users_table --model User</code></pre>
 
-    <p>Example migration:</p>
-    <pre><code class="language-rust">Migration::new(
-    "1739885809_add_email_to_users",
-    // UP migration
-    "ALTER TABLE users ADD COLUMN email TEXT;",
-    // DOWN migration
-    "ALTER TABLE users DROP COLUMN email;"
-)</code></pre>
+    <p>This creates a new migration file in <code>database/migrations/</code> with a timestamp prefix.</p>
 
-    <h2>Migration Ordering</h2>
+    <h3>Adding Fields</h3>
 
-    <p>Migrations are automatically ordered by their timestamp prefix, ensuring that:</p>
-    <ol>
-        <li>Migrations run in the order they were created</li>
-        <li>New migrations always run after existing ones</li>
-        <li>The order is consistent across all environments</li>
-    </ol>
+    <pre><code class="language-bash">cargo kit make:migration add_status_to_users --model User</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="migration-structure">Migration Structure</h2>
 
-    <ol>
-        <li><strong>One Change Per Migration</strong>: Each migration should handle one specific change (e.g., adding a column, creating a table)</li>
-        <li><strong>Meaningful Names</strong>: Use descriptive names for migrations:
-            <ul>
-                <li><code>create_users_table</code></li>
-                <li><code>add_email_to_users</code></li>
-                <li><code>add_foreign_key_to_posts</code></li>
-            </ul>
-        </li>
-        <li><strong>Always Include DOWN Migrations</strong>: Make sure your DOWN migrations correctly reverse the changes made in UP migrations</li>
-        <li><strong>Run Migrations Immediately</strong>: After creating a new migration, run <code>cargo kit migrate</code> to apply it</li>
-        <li><strong>Version Control</strong>: Commit your migrations along with related code changes</li>
-    </ol>
+    <p>Each migration file contains an <code>up</code> and <code>down</code> function:</p>
 
-    <h2>Migration Files</h2>
+    <pre><code class="language-rust">use ruskit::framework::database::migration::Migration;
+use ruskit::framework::database::DatabaseError;
+use sqlx::{Pool, Sqlite};
 
-    <p>Migrations are stored in your model files under the <code>migrations()</code> function:</p>
+pub struct CreateUsersTable;
 
-    <pre><code class="language-rust">impl Model for User {
-    fn migrations() -> Vec<Migration> {
-        vec![
-            Migration::new(
-                "1739885800_create_users_table",
-                "CREATE TABLE users (...)",
-                "DROP TABLE users"
-            ),
-            Migration::new(
-                "1739885809_add_email_to_users",
-                "ALTER TABLE users ADD COLUMN email TEXT;",
-                "ALTER TABLE users DROP COLUMN email;"
-            ),
-        ]
+#[async_trait::async_trait]
+impl Migration for CreateUsersTable {
+    async fn up(&self, pool: &Pool<Sqlite>) -> Result<(), DatabaseError> {
+        sqlx::query(
+            "CREATE TABLE users (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )"
+        )
+        .execute(pool)
+        .await?;
+        
+        Ok(())
+    }
+
+    async fn down(&self, pool: &Pool<Sqlite>) -> Result<(), DatabaseError> {
+        sqlx::query("DROP TABLE users")
+            .execute(pool)
+            .await?;
+            
+        Ok(())
     }
 }</code></pre>
 
-    <h2>Migration Table</h2>
+    <h2 id="auto-generation-process">Auto-Generation Process</h2>
 
-    <p>Ruskit maintains a <code>migrations</code> table in your database to track which migrations have been run:</p>
+    <p>When you run migrations, Ruskit:</p>
 
-    <pre><code class="language-sql">CREATE TABLE migrations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    batch INTEGER NOT NULL,
-    migration_time INTEGER NOT NULL
-)</code></pre>
-
-    <p>This ensures that:</p>
     <ol>
-        <li>Each migration runs exactly once</li>
-        <li>Migrations can be rolled back by batch</li>
-        <li>You can track when each migration was applied</li>
+        <li>Executes pending migrations</li>
+        <li>Inspects the database schema</li>
+        <li>Generates entity files based on the schema</li>
+        <li>Updates the entities module exports</li>
     </ol>
+
+    <p>The generated entities include:</p>
+    <ul>
+        <li>Documentation about auto-generation</li>
+        <li>Instructions for regeneration</li>
+        <li>Field-level documentation</li>
+        <li>Proper type mappings</li>
+    </ul>
+
+    <h2 id="best-practices">Best Practices</h2>
+
+    <ol>
+        <li><strong>Migration Names</strong>:
+            <ul>
+                <li>Use descriptive names (<code>create_users_table</code>)</li>
+                <li>Include model name for context</li>
+                <li>Use snake_case</li>
+            </ul>
+        </li>
+        <li><strong>Schema Design</strong>:
+            <ul>
+                <li>Always include <code>id</code>, <code>created_at</code>, <code>updated_at</code></li>
+                <li>Use appropriate SQLite types</li>
+                <li>Consider indexing for performance</li>
+                <li>Define foreign key constraints</li>
+            </ul>
+        </li>
+        <li><strong>Running Migrations</strong>:
+            <ul>
+                <li>Test migrations locally first</li>
+                <li>Back up production data</li>
+                <li>Run <code>migrate:fresh</code> in development</li>
+                <li>Use <code>migrate</code> in production</li>
+            </ul>
+        </li>
+        <li><strong>Entity Generation</strong>:
+            <ul>
+                <li>Never edit generated entities</li>
+                <li>Create new migrations for changes</li>
+                <li>Review generated entities after migration</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2 id="common-patterns">Common Patterns</h2>
+
+    <h3>Primary Keys</h3>
+
+    <pre><code class="language-sql">CREATE TABLE users (
+    id INTEGER PRIMARY KEY,  -- Auto-incrementing primary key
+    -- other fields
+);</code></pre>
+
+    <h3>Timestamps</h3>
+
+    <pre><code class="language-sql">CREATE TABLE posts (
+    -- other fields
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);</code></pre>
+
+    <h3>Foreign Keys</h3>
+
+    <pre><code class="language-sql">CREATE TABLE comments (
+    id INTEGER PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);</code></pre>
+
+    <h3>Nullable Fields</h3>
+
+    <pre><code class="language-sql">CREATE TABLE profiles (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    bio TEXT,  -- Nullable
+    website TEXT,  -- Nullable
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);</code></pre>
+
+    <h3>Unique Constraints</h3>
+
+    <pre><code class="language-sql">CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    -- other fields
+);</code></pre>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+
+    <p>If entity generation fails:</p>
+
+    <ol>
+        <li>Check migration syntax</li>
+        <li>Verify foreign key constraints</li>
+        <li>Run <code>migrate:fresh</code> to start clean</li>
+        <li>Check database connection</li>
+        <li>Review migration logs</li>
+    </ol>
+</div>
+
+<div class="mt-8 border-t border-gray-200 pt-6">
+    <div class="flex justify-between">
+        <a href="/docs/models" class="text-primary-600 hover:text-primary-900">← Models</a>
+        <a href="/docs/entities" class="text-primary-600 hover:text-primary-900">Entities →</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block toc %}
+<div class="hidden xl:block">
+    <div class="sticky top-16 space-y-4">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h4 class="text-sm font-medium text-gray-900 mb-4">On this page</h4>
+            <nav class="space-y-2">
+                <a href="#migration-commands" class="block text-gray-500 hover:text-gray-900 text-sm">Migration Commands</a>
+                <a href="#creating-migrations" class="block text-gray-500 hover:text-gray-900 text-sm">Creating Migrations</a>
+                <a href="#migration-structure" class="block text-gray-500 hover:text-gray-900 text-sm">Migration Structure</a>
+                <a href="#auto-generation-process" class="block text-gray-500 hover:text-gray-900 text-sm">Auto-Generation Process</a>
+                <a href="#best-practices" class="block text-gray-500 hover:text-gray-900 text-sm">Best Practices</a>
+                <a href="#common-patterns" class="block text-gray-500 hover:text-gray-900 text-sm">Common Patterns</a>
+                <a href="#troubleshooting" class="block text-gray-500 hover:text-gray-900 text-sm">Troubleshooting</a>
+            </nav>
+        </div>
+    </div>
 </div>
 {% endblock %} 
