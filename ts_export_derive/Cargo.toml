@@ -2,6 +2,10 @@
 name = "ts_export_derive"
 version = "0.1.0"
 edition = "2021"
+description = "TypeScript export derive macros for the Ruskit web framework"
+license = "MIT"
+authors = ["Dayem Siddiqui <dayemsiddiqui@gmail.com>"]
+repository = "https://github.com/dayemsiddiqui/ruskit"
 
 [lib]
 proc-macro = true

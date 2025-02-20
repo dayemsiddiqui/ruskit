@@ -7,7 +7,7 @@ members = [
 
 [package]
 name = "ruskit"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "A modern web framework for Rust inspired by Laravel"
 authors = ["Dayem Siddiqui <dayemsiddiqui@gmail.com>"]
@@ -58,6 +58,6 @@ inventory = "0.3"
 pulldown-cmark = "0.9"
 axum-inertia = "0.6.0"
 ts-rs = { version = "7.1", features = ["format"] }
-ts_export_derive = { path = "ts_export_derive" }
-rustavel_derive = { path = "./rustavel_derive" }
+ts_export_derive = { version = "0.1.0", path = "ts_export_derive" }
+rustavel_derive = { version = "0.1.0", path = "./rustavel_derive" }
 paste = "1.0"
