@@ -1,13 +1,6 @@
-use validator::ValidationError;
-use crate::framework::database::{
-    model::{Model, HasMany, Rules, Validate, ValidationRules},
-    query_builder::QueryBuilder,
-    DatabaseError,
-    migration::Migration,
-};
+use crate::app::prelude::*;
 use crate::app::entities::Post;
 use crate::app::entities::User;
-use async_trait::async_trait;
 
 impl User {
     /// Get recent records

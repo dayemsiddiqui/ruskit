@@ -1,12 +1,5 @@
-use validator::ValidationError;
-use crate::framework::database::{
-    model::{Model, BelongsTo, Rules, Validate, ValidationRules},
-    query_builder::QueryBuilder,
-    DatabaseError,
-    migration::Migration,
-};
-use crate::app::entities::{User, Post};
-use async_trait::async_trait;
+use crate::app::entities::{Post, User};
+use crate::app::prelude::*;
 
 impl Post {
     /// Get the user who created this post
@@ -26,7 +19,7 @@ impl Post {
 
 impl ValidationRules for Post {
     fn validate_rules(&self) -> Result<(), ValidationError> {
-        self.title.validate(Rules::new().required().max(255))?;
+        self.title.validate(Rules::new().required().min(3).max(255))?;
         self.content.validate(Rules::new().required())?;
         Ok(())
     }
@@ -34,12 +27,12 @@ impl ValidationRules for Post {
 
 #[async_trait]
 impl Model for Post {
-    fn id(&self) -> i64 {
-        self.id
-    }
-
     fn table_name() -> &'static str {
         "posts"
+    }
+
+    fn id(&self) -> i64 {
+        self.id
     }
 
     fn migrations() -> Vec<Migration> {

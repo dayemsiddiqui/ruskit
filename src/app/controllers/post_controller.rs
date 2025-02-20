@@ -1,11 +1,7 @@
-use axum::{
-    extract::Path,
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
+// Framework imports from prelude
+use crate::app::prelude::*;
+// App-specific imports
 use crate::app::entities::{Post, User};
-use crate::framework::database::model::Model;
 use crate::app::dtos::post::{CreatePostRequest, PostResponse, PostListResponse};
 
 /// Post Controller handling all post-related endpoints

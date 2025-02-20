@@ -1,8 +1,5 @@
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
-use rustavel_derive::GenerateValidationFields;
-use crate::framework::database::model::{Field, ModelValidation};
-use validator::ValidationError;
+// Framework imports from prelude
+use crate::app::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, GenerateValidationFields)]
 pub struct User {

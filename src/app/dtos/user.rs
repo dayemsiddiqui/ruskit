@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::app::entities::User;
 use validator::Validate;
+use crate::app::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct CreateUserRequest {

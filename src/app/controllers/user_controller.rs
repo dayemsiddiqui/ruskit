@@ -1,10 +1,7 @@
-use axum::{
-    response::IntoResponse,
-    extract::Path,
-    Json,
-};
+// Framework imports from prelude
+use crate::app::prelude::*;
+// App-specific imports
 use crate::app::entities::User;
-use crate::framework::database::model::Model;
 use crate::app::dtos::user::{CreateUserRequest, UserResponse, UserListResponse};
 
 /// User Controller handling all user-related endpoints
