@@ -37,6 +37,7 @@ impl Model for User {
             email: Faker.fake(),
             created_at: now.to_string(),
             updated_at: now.to_string(),
+            
         }
     }
 
