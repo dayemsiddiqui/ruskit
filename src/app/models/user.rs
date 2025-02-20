@@ -31,17 +31,17 @@ impl Model for User {
 
     fn migrations() -> Vec<Migration> {
         vec![
-            Migration::new(
-                "1739887638_create_users_table",
-                "CREATE TABLE users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    email TEXT NOT NULL,
-                    created_at INTEGER NOT NULL,
-                    updated_at INTEGER NOT NULL
-                )",
-                "DROP TABLE users"
-            ),
+            Migration::create("1739887638_create_users_table", |schema| {
+                schema.create_table("users", |table| {
+                    table.id();
+                    table.text("name").not_null();
+                    table.text("email").not_null();
+                    table.timestamp_iso_strings();
+                });
+            })
+            .down(|schema| {
+                schema.drop_table("users");
+            })
         ]
     }
 }

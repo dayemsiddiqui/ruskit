@@ -75,6 +75,7 @@ pub struct {struct_name} {{
             "REAL" => "f64",
             "TEXT" => "String",
             "BOOLEAN" => "bool",
+            "DATETIME" => "String",
             _ => "String", // Default to String for unknown types
         };
 

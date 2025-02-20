@@ -12,6 +12,7 @@ pub mod config;
 pub mod seeder;
 pub mod factory;
 pub mod schema;
+pub mod schema_builder;
 
 use config::DatabaseConfig;
 use seeder::DatabaseSeeder;

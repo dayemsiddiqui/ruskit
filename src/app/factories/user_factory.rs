@@ -6,12 +6,13 @@ pub struct UserFactory;
 
 impl Factory for User {
     fn definition() -> Self {
+        let now = chrono::Utc::now().to_rfc3339();
         User {
             id: 0,
             name: Faker.fake(),
             email: Faker.fake(),
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
+            created_at: now.clone(),
+            updated_at: now,
         }
     }
 } 

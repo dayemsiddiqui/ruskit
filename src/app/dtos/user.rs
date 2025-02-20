@@ -42,12 +42,13 @@ impl From<User> for UserResponse {
 
 impl From<CreateUserRequest> for User {
     fn from(request: CreateUserRequest) -> Self {
+        let now = chrono::Utc::now().to_rfc3339();
         Self {
             id: 0,
             name: request.name,
             email: request.email,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
+            created_at: now.clone(),
+            updated_at: now,
         }
     }
 } 

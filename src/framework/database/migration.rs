@@ -3,6 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::framework::database::{
     DatabaseError,
     config,
+    schema_builder::SchemaBuilder,
 };
 use crate::framework::database::model::{Model, discover_and_register_models};
 use sqlx::{Pool, Sqlite};
@@ -20,6 +21,32 @@ impl Migration {
             up: up.to_string(),
             down: down.to_string(),
         }
+    }
+
+    pub fn create<F>(name: &str, callback: F) -> Self 
+    where 
+        F: FnOnce(&mut SchemaBuilder)
+    {
+        let mut schema = SchemaBuilder::new();
+        callback(&mut schema);
+        let sql = schema.to_sql();
+        println!("Generated migration SQL for {}: {}", name, sql);
+        
+        Self {
+            name: name.to_string(),
+            up: sql,
+            down: String::new(), // Down SQL will be set separately
+        }
+    }
+
+    pub fn down<F>(mut self, callback: F) -> Self 
+    where 
+        F: FnOnce(&mut SchemaBuilder)
+    {
+        let mut schema = SchemaBuilder::new();
+        callback(&mut schema);
+        self.down = schema.to_sql();
+        self
     }
 }
 
@@ -205,6 +232,12 @@ impl MigrationManager {
         println!("Running all migrations...");
         self.run(self.get_all_model_migrations()).await?;
         println!("All migrations completed.");
+
+        // Generate entities from schema
+        use crate::framework::database::schema::generate_all_entities;
+        println!("Generating entities from database schema...");
+        generate_all_entities(&self.pool).await?;
+        println!("Entity generation completed successfully.");
         
         Ok(())
     }

@@ -340,7 +340,7 @@ pub struct {model_name} {{
         .unwrap()
         .as_secs();
 
-    // Generate model content
+    // Generate model content with new fluent migration API
     let model_content = format!(
         r#"use crate::framework::prelude::*;
 use crate::app::entities::{model_name};
@@ -375,16 +375,16 @@ impl Model for {model_name} {{
 
     fn migrations() -> Vec<Migration> {{
         vec![
-            Migration::new(
-                "{timestamp}_create_{table_name}_table",
-                "CREATE TABLE {table_name} (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    -- TODO: Add your columns here
-                    created_at INTEGER NOT NULL,
-                    updated_at INTEGER NOT NULL
-                )",
-                "DROP TABLE {table_name}"
-            ),
+            Migration::create("{timestamp}_create_{table_name}_table", |schema| {{
+                schema.create_table("{table_name}", |table| {{
+                    table.id();
+                    // TODO: Add your columns here
+                    table.timestamps();
+                }});
+            }})
+            .down(|schema| {{
+                schema.drop_table("{table_name}");
+            }})
         ]
     }}
 }}"#
@@ -574,14 +574,14 @@ fn make_migration(name: &str, model: &str) -> Result<(), Box<dyn std::error::Err
             
             // Find the last Migration::new in the vector
             let last_migration_pos = vec_content[..vec_end]
-                .rfind("Migration::new")
+                .rfind("Migration::create")
                 .unwrap_or(vec_end);
             
             // If we found a previous migration, insert after its closing parenthesis
             let insert_pos = if last_migration_pos < vec_end {
                 let remaining = &vec_content[last_migration_pos..vec_end];
-                if let Some(paren_end) = remaining.find("),") {
-                    migrations_start + vec_start + last_migration_pos + paren_end + 1
+                if let Some(paren_end) = remaining.find("}),") {
+                    migrations_start + vec_start + last_migration_pos + paren_end + 2
                 } else {
                     migrations_start + vec_start + vec_end
                 }
@@ -589,24 +589,42 @@ fn make_migration(name: &str, model: &str) -> Result<(), Box<dyn std::error::Err
                 migrations_start + vec_start + vec_end
             };
             
-            // Insert the new migration
+            // Insert the new migration using the fluent API
             let migration = if content[..insert_pos].trim_end().ends_with(',') {
                 format!(
                     r#"
-            Migration::new(
-                "{timestamp}_{name}",
-                "-- Add your UP migration SQL here",
-                "-- Add your DOWN migration SQL here"
-            )"#
+            Migration::create("{timestamp}_{name}", |schema| {{
+                // TODO: Add your migration schema changes here
+                // Example:
+                // schema.create_table("table_name", |table| {{
+                //     table.id();
+                //     table.text("name").not_null();
+                //     table.timestamp_iso_strings();
+                // }});
+            }})
+            .down(|schema| {{
+                // TODO: Add your rollback schema changes here
+                // Example:
+                // schema.drop_table("table_name");
+            }})"#
                 )
             } else {
                 format!(
                     r#",
-            Migration::new(
-                "{timestamp}_{name}",
-                "-- Add your UP migration SQL here",
-                "-- Add your DOWN migration SQL here"
-            )"#
+            Migration::create("{timestamp}_{name}", |schema| {{
+                // TODO: Add your migration schema changes here
+                // Example:
+                // schema.create_table("table_name", |table| {{
+                //     table.id();
+                //     table.text("name").not_null();
+                //     table.timestamp_iso_strings();
+                // }});
+            }})
+            .down(|schema| {{
+                // TODO: Add your rollback schema changes here
+                // Example:
+                // schema.drop_table("table_name");
+            }})"#
                 )
             };
             
@@ -614,7 +632,7 @@ fn make_migration(name: &str, model: &str) -> Result<(), Box<dyn std::error::Err
             fs::write(path, content)?;
             
             println!("Created migration {timestamp}_{name}");
-            println!("Please edit {} to add your migration SQL", model_file);
+            println!("Please edit {} to add your migration schema changes", model_file);
         }
     }
     
@@ -631,25 +649,21 @@ fn make_factory(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let factory_file = factories_dir.join(format!("{}_factory.rs", model_name.to_lowercase()));
 
     let factory_content = format!(
-        r#"use crate::app::models::{model_name};
+        r#"use crate::app::entities::{model_name};
 use crate::framework::database::factory::Factory;
-use crate::framework::database::DatabaseError;
-use fake::{{faker::internet::en::*, faker::name::en::*, Fake}};
-use serde_json::json;
-use std::time::{{SystemTime, UNIX_EPOCH}};
+use fake::{{Fake, Faker}};
+
+pub struct {model_name}Factory;
 
 impl Factory for {model_name} {{
-    fn definition() -> serde_json::Value {{
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-
-        json!({{
+    fn definition() -> Self {{
+        let now = chrono::Utc::now().timestamp();
+        Self {{
+            id: 0,
             // TODO: Add your fake data here
-            "created_at": now,
-            "updated_at": now
-        }})
+            created_at: now,
+            updated_at: now,
+        }}
     }}
 }}"#
     );
