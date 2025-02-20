@@ -55,6 +55,22 @@ pub fn generate_validation_fields(input: TokenStream) -> TokenStream {
                 }
             }
         }
+
+        #[automatically_derived]
+        impl ModelValidation for #name {
+            type Fields = #fields_name;
+
+            fn fields() -> Self::Fields {
+                #fields_name::new()
+            }
+        }
+
+        // Generate a default validation implementation that can be overridden
+        impl #name {
+            fn _default_validate(&self) -> Result<(), ValidationError> {
+                Ok(())
+            }
+        }
     };
 
     TokenStream::from(expanded)

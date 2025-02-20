@@ -313,16 +313,26 @@ impl Validate for String {
     }
 }
 
+/// Trait for custom validation rules
+pub trait ValidationRules {
+    fn validate_rules(&self) -> Result<(), ValidationError> {
+        Ok(())
+    }
+}
+
 /// Trait for defining model-specific validation rules
 pub trait ModelValidation: Sized {
     type Fields;
     
     fn fields() -> Self::Fields;
-    fn validate(&self) -> Result<(), ValidationError>;
+    
+    fn validate(&self) -> Result<(), ValidationError> where Self: ValidationRules {
+        self.validate_rules()
+    }
 }
 
 #[async_trait]
-pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned + Send + Sync + Sized + Unpin + ModelValidation {
+pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned + Send + Sync + Sized + Unpin + ModelValidation + ValidationRules {
     /// Get the table name for the model
     fn table_name() -> &'static str;
 

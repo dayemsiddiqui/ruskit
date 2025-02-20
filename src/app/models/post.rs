@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::ValidationError;
 use crate::framework::database::{
-    model::{Model, BelongsTo, ModelValidation, Field, Rules, Validate},
+    model::{Model, BelongsTo, ModelValidation, Field, Rules, Validate, ValidationRules},
     query_builder::QueryBuilder,
     DatabaseError,
     migration::Migration,
@@ -37,14 +37,8 @@ impl Post {
     }
 }
 
-impl ModelValidation for Post {
-    type Fields = PostFields;
-
-    fn fields() -> Self::Fields {
-        PostFields::new()
-    }
-
-    fn validate(&self) -> Result<(), ValidationError> {
+impl ValidationRules for Post {
+    fn validate_rules(&self) -> Result<(), ValidationError> {
         self.title.validate(Rules::new().required().max(255))?;
         self.content.validate(Rules::new().required())?;
         Ok(())
