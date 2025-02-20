@@ -5,8 +5,6 @@ pub struct InertiaController;
 
 impl InertiaController {
     pub async fn about(inertia: Inertia) -> impl IntoResponse {
-        
-
         inertia.render("About", AboutPageProps {
             tech_stack: vec![String::from("Rust"), String::from("React"),
              String::from("TypeScript"),
