@@ -15,20 +15,10 @@ use rustavel_derive::GenerateValidationFields;
 pub struct User {
     #[sqlx(default)]
     pub id: i64,
-    #[serde(deserialize_with = "deserialize_unquoted_string")]
     pub name: String,
-    #[serde(deserialize_with = "deserialize_unquoted_string")]
     pub email: String,
     pub created_at: i64,
     pub updated_at: i64,
-}
-
-fn deserialize_unquoted_string<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    Ok(s.trim_matches('"').to_string())
 }
 
 impl User {
