@@ -24,24 +24,3 @@ args = ["run", "dev"]
 [tasks.dev]
 workspace = false
 run_task = { name = ["watch-assets", "watch-server"], parallel = true } 
-
-[tasks.run-migrations]
-command = "cargo"
-args = ["kit", "migrate"]
-
-[tasks.run-migrations-fresh]
-command = "cargo"
-args = ["kit", "migrate:fresh"]
-
-[tasks.migrate]
-workspace = false
-run_task = { name = ["kit", "run-migrations"], parallel = false }
-
-[tasks.migrate-fresh]
-workspace = false
-run_task = { name = ["kit", "run-migrations-fresh"], parallel = false }
-
-[tasks.script]
-workspace = false
-command = "cargo"
-args = ["run", "--package", "rustavel-scripts", "--bin", "${@}"]
