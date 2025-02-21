@@ -21,3 +21,7 @@ pub fn get_all_model_migrations() -> Vec<Migration> {
     migrations.extend(User::migrations());
     migrations
 }
+mod post;
+mod comment;
+mod category;
+mod product;

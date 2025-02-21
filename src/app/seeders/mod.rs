@@ -11,3 +11,4 @@ pub fn initialize() {
     println!("User seeder loaded");
     println!("All seeders loaded");
 } 
+pub mod postseeder;

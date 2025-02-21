@@ -2,8 +2,7 @@
 members = [
     "ts-collector",
     "ts_export_derive",
-    "rustavel_derive",
-    "scripts"
+    "rustavel_derive"
 ]
 
 [package]
