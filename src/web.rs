@@ -2,27 +2,43 @@ use axum::{
     Router,
     routing::{get, post},
 };
-
+use axum_login::{
+    AuthManagerLayerBuilder,
+    tower_sessions::{MemoryStore, SessionManagerLayer, Expiry},
+};
+use sea_orm::DatabaseConnection;
+use tower_http::services::ServeDir;
+use crate::{
+    app::controllers::{auth_controller::AuthController, user_controller::UserController},
+    app::services::auth_service::Backend,
+};
+use axum::extract::FromRef;
+use axum_inertia::InertiaConfig;
+use tower_sessions::cookie::time::Duration as CookieDuration;
 use crate::bootstrap::app::bootstrap;
-use crate::app::controllers::{
-    user_controller::UserController,
-    docs_controller::DocsController,
-    inertia_controller::InertiaController,
-    pages::landing,
-    posts_routes,
+use crate::app::{
+    controllers::{
+        docs_controller::DocsController,
+        inertia_controller::InertiaController,
+        pages::landing,
+    },
 };
 use axum_inertia::vite;
-use sea_orm::DatabaseConnection;
-use axum::extract::FromRef;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub inertia: axum_inertia::InertiaConfig,
     pub db: DatabaseConnection,
+    pub inertia: InertiaConfig,
 }
 
-impl FromRef<AppState> for axum_inertia::InertiaConfig {
-    fn from_ref(state: &AppState) -> Self {
+impl FromRef<AppState> for DatabaseConnection {
+    fn from_ref(state: &AppState) -> DatabaseConnection {
+        state.db.clone()
+    }
+}
+
+impl FromRef<AppState> for InertiaConfig {
+    fn from_ref(state: &AppState) -> InertiaConfig {
         state.inertia.clone()
     }
 }
@@ -50,6 +66,23 @@ pub async fn routes() -> Router {
         db: db.clone(),
     };
 
+    let session_store = MemoryStore::default();
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_expiry(Expiry::OnInactivity(CookieDuration::hours(1)));
+
+    let backend = Backend::new(db);
+    let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
+
+    // API routes
+    let api_router = Router::new()
+        .route("/me", get(AuthController::me))
+        .route("/login", post(AuthController::login))
+        .route("/register", post(AuthController::register))
+        .route("/logout", post(AuthController::logout))
+        .route("/users", get(UserController::index))
+        .route("/users/:id", get(UserController::show));
+
+    // Inertia page routes
     let inertia_router = Router::new()
         .route("/", get(landing))
         .route("/about", get(InertiaController::about))
@@ -59,16 +92,14 @@ pub async fn routes() -> Router {
         .route("/posts/create", get(InertiaController::posts_create))
         .route("/posts/:id", get(InertiaController::posts_show))
         .route("/posts/:id/edit", get(InertiaController::posts_edit))
-        .with_state(app_state);
-
-    let api_router = Router::new()
-        .route("/users", get(UserController::index))
-        .route("/users/{id}", get(UserController::show))
-        .route("/users", post(UserController::store))
-        .merge(posts_routes())
-        .with_state(db);
+        .route("/login", get(InertiaController::login))
+        .route("/register", get(InertiaController::register))
+        .route("/dashboard", get(InertiaController::dashboard));
 
     Router::new()
-        .nest("/", inertia_router)
         .nest("/api", api_router)
+        .merge(inertia_router)
+        .nest_service("/assets", ServeDir::new("assets"))
+        .layer(auth_layer)
+        .with_state(app_state)
 } 

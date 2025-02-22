@@ -8,6 +8,8 @@ pub struct CreateUserRequest {
     pub name: String,
     #[validate(email)]
     pub email: String,
+    #[validate(length(min = 8))]
+    pub password: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -15,6 +17,7 @@ pub struct UserResponse {
     pub id: i32,
     pub name: String,
     pub email: String,
+    pub role: String,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -38,6 +41,7 @@ impl From<User> for UserResponse {
             id: user.id,
             name: user.name,
             email: user.email,
+            role: user.role,
             created_at: user.created_at,
             updated_at: user.updated_at,
         }
@@ -46,13 +50,15 @@ impl From<User> for UserResponse {
 
 impl From<CreateUserRequest> for User {
     fn from(request: CreateUserRequest) -> Self {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp().to_string();
         Self {
             id: 0,
             name: request.name,
             email: request.email,
-            created_at: now.to_string(),
-            updated_at: now.to_string(),
+            password: String::new(), // This will be set by the controller
+            role: "user".to_string(),
+            created_at: now.clone(),
+            updated_at: now,
         }
     }
 } 

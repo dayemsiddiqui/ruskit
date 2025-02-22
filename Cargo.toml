@@ -29,7 +29,7 @@ path = "src/bin/cargo-kit.rs"
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1.0", features = ["full"] }
 tower = "0.4"
-tower-http = { version = "0.5", features = ["trace"] }
+tower-http = { version = "0.5", features = ["trace", "fs"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 async-trait = "0.1"
@@ -65,3 +65,7 @@ paste = "1.0"
 sea-orm = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
 sea-orm-migration = "0.12"
 dotenvy = "0.15"
+axum-login = "0.12"
+bcrypt = "0.15"
+tower-sessions = "0.10"
+tower-sessions-sqlx-store = { version = "0.10", features = ["sqlite"] }

@@ -12,6 +12,10 @@ pub struct Model {
     #[sea_orm(column_type = "Text", unique)]
     pub email: String,
     #[sea_orm(column_type = "Text")]
+    pub password: String,
+    #[sea_orm(column_type = "Text")]
+    pub role: String,
+    #[sea_orm(column_type = "Text")]
     pub created_at: String,
     #[sea_orm(column_type = "Text")]
     pub updated_at: String,
