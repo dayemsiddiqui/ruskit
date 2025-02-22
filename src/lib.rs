@@ -3,20 +3,22 @@ pub mod framework;
 pub mod app;
 pub mod routes;
 
-// Re-export framework types
-pub use framework::middleware::{
+// Re-export framework functionality
+pub use framework::{
+    // Core functionality
+    bootstrap,
+    middleware_stack,
+    middleware_group,
+    
+    // Types and traits
     Middleware,
     RouteMiddlewareExt,
     RouterMiddlewareExt,
     WithMiddleware,
     presets,
-};
-
-// Re-export bootstrap functions
-pub use framework::bootstrap::app::{
-    bootstrap,
-    middleware_stack,
-    middleware_group,
+    
+    // Commonly used items
+    prelude::*,
 };
 
 pub async fn setup() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,7 +29,4 @@ pub async fn setup() -> Result<(), Box<dyn std::error::Error>> {
     framework::database::init().await?;
     
     Ok(())
-}
-
-// Re-export commonly used items
-pub use framework::prelude::*; 
+} 
