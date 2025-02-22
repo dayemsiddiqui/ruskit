@@ -4,7 +4,15 @@ use crate::framework::cli::error::CliError;
 use crate::web;
 use crate::framework::bootstrap::app::bootstrap;
 
-pub async fn start_server() -> Result<(), CliError> {
+pub async fn start_server(dev_mode: bool) -> Result<(), CliError> {
+    if dev_mode {
+        println!("Starting development server...");
+        // Add development-specific configuration here
+    } else {
+        println!("Starting production server...");
+        // Add production-specific configuration here
+    }
+    
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     let listener = TcpListener::bind(&addr).await?;
     println!("Server running on {}", addr);
@@ -30,6 +38,6 @@ pub fn run_dev() -> Result<(), CliError> {
         .build()
         .unwrap()
         .block_on(async {
-            start_server().await
+            start_server(true).await
         })
 } 

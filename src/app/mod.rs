@@ -1,6 +1,8 @@
+pub mod console;
 pub mod controllers;
-pub mod dtos;
+pub mod models;
 pub mod entities;
+pub mod dtos;
 pub mod services;
 pub mod middleware;
 

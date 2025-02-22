@@ -11,3 +11,5 @@ pub use docs_controller::*;
 pub use inertia_controller::*;
 pub use posts_controller::routes as posts_routes;
 pub use auth_controller::*;
+
+// Controllers will be registered here

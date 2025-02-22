@@ -15,7 +15,9 @@ args = ["watch", "-w", "templates", "-w", "src", "-x", "build"]
 [tasks.watch-server]
 dependencies = ["install-watch"]
 command = "cargo"
-args = ["watch", "-w", "templates", "-w", "src", "-x", "run"]
+args = ["watch", "-w", "templates", "-w", "src", "-x", "run -- serve"]
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
+env_files = [".env"]
 
 [tasks.watch-assets]
 command = "npm"
@@ -24,6 +26,14 @@ args = ["run", "dev"]
 [tasks.dev]
 workspace = false
 run_task = { name = ["watch-assets", "watch-server"], parallel = true }
+
+[tasks.serve]
+workspace = false
+command = "cargo"
+args = ["run", "--", "serve"]
+description = "Run the production server"
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
+env_files = [".env"]
 
 [tasks.migration-new]
 workspace = false
@@ -64,4 +74,17 @@ args = ["install", "sea-orm-cli"]
 
 [tasks.setup-db]
 workspace = false
-dependencies = ["install-sea-orm-cli"] 
+dependencies = ["install-sea-orm-cli"]
+
+[tasks.schedule]
+workspace = false
+command = "cargo"
+args = ["run", "--", "schedule"]
+description = "Run the scheduler to execute cron jobs"
+
+[tasks.schedule-watch]
+workspace = false
+dependencies = ["install-watch"]
+command = "cargo"
+args = ["watch", "-w", "src", "-x", "run -- schedule"]
+description = "Run the scheduler in watch mode (reloads on code changes)" 

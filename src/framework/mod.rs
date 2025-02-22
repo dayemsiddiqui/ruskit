@@ -11,6 +11,7 @@ pub mod bootstrap;
 pub mod cli;
 pub mod config;
 pub mod app;
+pub mod schedule;
 
 // Re-export framework types
 pub use middleware::{

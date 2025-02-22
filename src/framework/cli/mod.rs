@@ -2,54 +2,45 @@ pub mod commands;
 pub mod error;
 pub mod handlers;
 
-use commands::{Cli, Commands};
-use error::CliError;
-use handlers::{make, project, server};
-use clap::Parser;
+use crate::framework::cli::commands::{Cli, Commands};
+use crate::framework::cli::error::CliError;
 
-pub async fn run() -> Result<(), CliError> {
-    let cli = Cli::parse();
-    
+pub async fn run_cli(cli: Cli) -> Result<(), CliError> {
     match cli.command {
-        Commands::New { name } => {
-            project::create_new_project(&name)?;
+        Some(Commands::Schedule(cmd)) => {
+            cmd.handle().await;
+            Ok(())
         },
-        Commands::Dev => {
-            server::run_dev()?;
+        Some(Commands::New { name }) => {
+            handlers::project::create_new_project(&name)?;
+            Ok(())
         },
-        Commands::Serve => {
-            println!("Starting production server...");
-            server::start_server().await?;
+        Some(Commands::Dev) => {
+            handlers::server::start_server(true).await?;
+            Ok(())
         },
-        Commands::MakeController { name } => {
-            println!("Creating controller {}...", name);
-            make::make_controller(&name)?;
+        Some(Commands::Serve) => {
+            handlers::server::start_server(false).await?;
+            Ok(())
         },
-        Commands::InertiaPage { name } => {
-            println!("Creating Inertia page components for {}...", name);
-            
-            println!("\n1. Creating controller...");
-            make::make_page_controller(&name)?;
-            
-            println!("\n2. Creating React component...");
-            make::make_page_component(&name)?;
-            
-            println!("\nSuccessfully created Inertia page components!");
-            println!("\nNext steps:");
-            println!("1. Add your route in src/web.rs:");
-            println!("   .route(\"/{}\", get({}Controller::show))", name.to_lowercase(), name);
-            println!("2. Customize the page component in resources/js/pages/{}.tsx", name);
+        Some(Commands::MakeController { name }) => {
+            handlers::make::run_make(&name, commands::ResourceType::Controller)?;
+            Ok(())
         },
-        Commands::InertiaProp { name } => {
-            println!("Creating Inertia props type for {}...", name);
-            make::make_page_dto(&name)?;
-            println!("\nSuccessfully created Inertia props type!");
+        Some(Commands::InertiaPage { name }) => {
+            handlers::make::make_page_dto(&name)?;
+            handlers::make::make_page_controller(&name)?;
+            handlers::make::make_page_component(&name)?;
+            Ok(())
         },
-        Commands::Make { name, resource_type } => {
-            println!("Creating {} {}...", resource_type, name);
-            make::run_make(&name, resource_type)?;
+        Some(Commands::InertiaProp { name }) => {
+            handlers::make::make_page_dto(&name)?;
+            Ok(())
         },
+        Some(Commands::Make { name, resource_type }) => {
+            handlers::make::run_make(&name, resource_type)?;
+            Ok(())
+        },
+        None => Ok(()),
     }
-    
-    Ok(())
 } 

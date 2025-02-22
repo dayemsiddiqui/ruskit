@@ -74,3 +74,5 @@ bcrypt = "0.15"
 tower-sessions = "0.10"
 tower-sessions-sqlx-store = { version = "0.10", features = ["sqlite"] }
 redis = { version = "0.24", features = ["tokio-comp"] }
+tokio-cron-scheduler = "0.10.0"
+lazy_static = "1.4.0"
