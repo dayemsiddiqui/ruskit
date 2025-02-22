@@ -33,4 +33,6 @@ pub use tower_http::services::ServeDir;
 pub use crate::framework::views::*;
 pub use crate::framework::middleware::*;
 pub use crate::framework::routing::*;
-pub use crate::framework::inertia::*; 
+pub use crate::framework::inertia::*;
+pub use crate::framework::cache::Cache;
+pub use serde_json::json; 

@@ -12,17 +12,17 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserResponse {
     pub id: i32,
     pub name: String,
     pub email: String,
     pub role: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserListResponse {
     pub data: Vec<UserResponse>,
 }
@@ -42,8 +42,24 @@ impl From<User> for UserResponse {
             name: user.name,
             email: user.email,
             role: user.role,
-            created_at: user.created_at,
-            updated_at: user.updated_at,
+            created_at: Some(user.created_at),
+            updated_at: Some(user.updated_at),
+        }
+    }
+}
+
+impl From<Option<User>> for UserResponse {
+    fn from(user: Option<User>) -> Self {
+        match user {
+            Some(user) => Self::from(user),
+            None => Self {
+                id: 0,
+                name: String::new(),
+                email: String::new(),
+                role: String::from("user"),
+                created_at: None,
+                updated_at: None,
+            }
         }
     }
 }
