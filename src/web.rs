@@ -1,7 +1,7 @@
 use crate::framework::prelude::*;
 use sea_orm::DatabaseConnection;
 use tower_http::services::ServeDir;
-use crate::config;
+use crate::framework::config::AppConfig;
 use crate::routes;
 
 #[derive(Clone)]
@@ -24,7 +24,7 @@ impl FromRef<AppState> for InertiaConfig {
 
 pub async fn routes(db: DatabaseConnection) -> Router {
     // Set up application configuration
-    let config::AppConfig { inertia, auth_layer, .. } = config::AppConfig::new(db.clone()).await;
+    let AppConfig { inertia, auth_layer, .. } = AppConfig::new(db.clone()).await;
     let app_state = AppState { db, inertia };
 
     Router::new()

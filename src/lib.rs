@@ -1,7 +1,6 @@
 pub mod web;
 pub mod framework;
 pub mod app;
-pub mod config;
 pub mod routes;
 
 // Re-export framework types

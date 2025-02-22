@@ -2,8 +2,6 @@ use std::net::SocketAddr;
 use std::fs;
 use tokio::net::TcpListener;
 use axum::serve;
-use axum_inertia::vite;
-use crate::web::AppState;
 use crate::framework::bootstrap::app::bootstrap;
 use crate::framework::typescript::export_all_types;
 use dotenvy::dotenv;
@@ -11,7 +9,6 @@ use dotenvy::dotenv;
 mod web;
 mod framework;
 mod app;
-mod config;
 mod routes;
 
 fn generate_typescript_types() -> std::io::Result<()> {
