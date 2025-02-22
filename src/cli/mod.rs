@@ -19,7 +19,7 @@ pub async fn run() -> Result<(), CliError> {
         },
         Commands::Serve => {
             println!("Starting production server...");
-            server::run_server().await?;
+            server::start_server().await?;
         },
         Commands::MakeController { name } => {
             println!("Creating controller {}...", name);

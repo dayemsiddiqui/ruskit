@@ -3,6 +3,8 @@ pub mod web;
 pub mod bootstrap;
 pub mod framework;
 pub mod app;
+pub mod config;
+pub mod routes;
 
 // Re-export framework types
 pub use framework::middleware::{

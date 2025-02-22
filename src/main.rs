@@ -4,6 +4,9 @@ use tokio::net::TcpListener;
 use std::fs;
 use ruskit::framework::export_all_types;
 use dotenvy::dotenv;
+use axum_inertia::{InertiaConfig, vite};
+use ruskit::web::AppState;
+use sea_orm::DatabaseConnection;
 
 fn generate_typescript_types() -> std::io::Result<()> {
     // Ensure the types directory exists
@@ -39,8 +42,22 @@ async fn main() {
         eprintln!("Error generating TypeScript types: {}", e);
     }
 
-    // Get the router
-    let app = web::routes().await;
+    // Initialize the application and get the database connection
+    let db = ruskit::bootstrap::app::bootstrap().await.unwrap();
+    
+    // Create the app state
+    let app_state = AppState {
+        db,
+        inertia: vite::Development::default()
+            .port(3000)
+            .main("resources/js/app.jsx")
+            .lang("en")
+            .title("Ruskit")
+            .into_config(),
+    };
+
+    // Get the router and add state
+    let app = web::routes().await.with_state(app_state);
 
     // Set up the address to listen on
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
@@ -49,5 +66,7 @@ async fn main() {
 
     // Create the listener
     let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let service = app.into_make_service();
+    
+    axum::serve(listener, service).await.unwrap();
 }
