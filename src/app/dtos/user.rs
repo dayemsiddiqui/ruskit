@@ -12,18 +12,29 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UserResponse {
+    #[serde(default)]
     pub id: i32,
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub email: String,
+    #[serde(default = "default_role")]
     pub role: String,
+    #[serde(default)]
     pub created_at: Option<String>,
+    #[serde(default)]
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+fn default_role() -> String {
+    "user".to_string()
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UserListResponse {
+    #[serde(default)]
     pub data: Vec<UserResponse>,
 }
 

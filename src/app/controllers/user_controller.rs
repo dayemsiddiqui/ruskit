@@ -11,6 +11,7 @@ use axum::{
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set, QueryOrder, PaginatorTrait};
 use std::time::Duration;
 use serde_json::Value;
+use crate::framework::cache::BoxFuture;
 
 /// User Controller handling all user-related endpoints
 pub struct UserController;
@@ -19,23 +20,19 @@ impl UserController {
     /// Returns a list of users
     pub async fn index(State(db): State<DatabaseConnection>) -> impl IntoResponse {
         // Try to get users from cache first
-        if let Some(users) = Cache::get::<UserListResponse>("users:all").await {
-            return Json(users);
-        }
+        let db_clone = db.clone();
+        let users = Cache::flexible("users:all", Duration::from_secs(300), Duration::from_secs(10), move || {
+            async move {
+                let users = User::find()
+                    .order_by(user::Column::Id, sea_orm::Order::Desc)
+                    .all(&db_clone)
+                    .await
+                    .unwrap_or_default();
+                UserListResponse::from(users)
+            }.boxed()
+        }).await.unwrap_or_default();
 
-        // If not in cache, get from database
-        let users = User::find()
-            .order_by(user::Column::Id, sea_orm::Order::Desc)
-            .all(&db)
-            .await
-            .unwrap_or_default();
-
-        let response = UserListResponse::from(users);
-
-        // Cache the result for 5 minutes
-        Cache::put("users:all", &response, Duration::from_secs(300)).await;
-
-        Json(response)
+        Json(users)
     }
 
     /// Returns details for a specific user
@@ -43,17 +40,21 @@ impl UserController {
         State(db): State<DatabaseConnection>,
         Path(id): Path<i32>
     ) -> impl IntoResponse {
-        let user = User::find_by_id(id).one(&db).await.unwrap_or(None);
-        let user_response = UserResponse::from(user);
-        
-        // Cache the response for future requests
-        Cache::put(
+        let db_clone = db.clone();
+        let user = Cache::flexible(
             &format!("users:{}", id),
-            &user_response,
             Duration::from_secs(300),
-        ).await;
+            Duration::from_secs(10),
+            move || async move {
+                let user = User::find_by_id(id)
+                    .one(&db_clone)
+                    .await
+                    .unwrap_or(None);
+                UserResponse::from(user)
+            }.boxed()
+        ).await.unwrap_or_default();
 
-        Json(user_response)
+        Json(user)
     }
 
     /// Creates a new user
@@ -137,13 +138,18 @@ impl UserController {
 
     /// Returns user statistics
     pub async fn stats(State(db): State<DatabaseConnection>) -> impl IntoResponse {
-        let total_users = User::find().count(&db).await.unwrap_or(0);
-        let stats = json!({
-            "total_users": total_users,
-        });
-        
-        // Cache the stats forever
-        Cache::forever("user:stats", &stats).await;
+        let db_clone = db.clone();
+        let stats = Cache::flexible(
+            "user:stats",
+            Duration::from_secs(3600), // Cache for 1 hour
+            Duration::from_secs(60),   // Grace period of 1 minute
+            move || async move {
+                let total_users = User::find().count(&db_clone).await.unwrap_or(0);
+                json!({
+                    "total_users": total_users,
+                })
+            }.boxed()
+        ).await.unwrap_or_default();
 
         Json(stats)
     }

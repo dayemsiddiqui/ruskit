@@ -5,9 +5,25 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::OnceCell;
+use std::future::Future;
+use std::pin::Pin;
 
 pub mod drivers;
 pub mod config;
+
+/// A trait to easily box futures for the cache system
+pub trait BoxFuture<T>: Future<Output = T> + Send + 'static {
+    fn boxed(self) -> Pin<Box<dyn Future<Output = T> + Send + 'static>>;
+}
+
+impl<F, T> BoxFuture<T> for F
+where
+    F: Future<Output = T> + Send + 'static,
+{
+    fn boxed(self) -> Pin<Box<dyn Future<Output = T> + Send + 'static>> {
+        Box::pin(self)
+    }
+}
 
 static CACHE_STORE: OnceCell<Arc<RwLock<Box<dyn CacheStore + Send + Sync>>>> = OnceCell::new();
 
@@ -115,10 +131,11 @@ impl Cache {
 
     /// Get an item from the cache with stale-while-revalidate behavior.
     /// Returns the cached value (even if stale) while asynchronously revalidating it.
-    pub async fn flexible<T, F>(key: &str, ttl: Duration, grace: Duration, callback: F) -> Option<T>
+    pub async fn flexible<T, F, Fut>(key: &str, ttl: Duration, grace: Duration, callback: F) -> Option<T>
     where
         T: DeserializeOwned + Serialize + Clone + Send + 'static,
-        F: FnOnce() -> T + Send + Sync + Clone + 'static,
+        F: FnOnce() -> Fut + Send + Sync + Clone + 'static,
+        Fut: Future<Output = T> + Send + 'static,
     {
         let store = Self::store();
         let store_read = store.read().await;
@@ -132,9 +149,9 @@ impl Cache {
             
             tokio::spawn(async move {
                 // Check if the value is stale and needs revalidation
-                if let Some(value) = store.read().await.get(&key).await {
+                if let Some(_) = store.read().await.get(&key).await {
                     // If we have a value, check if it's stale
-                    let new_value = callback();
+                    let new_value = callback().await;
                     if let Ok(value) = serde_json::to_value(new_value) {
                         let _ = store.read().await.put(&key, value, Some(ttl)).await;
                     }
@@ -146,7 +163,7 @@ impl Cache {
         }
 
         // If no value exists, generate it synchronously
-        let value = callback();
+        let value = callback().await;
         if let Ok(json_value) = serde_json::to_value(value.clone()) {
             let _ = store_read.put(key, json_value, Some(ttl + grace)).await;
         }
