@@ -2,16 +2,11 @@ use std::net::SocketAddr;
 use std::fs;
 use tokio::net::TcpListener;
 use axum::serve;
-use crate::framework::bootstrap::app::bootstrap;
 use crate::framework::typescript::export_all_types;
 use dotenvy::dotenv;
 
-mod web;
-mod framework;
-mod app;
-mod routes;
-
-fn generate_typescript_types() -> std::io::Result<()> {
+/// Generate TypeScript types for all DTOs
+pub fn generate_typescript_types() -> std::io::Result<()> {
     // Ensure the types directory exists
     fs::create_dir_all("resources/js/types")?;
     
@@ -27,10 +22,10 @@ fn generate_typescript_types() -> std::io::Result<()> {
     Ok(())
 }
 
-#[tokio::main]
-async fn main() {
+/// Run the application
+pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-    let listener = TcpListener::bind(&addr).await.unwrap();
+    let listener = TcpListener::bind(&addr).await?;
     println!("Server running on {}", addr);
 
     // Load .env file
@@ -44,7 +39,7 @@ async fn main() {
     }
 
     // Initialize the application and get the database connection
-    let db = match bootstrap().await {
+    let db = match crate::framework::bootstrap::app::bootstrap().await {
         Ok(db) => {
             println!("Application bootstrapped successfully");
             db
@@ -56,8 +51,10 @@ async fn main() {
     };
     
     // Get the router and add state
-    let app = web::routes(db).await;
+    let app = crate::web::routes(db).await;
     
     println!("Starting server...");
-    serve(listener, app).await.unwrap();
-}
+    serve(listener, app).await?;
+    
+    Ok(())
+} 

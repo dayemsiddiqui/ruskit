@@ -22,6 +22,10 @@ readme = "README.md"
 default-run = "ruskit"
 
 [[bin]]
+name = "ruskit"
+path = "src/bin/ruskit.rs"
+
+[[bin]]
 name = "cargo-kit"
 path = "src/bin/cargo-kit.rs"
 

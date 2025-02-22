@@ -10,7 +10,7 @@ pub mod storage;
 pub mod bootstrap;
 pub mod cli;
 pub mod config;
-pub mod bin;
+pub mod app;
 
 // Re-export framework types
 pub use middleware::{
@@ -39,6 +39,9 @@ pub use cache::config::{CacheConfig, CacheDriver, init_cache};
 
 // Re-export config
 pub use config::AppConfig;
+
+// Re-export app functions
+pub use app::{run, generate_typescript_types};
 
 pub async fn setup() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables

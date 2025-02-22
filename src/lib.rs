@@ -19,14 +19,4 @@ pub use framework::{
     
     // Commonly used items
     prelude::*,
-};
-
-pub async fn setup() -> Result<(), Box<dyn std::error::Error>> {
-    // Load environment variables
-    dotenvy::dotenv().ok();
-    
-    // Initialize database connection
-    framework::database::init().await?;
-    
-    Ok(())
-} 
+}; 

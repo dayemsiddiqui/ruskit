@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use crate::framework::cli::commands::Commands;
+use ruskit::framework::cli::commands::Commands;
 
 #[derive(Parser)]
 #[command(name = "cargo")]
@@ -21,31 +21,31 @@ async fn main() {
     match cli {
         CargoCli::Kit(kit) => match kit.command {
             Commands::Dev => {
-                if let Err(e) = crate::framework::cli::handlers::server::run_dev() {
+                if let Err(e) = ruskit::framework::cli::handlers::server::run_dev() {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
             }
             Commands::Make { name, resource_type } => {
-                if let Err(e) = crate::framework::cli::handlers::make::run_make(&name, resource_type) {
+                if let Err(e) = ruskit::framework::cli::handlers::make::run_make(&name, resource_type) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
             }
             Commands::New { name } => {
-                if let Err(e) = crate::framework::cli::handlers::project::create_new_project(&name) {
+                if let Err(e) = ruskit::framework::cli::handlers::project::create_new_project(&name) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
             }
             Commands::Serve => {
-                if let Err(e) = crate::framework::cli::handlers::server::start_server().await {
+                if let Err(e) = ruskit::framework::cli::handlers::server::start_server().await {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
             }
             Commands::MakeController { name } => {
-                if let Err(e) = crate::framework::cli::handlers::make::make_controller(&name) {
+                if let Err(e) = ruskit::framework::cli::handlers::make::make_controller(&name) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
@@ -54,13 +54,13 @@ async fn main() {
                 println!("Creating Inertia page components for {}...", name);
                 
                 println!("\n1. Creating controller...");
-                if let Err(e) = crate::framework::cli::handlers::make::make_page_controller(&name) {
+                if let Err(e) = ruskit::framework::cli::handlers::make::make_page_controller(&name) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
                 
                 println!("\n2. Creating React component...");
-                if let Err(e) = crate::framework::cli::handlers::make::make_page_component(&name) {
+                if let Err(e) = ruskit::framework::cli::handlers::make::make_page_component(&name) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
@@ -73,7 +73,7 @@ async fn main() {
             }
             Commands::InertiaProp { name } => {
                 println!("Creating Inertia props type for {}...", name);
-                if let Err(e) = crate::framework::cli::handlers::make::make_page_dto(&name) {
+                if let Err(e) = ruskit::framework::cli::handlers::make::make_page_dto(&name) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
