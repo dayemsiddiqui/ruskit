@@ -4,6 +4,7 @@ pub mod routing;
 pub mod typescript;
 pub mod views;
 pub mod prelude;
+pub mod database;
 
 pub use middleware::*;
 pub use views::*;

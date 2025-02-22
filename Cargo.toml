@@ -61,3 +61,6 @@ ts-rs = { version = "7.1", features = ["format"] }
 ts_export_derive = { version = "0.1.0", path = "ts_export_derive" }
 rustavel_derive = { version = "0.1.0", path = "./rustavel_derive" }
 paste = "1.0"
+sea-orm = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+sea-orm-migration = "0.12"
+dotenvy = "0.15"

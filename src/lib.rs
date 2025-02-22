@@ -18,4 +18,17 @@ pub use bootstrap::app::{
     bootstrap,
     middleware_stack,
     middleware_group,
-}; 
+};
+
+pub async fn setup() -> Result<(), Box<dyn std::error::Error>> {
+    // Load environment variables
+    dotenvy::dotenv().ok();
+    
+    // Initialize database connection
+    framework::database::init().await?;
+    
+    Ok(())
+}
+
+// Re-export commonly used items
+pub use framework::prelude::*; 
