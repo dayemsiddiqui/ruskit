@@ -1,10 +1,12 @@
 use axum::{
     Router,
     routing::{get, post},
+    middleware::from_fn,
 };
 use axum_login::{
     AuthManagerLayerBuilder,
     tower_sessions::{MemoryStore, SessionManagerLayer, Expiry},
+    AuthSession,
 };
 use sea_orm::DatabaseConnection;
 use tower_http::services::ServeDir;
@@ -24,6 +26,9 @@ use crate::app::{
     },
 };
 use axum_inertia::vite;
+use axum::response::{Response, IntoResponse, Redirect};
+use axum::http::Request;
+use axum::body::Body;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -40,6 +45,18 @@ impl FromRef<AppState> for DatabaseConnection {
 impl FromRef<AppState> for InertiaConfig {
     fn from_ref(state: &AppState) -> InertiaConfig {
         state.inertia.clone()
+    }
+}
+
+// Middleware to require authentication
+async fn require_auth(
+    auth: AuthSession<Backend>,
+    request: Request<Body>,
+    next: axum::middleware::Next,
+) -> Response {
+    match auth.user {
+        Some(_) => next.run(request).await,
+        None => Redirect::to("/login").into_response(),
     }
 }
 
@@ -82,7 +99,12 @@ pub async fn routes() -> Router {
         .route("/users", get(UserController::index))
         .route("/users/:id", get(UserController::show));
 
-    // Inertia page routes
+    // Protected routes
+    let protected_router = Router::new()
+        .route("/dashboard", get(InertiaController::dashboard))
+        .route_layer(from_fn(require_auth));
+
+    // Public Inertia page routes
     let inertia_router = Router::new()
         .route("/", get(landing))
         .route("/about", get(InertiaController::about))
@@ -94,7 +116,7 @@ pub async fn routes() -> Router {
         .route("/posts/:id/edit", get(InertiaController::posts_edit))
         .route("/login", get(InertiaController::login))
         .route("/register", get(InertiaController::register))
-        .route("/dashboard", get(InertiaController::dashboard));
+        .merge(protected_router);
 
     Router::new()
         .nest("/api", api_router)
