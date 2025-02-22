@@ -102,9 +102,6 @@ impl Application {
 
 /// Initialize the application
 pub async fn bootstrap() -> Result<Application, Box<dyn std::error::Error>> {
-    // Register all models
-    models::register_models();
-
     // Initialize database
     println!("Initializing database...");
     let db_config = database::config::DatabaseConfig::from_env();

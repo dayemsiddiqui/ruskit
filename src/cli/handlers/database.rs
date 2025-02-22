@@ -3,13 +3,9 @@ use crate::framework::database::{
     initialize,
     config::DatabaseConfig,
 };
-use crate::app;
 
 pub async fn generate_entities() -> Result<(), CliError> {
     use crate::framework::database::schema;
-    
-    println!("Initializing application...");
-    app::initialize();
     
     println!("Initializing database...");
     let db_config = DatabaseConfig::from_env();
