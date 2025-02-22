@@ -12,6 +12,20 @@ use crate::app::controllers::{
     posts_routes,
 };
 use axum_inertia::vite;
+use sea_orm::DatabaseConnection;
+use axum::extract::FromRef;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub inertia: axum_inertia::InertiaConfig,
+    pub db: DatabaseConnection,
+}
+
+impl FromRef<AppState> for axum_inertia::InertiaConfig {
+    fn from_ref(state: &AppState) -> Self {
+        state.inertia.clone()
+    }
+}
 
 // Define routes with middleware
 pub async fn routes() -> Router {
@@ -31,21 +45,30 @@ pub async fn routes() -> Router {
         .react() 
         .into_config();
     
+    let app_state = AppState {
+        inertia: inertia_config,
+        db: db.clone(),
+    };
+
     let inertia_router = Router::new()
         .route("/", get(landing))
         .route("/about", get(InertiaController::about))
         .route("/docs", get(DocsController::index))
         .route("/docs/:page", get(DocsController::show))
-        .with_state(inertia_config);
+        .route("/posts", get(InertiaController::posts_index))
+        .route("/posts/create", get(InertiaController::posts_create))
+        .route("/posts/:id", get(InertiaController::posts_show))
+        .route("/posts/:id/edit", get(InertiaController::posts_edit))
+        .with_state(app_state);
 
     let api_router = Router::new()
         .route("/users", get(UserController::index))
         .route("/users/{id}", get(UserController::show))
         .route("/users", post(UserController::store))
         .merge(posts_routes())
-        .with_state(db.clone());
+        .with_state(db);
 
     Router::new()
         .nest("/", inertia_router)
-        .nest("/api", api_router.with_state(()))
+        .nest("/api", api_router)
 } 
