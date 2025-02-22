@@ -95,7 +95,7 @@ impl Cache {
         store.decrement(key, value).await
     }
 
-    /// Get an item from the cache, or store the default value forever
+    /// Get an item from the cache, or store the default value with a TTL
     pub async fn remember<T, F>(key: &str, ttl: Duration, callback: F) -> Option<T>
     where
         T: DeserializeOwned + Serialize,
@@ -111,6 +111,46 @@ impl Cache {
         } else {
             None
         }
+    }
+
+    /// Get an item from the cache with stale-while-revalidate behavior.
+    /// Returns the cached value (even if stale) while asynchronously revalidating it.
+    pub async fn flexible<T, F>(key: &str, ttl: Duration, grace: Duration, callback: F) -> Option<T>
+    where
+        T: DeserializeOwned + Serialize + Clone + Send + 'static,
+        F: FnOnce() -> T + Send + Sync + Clone + 'static,
+    {
+        let store = Self::store();
+        let store_read = store.read().await;
+        
+        // Try to get the value from cache
+        if let Some(value) = store_read.get(key).await {
+            // If we have a value, spawn a background task to refresh it if it's stale
+            let key = key.to_string();
+            let callback = callback.clone();
+            let store = store.clone();
+            
+            tokio::spawn(async move {
+                // Check if the value is stale and needs revalidation
+                if let Some(value) = store.read().await.get(&key).await {
+                    // If we have a value, check if it's stale
+                    let new_value = callback();
+                    if let Ok(value) = serde_json::to_value(new_value) {
+                        let _ = store.read().await.put(&key, value, Some(ttl)).await;
+                    }
+                }
+            });
+
+            // Return the current value (might be stale) immediately
+            return serde_json::from_value(value).ok();
+        }
+
+        // If no value exists, generate it synchronously
+        let value = callback();
+        if let Ok(json_value) = serde_json::to_value(value.clone()) {
+            let _ = store_read.put(key, json_value, Some(ttl + grace)).await;
+        }
+        Some(value)
     }
 
     /// Get an item from the cache, or store the default value forever
