@@ -53,7 +53,8 @@ args = ["migrate", "reset", "-d", "migration"]
 [tasks.generate-entities]
 workspace = false
 command = "sea-orm-cli"
-args = ["generate", "entity", "--lib", "--output-dir", "src/app/entities", "--migration-dir", "migration"]
+args = ["generate", "entity", "--lib", "--output-dir", "src/app/entities", "--database-url", "sqlite:data/db.sqlite?mode=rwc"]
+env_files = [".env"]
 
 [tasks.install-sea-orm-cli]
 workspace = false
