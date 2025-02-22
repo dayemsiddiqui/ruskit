@@ -53,7 +53,8 @@ args = ["migrate", "reset", "-d", "migration"]
 [tasks.generate-entities]
 workspace = false
 command = "sea-orm-cli"
-args = ["generate", "entity", "--lib", "--output-dir", "src/app/entities", "--database-url", "sqlite:data/db.sqlite?mode=rwc"]
+args = ["generate", "entity", "--lib", "--output-dir", "src/app/entities", "--database-url", "${DATABASE_URL}"]
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
 env_files = [".env"]
 
 [tasks.install-sea-orm-cli]
