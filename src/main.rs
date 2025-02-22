@@ -4,13 +4,11 @@ use tokio::net::TcpListener;
 use axum::serve;
 use axum_inertia::vite;
 use crate::web::AppState;
-use crate::bootstrap::app::bootstrap;
+use crate::framework::bootstrap::app::bootstrap;
 use crate::framework::typescript::export_all_types;
 use dotenvy::dotenv;
 
-mod cli;
 mod web;
-mod bootstrap;
 mod framework;
 mod app;
 mod config;

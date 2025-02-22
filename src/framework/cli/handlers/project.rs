@@ -1,6 +1,53 @@
-use crate::cli::error::CliError;
+use std::fs;
+use std::path::PathBuf;
+use crate::framework::cli::error::CliError;
 use console::style;
 use std::process::Command;
+
+pub fn create_project(name: &str) -> Result<(), CliError> {
+    let project_dir = PathBuf::from(name);
+    
+    // Create project directory
+    fs::create_dir_all(&project_dir)
+        .map_err(|e| CliError::IoError(e))?;
+
+    // Create basic project structure
+    let dirs = [
+        "src/app/controllers",
+        "src/app/models",
+        "src/app/views",
+        "src/app/middleware",
+        "src/config",
+        "src/routes",
+        "src/public",
+        "src/resources/js",
+        "src/resources/css",
+        "migrations",
+    ];
+
+    for dir in dirs.iter() {
+        fs::create_dir_all(project_dir.join(dir))
+            .map_err(|e| CliError::IoError(e))?;
+    }
+
+    // Create basic files with minimal content
+    let files = [
+        ("src/main.rs", "fn main() { println!(\"Hello, world!\"); }"),
+        ("src/lib.rs", "// Library code goes here"),
+        ("Cargo.toml", "[package]\nname = \"project\"\nversion = \"0.1.0\"\nedition = \"2021\""),
+        (".env", "# Environment variables go here"),
+        (".gitignore", "/target\n/Cargo.lock"),
+        ("README.md", "# Project\n\nA new Ruskit project."),
+    ];
+
+    for (path, content) in files.iter() {
+        fs::write(project_dir.join(path), content)
+            .map_err(|e| CliError::IoError(e))?;
+    }
+
+    println!("Created new Ruskit project: {}", name);
+    Ok(())
+}
 
 pub fn create_new_project(name: &str) -> Result<(), CliError> {
     println!("Creating new Ruskit project: {}", style(name).cyan());
@@ -44,5 +91,10 @@ pub fn create_new_project(name: &str) -> Result<(), CliError> {
     println!("  cd {}", name);
     println!("  cargo make dev    # Start the development server");
     
+    Ok(())
+}
+
+pub fn run_project(name: &str) -> Result<(), CliError> {
+    create_project(name)?;
     Ok(())
 } 

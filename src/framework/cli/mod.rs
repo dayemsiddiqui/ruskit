@@ -45,6 +45,10 @@ pub async fn run() -> Result<(), CliError> {
             make::make_page_dto(&name)?;
             println!("\nSuccessfully created Inertia props type!");
         },
+        Commands::Make { name, resource_type } => {
+            println!("Creating {} {}...", resource_type, name);
+            make::run_make(&name, resource_type)?;
+        },
     }
     
     Ok(())

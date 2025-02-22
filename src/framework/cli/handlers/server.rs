@@ -1,8 +1,8 @@
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use crate::cli::error::CliError;
+use crate::framework::cli::error::CliError;
 use crate::web;
-use crate::bootstrap::app::bootstrap;
+use crate::framework::bootstrap::app::bootstrap;
 
 pub async fn start_server() -> Result<(), CliError> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));

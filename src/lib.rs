@@ -1,6 +1,4 @@
-pub mod cli;
 pub mod web;
-pub mod bootstrap;
 pub mod framework;
 pub mod app;
 pub mod config;
@@ -16,7 +14,7 @@ pub use framework::middleware::{
 };
 
 // Re-export bootstrap functions
-pub use bootstrap::app::{
+pub use framework::bootstrap::app::{
     bootstrap,
     middleware_stack,
     middleware_group,

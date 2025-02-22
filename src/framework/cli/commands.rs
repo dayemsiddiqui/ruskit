@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::fmt;
 
 #[derive(Parser)]
 #[command(name = "cargo-kit")]
@@ -11,7 +12,7 @@ pub struct Cli {
     pub command: Commands,
 }
 
-#[derive(Subcommand)]
+#[derive(Debug, Subcommand)]
 pub enum Commands {
     /// Create a new Ruskit project
     New {
@@ -40,4 +41,33 @@ pub enum Commands {
         /// Name of the props to create (e.g., "Dashboard")
         name: String,
     },
+    /// Make a new resource
+    Make {
+        /// Name of the resource
+        name: String,
+        /// Type of resource to create
+        #[arg(value_enum)]
+        resource_type: ResourceType,
+    },
+}
+
+#[derive(Debug, clap::ValueEnum, Clone)]
+pub enum ResourceType {
+    Controller,
+    Model,
+    Migration,
+    Middleware,
+    Command,
+}
+
+impl fmt::Display for ResourceType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ResourceType::Controller => write!(f, "controller"),
+            ResourceType::Model => write!(f, "model"),
+            ResourceType::Migration => write!(f, "migration"),
+            ResourceType::Middleware => write!(f, "middleware"),
+            ResourceType::Command => write!(f, "command"),
+        }
+    }
 } 

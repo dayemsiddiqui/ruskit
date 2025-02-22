@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use ruskit::framework::cli::commands::Commands;
 
 #[derive(Parser)]
 #[command(name = "cargo")]
@@ -14,17 +15,23 @@ struct KitCli {
     command: Commands,
 }
 
-#[derive(Subcommand)]
-enum Commands {
-    // Add your other commands here
-}
-
 #[tokio::main]
 async fn main() {
     let cli = CargoCli::parse();
     match cli {
         CargoCli::Kit(kit) => match kit.command {
-            // Add your other command matches here
+            Commands::Dev => {
+                if let Err(e) = ruskit::framework::cli::handlers::server::run_dev() {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+            }
+            Commands::Make { name, resource_type } => {
+                if let Err(e) = ruskit::framework::cli::handlers::make::run_make(&name, resource_type) {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+            }
         },
     }
 } 

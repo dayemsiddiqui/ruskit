@@ -1,8 +1,10 @@
-use crate::cli::error::CliError;
 use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use console::style;
+use crate::framework::cli::error::CliError;
+use crate::framework::cli::commands::ResourceType;
+use std::path::PathBuf;
 
 pub fn make_model(name: &str) -> Result<(), CliError> {
     // Create entities directory if it doesn't exist
@@ -462,5 +464,42 @@ export default function {name}({{ title }}: Props) {{
     fs::write(&file_name, component_content)?;
     println!("Created React component: {}", file_name.display());
     
+    Ok(())
+}
+
+pub fn run_make(name: &str, resource_type: ResourceType) -> Result<(), CliError> {
+    let template_path = match resource_type {
+        ResourceType::Controller => "templates/controller.rs",
+        ResourceType::Model => "templates/model.rs",
+        ResourceType::Migration => "templates/migration.rs",
+        ResourceType::Middleware => "templates/middleware.rs",
+        ResourceType::Command => "templates/command.rs",
+    };
+
+    let template = fs::read_to_string(template_path)
+        .map_err(|e| CliError::IoError(e))?;
+
+    let output = template
+        .replace("{{name}}", name)
+        .replace("{{timestamp}}", &SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string());
+
+    let output_path = match resource_type {
+        ResourceType::Controller => format!("src/app/controllers/{}_controller.rs", name.to_lowercase()),
+        ResourceType::Model => format!("src/app/models/{}.rs", name.to_lowercase()),
+        ResourceType::Migration => format!("migrations/{}_create_{}.rs", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(), name.to_lowercase()),
+        ResourceType::Middleware => format!("src/app/middleware/{}.rs", name.to_lowercase()),
+        ResourceType::Command => format!("src/app/commands/{}.rs", name.to_lowercase()),
+    };
+
+    // Create parent directory if it doesn't exist
+    if let Some(parent) = PathBuf::from(&output_path).parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| CliError::IoError(e))?;
+    }
+
+    fs::write(&output_path, output)
+        .map_err(|e| CliError::IoError(e))?;
+
+    println!("Created {}", output_path);
     Ok(())
 } 
