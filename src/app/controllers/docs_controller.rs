@@ -106,6 +106,14 @@ pub struct TestTemplate {
     pub current_page: String,
 }
 
+#[derive(Template)]
+#[template(path = "docs/scheduling.html")]
+pub struct SchedulingTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
 #[derive(Default)]
 pub struct DocSection {
     pub title: String,
@@ -195,7 +203,7 @@ impl DocsController {
                     },
                     DocItem {
                         title: "Task Scheduling".to_string(),
-                        path: "/docs/schedule".to_string(),
+                        path: "/docs/scheduling".to_string(),
                         is_active: false,
                     },
                 ],
@@ -259,6 +267,11 @@ impl DocsController {
         let sections = Self::get_sections_with_active(&page);
         
         match page.as_str() {
+            "scheduling" => SchedulingTemplate {
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
             "commands" => CommandsTemplate {
                 content: String::new(),
                 sections,

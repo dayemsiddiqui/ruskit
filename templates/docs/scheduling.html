@@ -1,0 +1,192 @@
+{% extends "docs_base.html" %}
+
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>Task Scheduling</h1>
+
+    <p>
+        Ruskit provides a powerful task scheduling system inspired by Laravel's scheduler. 
+        This feature allows you to fluently and expressively define your command schedule within your application.
+    </p>
+
+    <h2>Defining Schedules</h2>
+
+    <p>
+        All task schedules are defined in the <code>schedule</code> function within your <code>app/console/kernel.rs</code> file.
+        Here's how you can define your scheduled tasks:
+    </p>
+
+    <pre><code class="language-rust">use ruskit::framework::schedule::Schedule;
+
+pub fn schedule(schedule: &mut Schedule) {
+    schedule
+        .command("send:emails")
+        .daily_at("13:00")
+        .expect("Failed to schedule task");
+
+    schedule
+        .job(Box::new(BackupDatabase))
+        .every_day()
+        .expect("Failed to schedule task");
+}</code></pre>
+
+    <h2>Schedule Frequency Options</h2>
+
+    <p>
+        Ruskit provides a variety of scheduling frequency options. Here are some common scheduling methods:
+    </p>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left">Method</th>
+                    <th class="px-4 py-2 text-left">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="bg-slate-50">
+                    <td class="px-4 py-2"><code>.every_minute()</code></td>
+                    <td class="px-4 py-2">Run the task every minute</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>.every_two_minutes()</code></td>
+                    <td class="px-4 py-2">Run the task every two minutes</td>
+                </tr>
+                <tr class="bg-slate-50">
+                    <td class="px-4 py-2"><code>.every_five_minutes()</code></td>
+                    <td class="px-4 py-2">Run the task every five minutes</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>.hourly()</code></td>
+                    <td class="px-4 py-2">Run the task every hour</td>
+                </tr>
+                <tr class="bg-slate-50">
+                    <td class="px-4 py-2"><code>.daily()</code></td>
+                    <td class="px-4 py-2">Run the task every day at midnight</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>.daily_at("13:00")</code></td>
+                    <td class="px-4 py-2">Run the task every day at 13:00</td>
+                </tr>
+                <tr class="bg-slate-50">
+                    <td class="px-4 py-2"><code>.weekly()</code></td>
+                    <td class="px-4 py-2">Run the task every week</td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2"><code>.monthly()</code></td>
+                    <td class="px-4 py-2">Run the task every month</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Defining Schedulable Jobs</h2>
+
+    <p>
+        In addition to scheduling console commands, you can also schedule arbitrary jobs. 
+        Jobs must implement the <code>Runnable</code> trait:
+    </p>
+
+    <pre><code class="language-rust">use ruskit::framework::schedule::Runnable;
+
+pub struct BackupDatabase;
+
+#[async_trait]
+impl Runnable for BackupDatabase {
+    async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Backup logic here
+        Ok(())
+    }
+}</code></pre>
+
+    <h2>Running the Scheduler</h2>
+
+    <p>
+        To run the scheduler, you need to start the scheduler worker:
+    </p>
+
+    <pre><code class="language-bash">cargo kit schedule:work</code></pre>
+
+    <p>
+        It's recommended to run this command in a supervisor like systemd to ensure it stays running.
+        Here's an example systemd service configuration:
+    </p>
+
+    <pre><code class="language-ini">[Unit]
+Description=Ruskit Scheduler Worker
+After=network.target
+
+[Service]
+User=www-data
+Type=simple
+WorkingDirectory=/path/to/your/app
+ExecStart=/usr/local/bin/cargo kit schedule:work
+Restart=always
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+    <h2>Task Output</h2>
+
+    <p>
+        The scheduler will automatically log the output of your scheduled tasks.
+        You can find these logs in your application's log directory.
+    </p>
+
+    <h2>Task Hooks</h2>
+
+    <p>
+        You can add hooks to your scheduled tasks to perform actions before or after the task runs:
+    </p>
+
+    <pre><code class="language-rust">schedule
+    .command("send:emails")
+    .daily()
+    .before(|| println!("About to send emails"))
+    .after(|| println!("Finished sending emails"))
+    .expect("Failed to schedule task");</code></pre>
+
+    <h2>Preventing Task Overlaps</h2>
+
+    <p>
+        By default, scheduled tasks will be executed even if the previous instance of the task is still running.
+        You can prevent this using the <code>.without_overlapping()</code> method:
+    </p>
+
+    <pre><code class="language-rust">schedule
+    .command("analytics:process")
+    .daily()
+    .without_overlapping()
+    .expect("Failed to schedule task");</code></pre>
+
+    <h2>Task Priority</h2>
+
+    <p>
+        When you have multiple tasks scheduled at the same time, you can assign priorities to determine their execution order:
+    </p>
+
+    <pre><code class="language-rust">schedule
+    .command("high-priority-task")
+    .daily()
+    .priority(1)
+    .expect("Failed to schedule task");
+
+schedule
+    .command("low-priority-task")
+    .daily()
+    .priority(5)
+    .expect("Failed to schedule task");</code></pre>
+
+    <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+        <h3 class="text-blue-800">Best Practices</h3>
+        <ul class="list-disc pl-5 text-blue-700">
+            <li>Always use error handling with <code>.expect()</code> or proper error propagation</li>
+            <li>Keep scheduled tasks idempotent</li>
+            <li>Use appropriate logging for debugging</li>
+            <li>Monitor task execution times and failures</li>
+            <li>Consider using task priorities for resource management</li>
+        </ul>
+    </div>
+</div>
+{% endblock %} 
