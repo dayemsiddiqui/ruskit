@@ -5,15 +5,11 @@ use crate::framework::{
         presets::{Cors, TrimStrings}
     },
     views::{Metadata, set_global_metadata},
-    database::{self},
     inertia::InertiaConfig,
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
-use std::path::Path;
-use std::fs;
-use sqlx::sqlite::SqlitePool;
 
 /// Global application state
 static APP: Lazy<Arc<RwLock<Application>>> = Lazy::new(|| {
@@ -101,32 +97,6 @@ impl Application {
 
 /// Initialize the application
 pub async fn bootstrap() -> Result<Application, Box<dyn std::error::Error>> {
-    // Initialize database
-    println!("Initializing database...");
-    let db_config = database::config::DatabaseConfig::from_env();
-    println!("Initializing database at path: {}", db_config.database_path());
-    
-    // Create database directory if it doesn't exist
-    if let Some(parent) = Path::new(&db_config.database_path()).parent() {
-        println!("Creating database directory: {}", parent.display());
-        fs::create_dir_all(parent)?;
-    }
-    
-    println!("Connecting to database with URL: {}", db_config.connection_url());
-    let pool = SqlitePool::connect(&db_config.connection_url()).await?;
-    println!("Successfully connected to database");
-    
-    // Enable foreign key constraints
-    println!("Enabling foreign key constraints");
-    sqlx::query("PRAGMA foreign_keys = ON")
-        .execute(&pool)
-        .await?;
-    
-    // Store the pool globally
-    *database::POOL.lock().unwrap() = Some(Arc::new(pool));
-    println!("Database pool initialized successfully");
-
-
     let app = Application::instance().await;
     let mut app = app.write().await;
 

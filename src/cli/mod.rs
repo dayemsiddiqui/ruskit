@@ -4,7 +4,7 @@ pub mod handlers;
 
 use commands::{Cli, Commands};
 use error::CliError;
-use handlers::{database, make, project, server};
+use handlers::{make, project, server};
 use clap::Parser;
 
 pub async fn run() -> Result<(), CliError> {
