@@ -45,12 +45,6 @@ pub enum Commands {
         #[arg(short, long)]
         model: String,
     },
-    /// Create a new seeder
-    #[command(name = "make:seeder")]
-    MakeSeeder {
-        /// Name of the seeder to create
-        name: String,
-    },
     /// Create a new controller
     #[command(name = "make:controller")]
     MakeController {
@@ -69,9 +63,6 @@ pub enum Commands {
         /// Name to use for all components
         name: String,
     },
-    /// Seed the database with sample data
-    #[command(name = "db:seed")]
-    DbSeed,
     /// Create a new Inertia page with controller and DTO
     #[command(name = "inertia:page")]
     InertiaPage {

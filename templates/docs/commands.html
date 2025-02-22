@@ -30,11 +30,6 @@
                     <td class="px-4 py-2">Drop all tables and re-run all migrations</td>
                     <td class="px-4 py-2"><code>cargo kit migrate:fresh</code></td>
                 </tr>
-                <tr>
-                    <td class="px-4 py-2"><code>db:seed</code></td>
-                    <td class="px-4 py-2">Seed the database with sample data</td>
-                    <td class="px-4 py-2"><code>cargo kit db:seed</code></td>
-                </tr>
                 <tr class="bg-slate-100">
                     <td class="px-4 py-2 font-semibold" colspan="3">Development Commands</td>
                 </tr>
@@ -60,16 +55,6 @@
                     <td class="px-4 py-2"><code>make:migration</code></td>
                     <td class="px-4 py-2">Create a new migration for a model</td>
                     <td class="px-4 py-2"><code>cargo kit make:migration add_email --model User</code></td>
-                </tr>
-                <tr>
-                    <td class="px-4 py-2"><code>make:factory</code></td>
-                    <td class="px-4 py-2">Create a new factory for a model</td>
-                    <td class="px-4 py-2"><code>cargo kit make:factory User</code></td>
-                </tr>
-                <tr>
-                    <td class="px-4 py-2"><code>make:seeder</code></td>
-                    <td class="px-4 py-2">Create a new database seeder</td>
-                    <td class="px-4 py-2"><code>cargo kit make:seeder Users</code></td>
                 </tr>
                 <tr>
                     <td class="px-4 py-2"><code>make:controller</code></td>
@@ -109,7 +94,6 @@
     <ul>
         <li><code>cargo kit migrate</code> - Run all pending database migrations</li>
         <li><code>cargo kit migrate:fresh</code> - Drop all tables and re-run all migrations</li>
-        <li><code>cargo kit db:seed</code> - Seed the database with sample data</li>
     </ul>
 
     <h3>Development Commands</h3>
@@ -129,14 +113,6 @@
         <li>
             <code>cargo kit make:migration &lt;name&gt; --model &lt;ModelName&gt;</code> - Create a new migration for an existing model
             <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
-        </li>
-        <li>
-            <code>cargo kit make:factory &lt;Name&gt;</code> - Create a new factory for a model
-            <pre><code class="language-bash">cargo kit make:factory User</code></pre>
-        </li>
-        <li>
-            <code>cargo kit make:seeder &lt;Name&gt;</code> - Create a new database seeder
-            <pre><code class="language-bash">cargo kit make:seeder Users</code></pre>
         </li>
     </ul>
 

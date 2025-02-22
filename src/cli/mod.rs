@@ -41,10 +41,6 @@ pub async fn run() -> Result<(), CliError> {
             println!("Creating migration {} for model {}...", name, model);
             make::make_migration(&name, &model)?;
         },
-        Commands::MakeSeeder { name } => {
-            println!("Creating seeder {}...", name);
-            make::make_seeder(&name)?;
-        },
         Commands::MakeController { name } => {
             println!("Creating controller {}...", name);
             make::make_controller(&name)?;
@@ -67,9 +63,6 @@ pub async fn run() -> Result<(), CliError> {
             
             println!("\nSuccessfully created all components!");
             println!("Run migrations with: cargo kit migrate");
-        },
-        Commands::DbSeed => {
-            database::run_seed().await?;
         },
         Commands::InertiaPage { name } => {
             println!("Creating Inertia page components for {}...", name);

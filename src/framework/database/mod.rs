@@ -9,12 +9,10 @@ pub mod model;
 pub mod query_builder;
 pub mod migration;
 pub mod config;
-pub mod seeder;
 pub mod schema;
 pub mod schema_builder;
 
 use config::DatabaseConfig;
-use seeder::DatabaseSeeder;
 
 pub static POOL: Lazy<Mutex<Option<Arc<SqlitePool>>>> = Lazy::new(|| Mutex::new(None));
 
@@ -101,19 +99,4 @@ pub fn get_pool() -> Result<Arc<SqlitePool>, DatabaseError> {
         ))?;
     println!("Got database pool successfully");
     Ok(pool)
-}
-
-pub async fn seed() -> Result<(), DatabaseError> {
-    println!("Starting database seeding...");
-    println!("Running seeders...");
-    match DatabaseSeeder::run_all().await {
-        Ok(_) => {
-            println!("All seeders completed successfully");
-            Ok(())
-        },
-        Err(e) => {
-            println!("Error running seeders: {}", e);
-            Err(e)
-        }
-    }
 } 

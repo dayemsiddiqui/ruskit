@@ -29,26 +29,13 @@ impl Model for User {
         self.id
     }
 
-    fn factory_definition() -> Self {
-        let now = chrono::Utc::now().timestamp();
-        Self {
-            id: 0,
-            name: Faker.fake(),
-            email: Faker.fake(),
-            created_at: now.to_string(),
-            updated_at: now.to_string(),
-            
-        }
-    }
-
     fn migrations() -> Vec<Migration> {
         vec![
-            Migration::create("1739887638_create_users_table", |schema| {
+            Migration::create("1710000000_create_users_table", |schema| {
                 schema.create_table("users", |table| {
                     table.id();
-                    table.text("name").not_null();
-                    table.text("email").not_null();
-                    table.timestamp_iso_strings();
+                    // TODO: Add your columns here
+                    table.timestamps();
                 });
             })
             .down(|schema| {

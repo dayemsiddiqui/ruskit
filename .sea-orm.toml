@@ -1,0 +1,7 @@
+[migration]
+# Path to the migration directory
+migration_dir = "migration"
+# Path to the entity directory
+entity_dir = "src/app/entities"
+# Path to the database URL
+database_url = "sqlite:./database/database.sqlite" 

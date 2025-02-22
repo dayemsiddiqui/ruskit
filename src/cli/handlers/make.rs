@@ -267,62 +267,6 @@ pub fn make_migration(name: &str, model: &str) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn make_seeder(name: &str) -> Result<(), CliError> {
-    let seeders_dir = Path::new("src/app/seeders");
-    if !seeders_dir.exists() {
-        fs::create_dir_all(seeders_dir)?;
-    }
-
-    let seeder_name = if name.ends_with("Seeder") {
-        name.to_string()
-    } else {
-        format!("{}Seeder", name)
-    };
-    
-    let seeder_file = seeders_dir.join(format!("{}.rs", seeder_name.to_lowercase()));
-
-    let seeder_content = format!(
-        r#"use crate::framework::prelude::*;
-use crate::framework::database::seeder::{{Seeder, DatabaseSeeder}};
-use once_cell::sync::Lazy;
-
-pub struct {seeder_name};
-
-#[async_trait]
-impl Seeder for {seeder_name} {{
-    async fn run(&self) -> Result<(), DatabaseError> {{
-        // TODO: Add your seeding logic here
-        Ok(())
-    }}
-}}
-
-static SEEDER: Lazy<()> = Lazy::new(|| {{
-    DatabaseSeeder::register(Box::new({seeder_name}));
-}});"#
-    );
-
-    fs::write(&seeder_file, seeder_content)?;
-    println!("Created seeder file: {}", seeder_file.display());
-
-    let mod_file = seeders_dir.join("mod.rs");
-    let mut mod_content = String::new();
-    
-    if mod_file.exists() {
-        mod_content = fs::read_to_string(&mod_file)?;
-    }
-
-    let mod_line = format!("pub mod {};", seeder_name.to_lowercase());
-    if !mod_content.contains(&mod_line) {
-        if !mod_content.is_empty() {
-            mod_content.push('\n');
-        }
-        mod_content.push_str(&mod_line);
-    }
-
-    fs::write(mod_file, mod_content)?;
-    Ok(())
-}
-
 pub fn make_controller(name: &str) -> Result<(), CliError> {
     let controller_dir = Path::new("src/app/controllers");
     if !controller_dir.exists() {
