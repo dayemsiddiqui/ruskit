@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20220101_000001_create_table;
 mod m20250222_022856_create_posts_table;
+mod m20250222_030920_create_comments_table;
 
 pub struct Migrator;
 
@@ -11,6 +12,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220101_000001_create_table::Migration),
             Box::new(m20250222_022856_create_posts_table::Migration),
+            Box::new(m20250222_030920_create_comments_table::Migration),
         ]
     }
 }

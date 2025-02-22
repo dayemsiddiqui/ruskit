@@ -23,4 +23,43 @@ args = ["run", "dev"]
 
 [tasks.dev]
 workspace = false
-run_task = { name = ["watch-assets", "watch-server"], parallel = true } 
+run_task = { name = ["watch-assets", "watch-server"], parallel = true }
+
+[tasks.migration-new]
+workspace = false
+command = "sea-orm-cli"
+args = ["migrate", "generate", "${@}", "-d", "migration"]
+
+[tasks.migration-up]
+workspace = false
+command = "sea-orm-cli"
+args = ["migrate", "up", "-d", "migration"]
+
+[tasks.migration-down]
+workspace = false
+command = "sea-orm-cli"
+args = ["migrate", "down", "-d", "migration"]
+
+[tasks.migration-fresh]
+workspace = false
+command = "sea-orm-cli"
+args = ["migrate", "fresh", "-d", "migration"]
+
+[tasks.migration-reset]
+workspace = false
+command = "sea-orm-cli"
+args = ["migrate", "reset", "-d", "migration"]
+
+[tasks.generate-entities]
+workspace = false
+command = "sea-orm-cli"
+args = ["generate", "entity", "--lib", "--output-dir", "src/app/entities", "--migration-dir", "migration"]
+
+[tasks.install-sea-orm-cli]
+workspace = false
+command = "cargo"
+args = ["install", "sea-orm-cli"]
+
+[tasks.setup-db]
+workspace = false
+dependencies = ["install-sea-orm-cli"] 
