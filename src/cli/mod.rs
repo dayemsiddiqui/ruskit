@@ -21,42 +21,17 @@ pub async fn run() -> Result<(), CliError> {
             println!("Starting production server...");
             server::run_server().await?;
         },
-        Commands::MakeModel { name } => {
-            println!("Creating model {}...", name);
-            make::make_model(&name)?;
-        },
         Commands::MakeController { name } => {
             println!("Creating controller {}...", name);
             make::make_controller(&name)?;
         },
-        Commands::MakeDto { name } => {
-            println!("Creating DTO {}...", name);
-            make::make_dto(&name)?;
-        },
-        Commands::MakeAll { name } => {
-            println!("Creating all components for {}...", name);
-            
-            println!("\n1. Creating model...");
-            make::make_model(&name)?;
-            
-            println!("\n2. Creating DTO...");
-            make::make_dto(&name)?;
-            
-            println!("\n3. Creating controller...");
-            make::make_controller(&name)?;
-            
-            println!("\nSuccessfully created all components!");
-        },
         Commands::InertiaPage { name } => {
             println!("Creating Inertia page components for {}...", name);
             
-            println!("\n1. Creating DTO...");
-            make::make_page_dto(&name)?;
-            
-            println!("\n2. Creating controller...");
+            println!("\n1. Creating controller...");
             make::make_page_controller(&name)?;
             
-            println!("\n3. Creating React component...");
+            println!("\n2. Creating React component...");
             make::make_page_component(&name)?;
             
             println!("\nSuccessfully created Inertia page components!");
@@ -64,17 +39,11 @@ pub async fn run() -> Result<(), CliError> {
             println!("1. Add your route in src/web.rs:");
             println!("   .route(\"/{}\", get({}Controller::show))", name.to_lowercase(), name);
             println!("2. Customize the page component in resources/js/pages/{}.tsx", name);
-            println!("3. Add your data to the DTO in src/app/dtos/{}.rs", name.to_lowercase());
         },
         Commands::InertiaProp { name } => {
             println!("Creating Inertia props type for {}...", name);
-            
             make::make_page_dto(&name)?;
-            
             println!("\nSuccessfully created Inertia props type!");
-            println!("\nNext steps:");
-            println!("1. Add your props in src/app/dtos/{}.rs", name.to_lowercase());
-            println!("2. Import the type in your component: import type {{ {}Props }} from '../types/generated';", name);
         },
     }
     

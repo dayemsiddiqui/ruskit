@@ -22,28 +22,10 @@ pub enum Commands {
     Dev,
     /// Start production server
     Serve,
-    /// Create a new model
-    #[command(name = "make:model")]
-    MakeModel {
-        /// Name of the model to create
-        name: String,
-    },
     /// Create a new controller
     #[command(name = "make:controller")]
     MakeController {
         /// Name of the controller to create
-        name: String,
-    },
-    /// Create a new DTO
-    #[command(name = "make:dto")]
-    MakeDto {
-        /// Name of the DTO to create
-        name: String,
-    },
-    /// Create model, DTO and controller
-    #[command(name = "make:all")]
-    MakeAll {
-        /// Name to use for all components
         name: String,
     },
     /// Create a new Inertia page with controller and DTO

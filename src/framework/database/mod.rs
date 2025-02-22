@@ -5,8 +5,6 @@ use std::path::Path;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
-pub mod model;
-pub mod query_builder;
 pub mod config;
 
 use config::DatabaseConfig;
@@ -35,12 +33,6 @@ impl std::error::Error for DatabaseError {}
 impl From<sqlx::Error> for DatabaseError {
     fn from(error: sqlx::Error) -> Self {
         DatabaseError::ConnectionError(error)
-    }
-}
-
-impl From<serde_json::Error> for DatabaseError {
-    fn from(error: serde_json::Error) -> Self {
-        DatabaseError::Other(error.to_string())
     }
 }
 
