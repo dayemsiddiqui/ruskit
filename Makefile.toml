@@ -35,6 +35,44 @@ description = "Run the production server"
 env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
 env_files = [".env"]
 
+[tasks.queue]
+workspace = false
+command = "cargo"
+args = ["run", "--", "queue:work"]
+description = "Run the queue worker"
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
+env_files = [".env"]
+
+[tasks.queue-watch]
+workspace = false
+dependencies = ["install-watch"]
+command = "cargo"
+args = ["watch", "-w", "src", "-x", "run -- queue:work"]
+description = "Run the queue worker in watch mode (reloads on code changes)"
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
+env_files = [".env"]
+
+[tasks.queue-named]
+workspace = false
+command = "cargo"
+args = ["run", "--", "queue:work", "--queue", "${@}"]
+description = "Run a queue worker for a specific queue"
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
+env_files = [".env"]
+
+[tasks.queue-named-watch]
+workspace = false
+dependencies = ["install-watch"]
+command = "cargo"
+args = ["watch", "-w", "src", "-x", "run -- queue:work --queue ${@}"]
+description = "Run a queue worker for a specific queue in watch mode"
+env = { DATABASE_URL = { value = "sqlite:data/db.sqlite?mode=rwc", condition = { env_not_set = ["DATABASE_URL"] } } }
+env_files = [".env"]
+
+[tasks.dev-with-queue]
+workspace = false
+run_task = { name = ["watch-assets", "watch-server", "queue-watch"], parallel = true }
+
 [tasks.migration-new]
 workspace = false
 command = "sea-orm-cli"

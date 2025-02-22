@@ -5,6 +5,7 @@ mod m20240320_000001_create_cache_table;
 mod m20250222_022856_create_posts_table;
 mod m20250222_030920_create_comments_table;
 mod m20250222_093246_add_auth_fields_to_users;
+mod m20250222_215612_create_jobs_table;
 
 pub struct Migrator;
 
@@ -17,6 +18,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250222_022856_create_posts_table::Migration),
             Box::new(m20250222_030920_create_comments_table::Migration),
             Box::new(m20250222_093246_add_auth_fields_to_users::Migration),
+            Box::new(m20250222_215612_create_jobs_table::Migration),
         ]
     }
 }

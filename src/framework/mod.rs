@@ -12,6 +12,7 @@ pub mod cli;
 pub mod config;
 pub mod app;
 pub mod schedule;
+pub mod queue;
 
 // Re-export framework types
 pub use middleware::{
@@ -43,6 +44,8 @@ pub use config::AppConfig;
 
 // Re-export app functions
 pub use app::{run, generate_typescript_types};
+
+pub use queue::Queue;
 
 pub async fn setup() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables

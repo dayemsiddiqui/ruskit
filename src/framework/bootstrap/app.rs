@@ -8,6 +8,7 @@ use crate::framework::{
     inertia::InertiaConfig,
     database,
     cache::config::{CacheConfig, CacheDriver, init_cache},
+    queue::config::{QueueConfig, init_queue},
     init_storage,
     StorageConfig,
 };
@@ -121,6 +122,22 @@ pub async fn bootstrap() -> Result<DatabaseConnection, String> {
     init_cache(cache_config, (*db).clone()).await
         .map_err(|e| format!("Failed to initialize cache: {}", e))?;
     println!("Cache initialized successfully");
+
+    // Load the queue configuration
+    println!("Loading queue configuration...");
+    let queue_config = QueueConfig::default();
+    println!("Queue configuration loaded successfully");
+
+    // Initialize the queue with the database connection
+    println!("Initializing queue...");
+    init_queue(queue_config, (*db).clone()).await
+        .map_err(|e| format!("Failed to initialize queue: {}", e))?;
+    println!("Queue initialized successfully");
+
+    // Register jobs
+    println!("Registering jobs...");
+    crate::app::jobs::register_jobs();
+    println!("Jobs registered successfully");
 
     // Load the storage configuration
     println!("Loading storage configuration...");
