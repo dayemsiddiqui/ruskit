@@ -6,7 +6,9 @@ use crate::framework::{
     },
     views::{Metadata, set_global_metadata},
     inertia::InertiaConfig,
+    database,
 };
+use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
@@ -96,7 +98,7 @@ impl Application {
 }
 
 /// Initialize the application
-pub async fn bootstrap() -> Result<Application, Box<dyn std::error::Error>> {
+pub async fn bootstrap() -> Result<DatabaseConnection, Box<dyn std::error::Error>> {
     let app = Application::instance().await;
     let mut app = app.write().await;
 
@@ -125,8 +127,9 @@ pub async fn bootstrap() -> Result<Application, Box<dyn std::error::Error>> {
             .with_og_image("https://example.com/og-image.jpg")
     }).await;
 
-    let app_clone = app.clone();
-    Ok(app_clone)
+    // Initialize database connection
+    let db = database::init().await?;
+    Ok(db)
 }
 
 /// Get the application's middleware stack

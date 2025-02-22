@@ -29,3 +29,13 @@ Cargo.lock
 node_modules
 dist
 
+# Environment variables
+.env
+
+# Data files
+/data
+
+# SQLite files
+*.sqlite
+*.sqlite-*
+

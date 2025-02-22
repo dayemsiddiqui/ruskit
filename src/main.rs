@@ -1,8 +1,9 @@
 use std::net::SocketAddr;
-use ruskit::web;
+use ruskit::{web, setup};
 use tokio::net::TcpListener;
 use std::fs;
 use ruskit::framework::export_all_types;
+use dotenvy::dotenv;
 
 fn generate_typescript_types() -> std::io::Result<()> {
     // Ensure the types directory exists
@@ -22,6 +23,17 @@ fn generate_typescript_types() -> std::io::Result<()> {
 
 #[tokio::main]
 async fn main() {
+    // Load .env file
+    if let Err(e) = dotenv() {
+        eprintln!("Warning: Error loading .env file: {}", e);
+    }
+
+    // Setup application
+    if let Err(e) = setup().await {
+        eprintln!("Error setting up application: {}", e);
+        std::process::exit(1);
+    }
+
     // Generate TypeScript types
     if let Err(e) = generate_typescript_types() {
         eprintln!("Error generating TypeScript types: {}", e);

@@ -2,7 +2,8 @@
 members = [
     "ts-collector",
     "ts_export_derive",
-    "rustavel_derive"
+    "rustavel_derive",
+    "migration"
 ]
 
 [package]

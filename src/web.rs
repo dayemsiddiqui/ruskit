@@ -2,26 +2,26 @@ use axum::{
     Router,
     routing::{get, post},
 };
-use crate::framework::middleware::{
-    WithMiddleware,
-    presets::{Cors, TrimStrings},
-};
+
 use crate::bootstrap::app::bootstrap;
 use crate::app::controllers::{
     user_controller::UserController,
     docs_controller::DocsController,
     inertia_controller::InertiaController,
     pages::landing,
+    posts_routes,
 };
 use axum_inertia::vite;
 
 // Define routes with middleware
 pub async fn routes() -> Router {
     // Initialize the application
-    if let Err(e) = bootstrap().await {
-        eprintln!("Failed to bootstrap application: {}", e);
+    let db = if let Ok(db) = bootstrap().await {
+        db
+    } else {
+        eprintln!("Failed to bootstrap application");
         std::process::exit(1);
-    }
+    };
 
     let inertia_config = vite::Development::default()
         .port(3000)
@@ -39,19 +39,13 @@ pub async fn routes() -> Router {
         .with_state(inertia_config);
 
     let api_router = Router::new()
-        .route(
-            "/users", 
-            get(UserController::index)
-                .middleware(TrimStrings::new())
-                .middleware(Cors::new("http://users.example.com"))
-        )
+        .route("/users", get(UserController::index))
         .route("/users/{id}", get(UserController::show))
-        .route(
-            "/users", 
-            post(UserController::store).middleware(TrimStrings::new())
-        );
+        .route("/users", post(UserController::store))
+        .merge(posts_routes())
+        .with_state(db.clone());
 
     Router::new()
         .nest("/", inertia_router)
-        .nest("/api", api_router)
+        .nest("/api", api_router.with_state(()))
 } 

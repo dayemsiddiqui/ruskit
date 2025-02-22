@@ -1,6 +1,6 @@
-use crate::app::entities::User;
+use crate::app::entities::user::Model as User;
 use validator::Validate;
-use crate::framework::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct CreateUserRequest {
@@ -12,9 +12,11 @@ pub struct CreateUserRequest {
 
 #[derive(Debug, Serialize)]
 pub struct UserResponse {
-    pub id: i64,
+    pub id: i32,
     pub name: String,
     pub email: String,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 #[derive(Serialize)]
@@ -36,6 +38,8 @@ impl From<User> for UserResponse {
             id: user.id,
             name: user.name,
             email: user.email,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
         }
     }
 }

@@ -3,14 +3,16 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "user")]
+#[sea_orm(table_name = "post")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     #[sea_orm(column_type = "Text")]
-    pub name: String,
+    pub title: String,
+    #[sea_orm(column_type = "Text")]
+    pub content: String,
     #[sea_orm(column_type = "Text", unique)]
-    pub email: String,
+    pub slug: String,
     #[sea_orm(column_type = "Text")]
     pub created_at: String,
     #[sea_orm(column_type = "Text")]
