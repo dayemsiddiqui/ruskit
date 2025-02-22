@@ -3,7 +3,6 @@ pub mod inertia;
 pub mod middleware;
 pub mod routing;
 pub mod typescript;
-pub mod validation;
 pub mod views;
 pub mod prelude;
 
