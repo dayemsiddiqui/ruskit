@@ -90,6 +90,22 @@ pub struct FrontendTemplate {
     pub current_page: String,
 }
 
+#[derive(Template)]
+#[template(path = "docs/queues.html")]
+pub struct QueuesTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/test.html")]
+pub struct TestTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
 #[derive(Default)]
 pub struct DocSection {
     pub title: String,
@@ -170,6 +186,21 @@ impl DocsController {
                 ],
             },
             DocSection {
+                title: "Background Tasks".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Queue System".to_string(),
+                        path: "/docs/queues".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Task Scheduling".to_string(),
+                        path: "/docs/schedule".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
                 title: "Advanced".to_string(),
                 items: vec![
                     DocItem {
@@ -243,22 +274,12 @@ impl DocsController {
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "entities" => EntitiesTemplate {
-                content: String::new(),
-                sections,
-                current_page: page.clone(),
-            }.into_response(),
             "models" => ModelsTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
             "views" => ViewsTemplate {
-                content: String::new(),
-                sections,
-                current_page: page.clone(),
-            }.into_response(),
-            "middleware" => MiddlewareTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
@@ -273,12 +294,27 @@ impl DocsController {
                 sections,
                 current_page: page.clone(),
             }.into_response(),
+            "entities" => EntitiesTemplate {
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "middleware" => MiddlewareTemplate {
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
             "extractors" => ExtractorsTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
             "frontend" => FrontendTemplate {
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "queues" => QueuesTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),

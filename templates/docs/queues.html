@@ -1,0 +1,247 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Queue System - Ruskit Documentation{% endblock %}
+
+{% block content %}
+<div class="prose max-w-none">
+    <h1>Queue System</h1>
+    
+    <p class="lead">
+        The Ruskit queue system provides a robust way to defer time-consuming tasks, improving your application's response times and overall user experience.
+    </p>
+
+    <nav class="my-8">
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">On this page</h2>
+        <ul class="mt-2 space-y-2 text-sm">
+            <li><a href="#introduction" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Introduction</a></li>
+            <li><a href="#configuration" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Configuration</a></li>
+            <li><a href="#creating-jobs" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Creating Jobs</a></li>
+            <li><a href="#dispatching-jobs" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Dispatching Jobs</a></li>
+            <li><a href="#running-worker" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Running the Queue Worker</a></li>
+            <li><a href="#job-lifecycle" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Job Lifecycle</a></li>
+            <li><a href="#use-cases" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">Real-World Use Cases</a></li>
+        </ul>
+    </nav>
+
+    <section id="introduction" class="mt-16">
+        <h2>Introduction</h2>
+        <p>
+            Queues allow you to defer time-consuming tasks until a later time. This is particularly useful for tasks that:
+        </p>
+        <ul>
+            <li>Take a long time to process</li>
+            <li>Could potentially fail and need retrying</li>
+            <li>Need to be processed in the background</li>
+            <li>Should not block the main request-response cycle</li>
+        </ul>
+        <p>Common use cases include:</p>
+        <ul>
+            <li>Sending emails</li>
+            <li>Processing large files</li>
+            <li>Making API calls</li>
+            <li>Generating reports</li>
+            <li>Processing images</li>
+            <li>Sending notifications</li>
+        </ul>
+    </section>
+
+    <section id="configuration" class="mt-16">
+        <h2>Configuration</h2>
+        <p>
+            The queue system is configured in your application's bootstrap process. By default, it uses a SQLite database
+            as the queue driver, but it also supports other drivers like SQS (Amazon Simple Queue Service).
+        </p>
+        <pre><code class="language-rust">// Example queue configuration
+let queue_config = QueueConfig {
+    driver: QueueDriverType::Database,
+    default_queue: "default".to_string(),
+    // ... other configuration options
+};</code></pre>
+    </section>
+
+    <section id="creating-jobs" class="mt-16">
+        <h2>Creating Jobs</h2>
+        <p>
+            To create a job, implement the <code>Job</code> trait. Here's an example of a job that sends an email:
+        </p>
+        <pre><code class="language-rust">use serde::{Serialize, Deserialize};
+use async_trait::async_trait;
+use crate::framework::queue::Job;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SendEmailJob {
+    pub to: String,
+    pub subject: String,
+    pub body: String,
+}
+
+#[async_trait]
+impl Job for SendEmailJob {
+    fn queue(&self) -> Option<String> {
+        Some("emails".to_string()) // Custom queue name
+    }
+
+    fn delay(&self) -> Option<u64> {
+        Some(30) // Delay in seconds
+    }
+
+    fn tries(&self) -> Option<u32> {
+        Some(3) // Maximum retry attempts
+    }
+
+    async fn handle(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Implement email sending logic here
+        println!("Sending email to: {}", self.to);
+        Ok(())
+    }
+
+    fn serialize(&self) -> Result<String, Box<dyn std::error::Error>> {
+        Ok(serde_json::to_string(self)?)
+    }
+
+    fn deserialize(data: &str) -> Result<Box<dyn Job>, Box<dyn std::error::Error>> {
+        let job: SendEmailJob = serde_json::from_str(data)?;
+        Ok(Box::new(job))
+    }
+
+    fn type_name() -> String {
+        "SendEmailJob".to_string()
+    }
+}</code></pre>
+    </section>
+
+    <section id="dispatching-jobs" class="mt-16">
+        <h2>Dispatching Jobs</h2>
+        <p>
+            You can dispatch jobs from anywhere in your application using the <code>Queue::dispatch</code> method:
+        </p>
+        <pre><code class="language-rust">use crate::framework::queue::Queue;
+
+// In your controller or service
+async fn register_user(user: User) -> Result<(), Error> {
+    // Save user to database
+    user.save().await?;
+
+    // Dispatch welcome email job
+    let email_job = SendEmailJob {
+        to: user.email,
+        subject: "Welcome to our platform!".to_string(),
+        body: "Thank you for registering...".to_string(),
+    };
+    
+    Queue::dispatch(email_job).await?;
+    Ok(())
+}</code></pre>
+    </section>
+
+    <section id="running-worker" class="mt-16">
+        <h2>Running the Queue Worker</h2>
+        <p>
+            To process queued jobs, you need to run a queue worker. Ruskit provides a CLI command for this:
+        </p>
+        <pre><code class="language-bash"># Run worker for default queue
+cargo run --bin ruskit -- queue:work
+
+# Run worker for specific queue
+cargo run --bin ruskit -- queue:work --queue emails
+
+# Run worker with custom settings
+cargo run --bin ruskit -- queue:work --queue emails --sleep 5 --tries 3</code></pre>
+    </section>
+
+    <section id="job-lifecycle" class="mt-16">
+        <h2>Job Lifecycle</h2>
+        <ol>
+            <li><strong>Creation</strong>: Jobs are created by implementing the <code>Job</code> trait</li>
+            <li><strong>Dispatching</strong>: Jobs are serialized and stored in the queue</li>
+            <li><strong>Processing</strong>: Queue worker picks up jobs and executes them</li>
+            <li><strong>Completion/Failure</strong>: Jobs are either completed successfully or failed and retried</li>
+            <li><strong>Cleanup</strong>: Completed jobs are removed from the queue</li>
+        </ol>
+    </section>
+
+    <section id="use-cases" class="mt-16">
+        <h2>Real-World Use Cases</h2>
+        
+        <h3 class="mt-8">User Registration Flow</h3>
+        <pre><code class="language-rust">async fn register_user(mut ctx: Context) -> Result<Response, Error> {
+    let user: User = ctx.extract::<User>().await?;
+    
+    // Save user synchronously
+    user.save().await?;
+    
+    // Queue async tasks
+    Queue::dispatch(SendWelcomeEmailJob {
+        user_id: user.id,
+        email: user.email.clone(),
+    }).await?;
+    
+    Queue::dispatch(SetupUserWorkspaceJob {
+        user_id: user.id,
+    }).await?;
+    
+    Queue::dispatch(NotifyAdminsJob {
+        event: "new_user_registered",
+        user_id: user.id,
+    }).await?;
+    
+    Ok(Response::json(user))
+}</code></pre>
+
+        <h3 class="mt-8">File Processing System</h3>
+        <pre><code class="language-rust">async fn upload_video(mut ctx: Context) -> Result<Response, Error> {
+    let video: UploadedFile = ctx.extract::<UploadedFile>().await?;
+    
+    // Save file metadata synchronously
+    let video_record = video.save_metadata().await?;
+    
+    // Queue processing tasks
+    Queue::dispatch(VideoTranscodingJob {
+        video_id: video_record.id,
+        formats: vec!["mp4", "webm"],
+    }).await?;
+    
+    Queue::dispatch(GenerateThumbnailsJob {
+        video_id: video_record.id,
+    }).await?;
+    
+    Queue::dispatch(ExtractMetadataJob {
+        video_id: video_record.id,
+    }).await?;
+    
+    Ok(Response::json(video_record))
+}</code></pre>
+
+        <h3 class="mt-8">E-commerce Order Processing</h3>
+        <pre><code class="language-rust">async fn place_order(mut ctx: Context) -> Result<Response, Error> {
+    let order: Order = ctx.extract::<Order>().await?;
+    
+    // Save order synchronously
+    order.save().await?;
+    
+    // Queue async tasks
+    Queue::dispatch(SendOrderConfirmationJob {
+        order_id: order.id,
+        email: order.customer_email.clone(),
+    }).await?;
+    
+    Queue::dispatch(UpdateInventoryJob {
+        order_id: order.id,
+        items: order.items.clone(),
+    }).await?;
+    
+    Queue::dispatch(NotifyShippingDepartmentJob {
+        order_id: order.id,
+    }).await?;
+    
+    Queue::dispatch(ProcessPaymentJob {
+        order_id: order.id,
+        amount: order.total,
+        payment_method: order.payment_method,
+    }).await?;
+    
+    Ok(Response::json(order))
+}</code></pre>
+    </section>
+</div>
+{% endblock %} 
