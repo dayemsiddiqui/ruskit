@@ -11,7 +11,6 @@ use crate::framework::{
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
-use crate::app::models;
 use std::path::Path;
 use std::fs;
 use sqlx::sqlite::SqlitePool;
