@@ -5,6 +5,7 @@ use sea_orm::{EntityTrait, QueryOrder};
 use serde_json::json;
 
 use crate::{web::AppState, app::entities::post::Entity as Post};
+use crate::app::dtos::post::{PostDto, PostListProps};
 
 pub struct InertiaController;
 
@@ -23,9 +24,18 @@ impl InertiaController {
             .await
             .unwrap_or_default();
 
-        inertia.render("Posts/Index", json!({
-            "posts": posts
-        }))
+        let post_dtos: Vec<PostDto> = posts.into_iter()
+            .map(|post| PostDto {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                slug: post.slug,
+                created_at: post.created_at,
+                updated_at: post.updated_at,
+            })
+            .collect();
+
+        inertia.render("Posts/Index", PostListProps { posts: post_dtos })
     }
 
     pub async fn posts_show(State(_state): State<AppState>, inertia: Inertia) -> impl IntoResponse {
