@@ -1,34 +1,17 @@
-use axum::{
-    Router,
-    routing::{get, post},
-    middleware::from_fn,
-};
-use axum_login::{
-    AuthManagerLayerBuilder,
-    tower_sessions::{MemoryStore, SessionManagerLayer, Expiry},
-    AuthSession,
-};
+use crate::framework::prelude::*;
 use sea_orm::DatabaseConnection;
-use tower_http::services::ServeDir;
 use crate::{
     app::controllers::{auth_controller::AuthController, user_controller::UserController},
     app::services::auth_service::Backend,
+    app::middleware::require_auth,
 };
-use axum::extract::FromRef;
-use axum_inertia::InertiaConfig;
-use tower_sessions::cookie::time::Duration as CookieDuration;
 use crate::bootstrap::app::bootstrap;
-use crate::app::{
-    controllers::{
-        docs_controller::DocsController,
-        inertia_controller::InertiaController,
-        pages::landing,
-    },
+use crate::app::controllers::{
+    docs_controller::DocsController,
+    inertia_controller::InertiaController,
+    pages::landing,
 };
 use axum_inertia::vite;
-use axum::response::{Response, IntoResponse, Redirect};
-use axum::http::Request;
-use axum::body::Body;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -45,18 +28,6 @@ impl FromRef<AppState> for DatabaseConnection {
 impl FromRef<AppState> for InertiaConfig {
     fn from_ref(state: &AppState) -> InertiaConfig {
         state.inertia.clone()
-    }
-}
-
-// Middleware to require authentication
-async fn require_auth(
-    auth: AuthSession<Backend>,
-    request: Request<Body>,
-    next: axum::middleware::Next,
-) -> Response {
-    match auth.user {
-        Some(_) => next.run(request).await,
-        None => Redirect::to("/login").into_response(),
     }
 }
 
