@@ -8,6 +8,8 @@ use crate::framework::{
     inertia::InertiaConfig,
     database,
     cache::config::{CacheConfig, CacheDriver, init_cache},
+    init_storage,
+    StorageConfig,
 };
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
@@ -98,62 +100,40 @@ impl Application {
     }
 }
 
-/// Initialize the application
-pub async fn bootstrap() -> Result<DatabaseConnection, Box<dyn std::error::Error>> {
-    // Load environment variables
-    dotenvy::dotenv().map_err(|e| format!("Failed to load .env file: {}", e))?;
-
-    let app = Application::instance().await;
-    let mut app = app.write().await;
-
-    // Configure global middleware
-    app.middleware(|stack| {
-        stack.add(Middleware::Cors(Cors::new("*")));
-        stack.add(Middleware::TrimStrings(TrimStrings::new()));
-    }).await;
-
-    // Configure middleware groups
-    app.middleware_groups(|groups| {
-        groups.push(("api".to_string(), vec![
-            Middleware::Cors(Cors::new("*")),
-            Middleware::TrimStrings(TrimStrings::new()),
-        ]));
-    }).await;
-
-    // Configure global metadata
-    app.metadata(|| {
-        Metadata::new("Ruskit")
-            .with_description("A modern web framework for Rust")
-            .with_keywords("rust, web, framework")
-            .with_author("Your Name")
-            .with_og_title("Ruskit")
-            .with_og_description("A modern web framework for Rust")
-            .with_og_image("https://example.com/og-image.jpg")
-    }).await;
-
-    // Initialize database connection
+/// Initialize the application with the given configuration
+pub async fn bootstrap() -> Result<DatabaseConnection, String> {
+    println!("Starting bootstrap process...");
+    
+    // Initialize the database connection
     println!("Initializing database connection...");
-    let database_url = std::env::var("DATABASE_URL")
-        .map_err(|_| "DATABASE_URL must be set in environment")?;
-    let db = database::init().await.map_err(|e| format!("Failed to initialize database: {}", e))?;
+    let db = crate::framework::database::init()
+        .await
+        .map_err(|e| format!("Failed to initialize database: {}", e))?;
     println!("Database connection initialized successfully");
 
-    // Initialize cache
-    println!("Initializing cache...");
-    let cache_config = CacheConfig {
-        driver: if let Ok(_) = std::env::var("REDIS_URL") {
-            CacheDriver::Redis
-        } else {
-            CacheDriver::Database
-        },
-        redis_url: std::env::var("REDIS_URL").ok(),
-        ..Default::default()
-    };
+    // Load the cache configuration
+    println!("Loading cache configuration...");
+    let cache_config = CacheConfig::default();
+    println!("Cache configuration loaded successfully");
 
-    init_cache(cache_config, db.clone()).await.map_err(|e| format!("Failed to initialize cache: {}", e))?;
+    // Initialize the cache with the database connection
+    println!("Initializing cache...");
+    init_cache(cache_config, (*db).clone()).await
+        .map_err(|e| format!("Failed to initialize cache: {}", e))?;
     println!("Cache initialized successfully");
 
-    Ok(db)
+    // Load the storage configuration
+    println!("Loading storage configuration...");
+    let storage_config = StorageConfig::default();
+    println!("Storage configuration loaded successfully");
+
+    // Initialize the storage system
+    println!("Initializing storage system...");
+    init_storage(storage_config).await
+        .map_err(|e| format!("Failed to initialize storage: {}", e))?;
+    println!("Storage system initialized successfully");
+
+    Ok((*db).clone())
 }
 
 /// Get the application's middleware stack

@@ -60,19 +60,8 @@ async fn main() {
         }
     };
     
-    // Create the app state
-    let app_state = AppState {
-        db,
-        inertia: vite::Development::default()
-            .port(3000)
-            .main("resources/js/app.jsx")
-            .lang("en")
-            .title("Ruskit")
-            .into_config(),
-    };
-    
     // Get the router and add state
-    let app = web::routes().await.with_state(app_state);
+    let app = web::routes(db).await;
     
     println!("Starting server...");
     serve(listener, app).await.unwrap();

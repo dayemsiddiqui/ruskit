@@ -1,6 +1,5 @@
 use crate::framework::prelude::*;
 use sea_orm::DatabaseConnection;
-use crate::bootstrap::app::bootstrap;
 use tower_http::services::ServeDir;
 use crate::config;
 use crate::routes;
@@ -23,17 +22,9 @@ impl FromRef<AppState> for InertiaConfig {
     }
 }
 
-pub async fn routes() -> Router<AppState> {
-    // Initialize the application
-    let db = if let Ok(db) = bootstrap().await {
-        db
-    } else {
-        eprintln!("Failed to bootstrap application");
-        std::process::exit(1);
-    };
-
+pub async fn routes(db: DatabaseConnection) -> Router {
     // Set up application configuration
-    let config::AppConfig { db, inertia, auth_layer } = config::AppConfig::new(db).await;
+    let config::AppConfig { inertia, auth_layer, .. } = config::AppConfig::new(db.clone()).await;
     let app_state = AppState { db, inertia };
 
     Router::new()

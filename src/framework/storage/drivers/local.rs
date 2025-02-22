@@ -12,11 +12,16 @@ pub struct LocalDriver {
 }
 
 impl LocalDriver {
-    pub fn new<P: AsRef<Path>>(root: P, url: &str) -> Self {
-        Self {
-            root: root.as_ref().to_path_buf(),
-            url: url.to_string(),
+    pub async fn new<P: AsRef<Path>>(root: P, url: &str) -> IoResult<Self> {
+        let root_path = root.as_ref().to_path_buf();
+        // Create the root directory if it doesn't exist
+        if !root_path.exists() {
+            fs::create_dir_all(&root_path).await?;
         }
+        Ok(Self {
+            root: root_path,
+            url: url.to_string(),
+        })
     }
 
     fn ensure_path(&self, path: &str) -> PathBuf {

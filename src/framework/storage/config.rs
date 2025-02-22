@@ -82,19 +82,19 @@ impl Default for StorageConfig {
 }
 
 /// Initialize the storage system with the provided configuration
-pub fn init_storage(config: StorageConfig) {
+pub async fn init_storage(config: StorageConfig) -> Result<(), Box<dyn std::error::Error>> {
     let driver: Box<dyn crate::framework::storage::StorageDriver + Send + Sync> = match config.default.as_str() {
         "local" => {
             Box::new(LocalDriver::new(
                 config.disks.local.root,
                 &config.disks.local.url,
-            ))
+            ).await?)
         }
         // Add other drivers here when implemented
-        _ => panic!("Unsupported storage driver: {}", config.default),
+        _ => return Err(format!("Unsupported storage driver: {}", config.default).into()),
     };
 
     STORAGE_DRIVER
         .set(Arc::new(RwLock::new(driver)))
-        .expect("Failed to initialize storage driver");
+        .map_err(|_| "Failed to initialize storage driver".into())
 } 

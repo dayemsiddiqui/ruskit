@@ -4,28 +4,26 @@ use crate::framework::prelude::*;
 use crate::app::dtos::user::{CreateUserRequest, UserResponse, UserListResponse};
 use crate::app::entities::{user, user::Entity as User};
 use axum::{
-    extract::{Path, State},
+    extract::Path,
     response::IntoResponse,
     Json,
 };
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set, QueryOrder, PaginatorTrait};
+use sea_orm::{ActiveModelTrait, EntityTrait, Set, QueryOrder, PaginatorTrait};
 use std::time::Duration;
-use serde_json::Value;
 use crate::framework::cache::BoxFuture;
+use crate::framework::database::DB;
 
 /// User Controller handling all user-related endpoints
 pub struct UserController;
 
 impl UserController {
     /// Returns a list of users
-    pub async fn index(State(db): State<DatabaseConnection>) -> impl IntoResponse {
-        // Try to get users from cache first
-        let db_clone = db.clone();
-        let users = Cache::flexible("users:all", Duration::from_secs(300), Duration::from_secs(10), move || {
+    pub async fn index() -> impl IntoResponse {
+        let users = Cache::flexible("users:all", Duration::from_secs(300), Duration::from_secs(10), || {
             async move {
                 let users = User::find()
                     .order_by(user::Column::Id, sea_orm::Order::Desc)
-                    .all(&db_clone)
+                    .all(&*DB::connection())
                     .await
                     .unwrap_or_default();
                 UserListResponse::from(users)
@@ -36,18 +34,14 @@ impl UserController {
     }
 
     /// Returns details for a specific user
-    pub async fn show(
-        State(db): State<DatabaseConnection>,
-        Path(id): Path<i32>
-    ) -> impl IntoResponse {
-        let db_clone = db.clone();
+    pub async fn show(Path(id): Path<i32>) -> impl IntoResponse {
         let user = Cache::flexible(
             &format!("users:{}", id),
             Duration::from_secs(300),
             Duration::from_secs(10),
             move || async move {
                 let user = User::find_by_id(id)
-                    .one(&db_clone)
+                    .one(&*DB::connection())
                     .await
                     .unwrap_or(None);
                 UserResponse::from(user)
@@ -58,10 +52,7 @@ impl UserController {
     }
 
     /// Creates a new user
-    pub async fn store(
-        State(db): State<DatabaseConnection>,
-        Json(payload): Json<CreateUserRequest>
-    ) -> impl IntoResponse {
+    pub async fn store(Json(payload): Json<CreateUserRequest>) -> impl IntoResponse {
         let user = user::ActiveModel {
             name: Set(payload.name),
             email: Set(payload.email),
@@ -72,7 +63,7 @@ impl UserController {
             ..Default::default()
         };
 
-        let user = user.insert(&db).await.unwrap();
+        let user = user.insert(&*DB::connection()).await.unwrap();
         
         // When creating a new user, we should:
         // 1. Cache the new user
@@ -86,12 +77,11 @@ impl UserController {
 
     /// Updates a user
     pub async fn update(
-        State(db): State<DatabaseConnection>,
         Path(id): Path<i32>,
         Json(payload): Json<CreateUserRequest>,
     ) -> impl IntoResponse {
         let user = User::find_by_id(id)
-            .one(&db)
+            .one(&*DB::connection())
             .await
             .unwrap()
             .unwrap();
@@ -101,7 +91,7 @@ impl UserController {
         user.email = Set(payload.email);
         user.updated_at = Set(chrono::Utc::now().timestamp().to_string());
 
-        let user = user.update(&db).await.unwrap();
+        let user = user.update(&*DB::connection()).await.unwrap();
         
         // When updating a user, we should:
         // 1. Update the user's cache
@@ -114,18 +104,15 @@ impl UserController {
     }
 
     /// Deletes a user
-    pub async fn destroy(
-        State(db): State<DatabaseConnection>,
-        Path(id): Path<i32>,
-    ) -> impl IntoResponse {
+    pub async fn destroy(Path(id): Path<i32>) -> impl IntoResponse {
         let user = User::find_by_id(id)
-            .one(&db)
+            .one(&*DB::connection())
             .await
             .unwrap()
             .unwrap();
 
         let user: user::ActiveModel = user.into();
-        user.delete(&db).await.unwrap();
+        user.delete(&*DB::connection()).await.unwrap();
         
         // When deleting a user, we should:
         // 1. Remove the user's cache
@@ -137,14 +124,13 @@ impl UserController {
     }
 
     /// Returns user statistics
-    pub async fn stats(State(db): State<DatabaseConnection>) -> impl IntoResponse {
-        let db_clone = db.clone();
+    pub async fn stats() -> impl IntoResponse {
         let stats = Cache::flexible(
             "user:stats",
             Duration::from_secs(3600), // Cache for 1 hour
             Duration::from_secs(60),   // Grace period of 1 minute
             move || async move {
-                let total_users = User::find().count(&db_clone).await.unwrap_or(0);
+                let total_users = User::find().count(&*DB::connection()).await.unwrap_or(0);
                 json!({
                     "total_users": total_users,
                 })
