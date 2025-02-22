@@ -1,0 +1,23 @@
+# Default storage driver to use
+default = "local"
+
+# Configuration for different storage disks
+[disks.local]
+root = "storage"
+url = "http://localhost:3000/storage"
+
+# Uncomment and configure these sections when implementing S3 or R2 drivers
+# [disks.s3]
+# key = ""
+# secret = ""
+# region = "us-east-1"
+# bucket = "your-bucket"
+# url = "https://your-bucket.s3.amazonaws.com" # optional
+# endpoint = "" # optional, for custom endpoints
+
+# [disks.r2]
+# account_id = ""
+# access_key_id = ""
+# secret_access_key = ""
+# bucket = "your-bucket"
+# url = "https://your-bucket.account-id.r2.cloudflarestorage.com" # optional 
