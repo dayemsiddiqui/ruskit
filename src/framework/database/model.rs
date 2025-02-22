@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
 use sqlx::{FromRow, sqlite::SqliteRow};
 use crate::framework::database::{get_pool, DatabaseError};
-use crate::framework::database::migration::Migration;
 use std::sync::Mutex;
 use std::collections::HashMap;
 use once_cell::sync::Lazy;
@@ -13,34 +12,6 @@ use std::marker::PhantomData;
 use validator::ValidationError;
 use regex::Regex;
 use paste;
-
-type MigrationFn = fn() -> Vec<Migration>;
-
-static MODEL_REGISTRY: Lazy<Mutex<HashMap<String, MigrationFn>>> = Lazy::new(|| Mutex::new(HashMap::new()));
-
-pub fn register_model_with_migrations(model_name: String, migrations_fn: MigrationFn) {
-    MODEL_REGISTRY.lock().unwrap().insert(model_name, migrations_fn);
-}
-
-pub fn get_all_model_migrations() -> Vec<Migration> {
-    let registry = MODEL_REGISTRY.lock().unwrap();
-    let mut migrations = Vec::new();
-    
-    for migrations_fn in registry.values() {
-        migrations.extend(migrations_fn());
-    }
-    
-    // Sort migrations by timestamp prefix to ensure chronological order
-    migrations.sort_by(|a, b| {
-        let a_timestamp = a.name.split('_').next().unwrap_or("0")
-            .parse::<u64>().unwrap_or(0);
-        let b_timestamp = b.name.split('_').next().unwrap_or("0")
-            .parse::<u64>().unwrap_or(0);
-        a_timestamp.cmp(&b_timestamp)
-    });
-    
-    migrations
-}
 
 /// Automatically discover and register all models in the models directory
 pub fn discover_and_register_models() -> std::io::Result<()> {
@@ -65,7 +36,6 @@ pub fn discover_and_register_models() -> std::io::Result<()> {
                                &model_name[1..];
                 let full_type_name = format!("ruskit::app::models::{}", model_name);
                 
-                // The model will register itself when it's used
                 println!("Discovered model: {}", full_type_name);
             }
         }
@@ -344,17 +314,6 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
     /// Get the model's ID
     fn id(&self) -> i64;
 
-    /// Get the migrations for this model
-    fn migrations() -> Vec<Migration>;
-
-    /// Register this model in the registry
-    fn register() {
-        register_model_with_migrations(
-            std::any::type_name::<Self>().to_string(),
-            Self::migrations
-        );
-    }
-
     /// Find a model by its primary key
     async fn find(id: i64) -> Result<Option<Self>, DatabaseError> {
         let pool = get_pool()?;
@@ -446,15 +405,12 @@ pub trait Model: for<'r> FromRow<'r, SqliteRow> + Serialize + DeserializeOwned +
         // Get the ID of the inserted row
         let id: i64 = result.last_insert_rowid();
 
-
         // Commit the transaction
         tx.commit().await?;
 
         // Log the result of the insert
         println!("Insert result: {:?}", result.last_insert_rowid());
         println!("Insert result: {:?}", result.rows_affected());
-       
-        
 
         // Fetch the created record
         let row = sqlx::query_as::<sqlx::Sqlite, Self>(&format!(

@@ -18,19 +18,6 @@
             </thead>
             <tbody>
                 <tr class="bg-slate-100">
-                    <td class="px-4 py-2 font-semibold" colspan="3">Database Commands</td>
-                </tr>
-                <tr>
-                    <td class="px-4 py-2"><code>migrate</code></td>
-                    <td class="px-4 py-2">Run all pending database migrations</td>
-                    <td class="px-4 py-2"><code>cargo kit migrate</code></td>
-                </tr>
-                <tr>
-                    <td class="px-4 py-2"><code>migrate:fresh</code></td>
-                    <td class="px-4 py-2">Drop all tables and re-run all migrations</td>
-                    <td class="px-4 py-2"><code>cargo kit migrate:fresh</code></td>
-                </tr>
-                <tr class="bg-slate-100">
                     <td class="px-4 py-2 font-semibold" colspan="3">Development Commands</td>
                 </tr>
                 <tr>
@@ -48,13 +35,8 @@
                 </tr>
                 <tr>
                     <td class="px-4 py-2"><code>make:model</code></td>
-                    <td class="px-4 py-2">Create a new model with migration</td>
+                    <td class="px-4 py-2">Create a new model</td>
                     <td class="px-4 py-2"><code>cargo kit make:model User</code></td>
-                </tr>
-                <tr>
-                    <td class="px-4 py-2"><code>make:migration</code></td>
-                    <td class="px-4 py-2">Create a new migration for a model</td>
-                    <td class="px-4 py-2"><code>cargo kit make:migration add_email --model User</code></td>
                 </tr>
                 <tr>
                     <td class="px-4 py-2"><code>make:controller</code></td>
@@ -90,12 +72,6 @@
 
     <h2>Available Commands</h2>
 
-    <h3>Database Commands</h3>
-    <ul>
-        <li><code>cargo kit migrate</code> - Run all pending database migrations</li>
-        <li><code>cargo kit migrate:fresh</code> - Drop all tables and re-run all migrations</li>
-    </ul>
-
     <h3>Development Commands</h3>
     <ul>
         <li><code>cargo kit dev</code> - Start development server with hot reload</li>
@@ -107,12 +83,8 @@
     <h4>Models and Database</h4>
     <ul>
         <li>
-            <code>cargo kit make:model &lt;Name&gt;</code> - Create a new model with migration
+            <code>cargo kit make:model &lt;Name&gt;</code> - Create a new model
             <pre><code class="language-bash">cargo kit make:model User</code></pre>
-        </li>
-        <li>
-            <code>cargo kit make:migration &lt;name&gt; --model &lt;ModelName&gt;</code> - Create a new migration for an existing model
-            <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
         </li>
     </ul>
 
@@ -135,7 +107,7 @@
             <pre><code class="language-bash">cargo kit make:all Post</code></pre>
             <p>This command will:</p>
             <ol>
-                <li>Create a model with migration</li>
+                <li>Create a model</li>
                 <li>Create DTOs for requests and responses</li>
                 <li>Create a controller with basic CRUD operations</li>
             </ol>
@@ -171,7 +143,6 @@
     <h3>Model Generation</h3>
     <ul>
         <li>Creates a new model file in <code>src/app/models</code></li>
-        <li>Automatically creates a migration</li>
         <li>Updates <code>mod.rs</code> to include the new model</li>
         <li>Includes basic timestamp fields and ID</li>
     </ul>
@@ -190,27 +161,6 @@
         <li>Includes validation support</li>
         <li>Generates From implementations for model conversion</li>
         <li>Updates <code>mod.rs</code> to include the new DTOs</li>
-    </ul>
-
-    <h3>Migration Generation</h3>
-    <ul>
-        <li>Creates a new migration in the model file</li>
-        <li>Uses timestamp-based ordering</li>
-        <li>Provides up and down migration templates</li>
-    </ul>
-
-    <h3>Factory Generation</h3>
-    <ul>
-        <li>Creates a new factory in <code>src/app/factories</code></li>
-        <li>Includes fake data generation setup</li>
-        <li>Updates <code>mod.rs</code> to include the new factory</li>
-    </ul>
-
-    <h3>Seeder Generation</h3>
-    <ul>
-        <li>Creates a new seeder in <code>src/app/seeders</code></li>
-        <li>Includes basic seeder structure</li>
-        <li>Updates <code>mod.rs</code> to include the new seeder</li>
     </ul>
 
     <h3>Inertia Page Generation</h3>
@@ -232,24 +182,9 @@ cargo kit make:dto UserProfile</code></pre>
         </li>
 
         <li>
-            Use snake_case for migration names:
-            <pre><code class="language-bash">cargo kit make:migration add_email_to_users --model User</code></pre>
-        </li>
-
-        <li>
             When using <code>make:all</code>, ensure the name represents a single entity:
             <pre><code class="language-bash">cargo kit make:all BlogPost  # Good
 cargo kit make:all blog_posts  # Not recommended</code></pre>
-        </li>
-
-        <li>
-            Run migrations after creating or modifying models:
-            <pre><code class="language-bash">cargo kit migrate</code></pre>
-        </li>
-
-        <li>
-            Use <code>migrate:fresh</code> during development to reset the database:
-            <pre><code class="language-bash">cargo kit migrate:fresh</code></pre>
         </li>
     </ol>
 </div>

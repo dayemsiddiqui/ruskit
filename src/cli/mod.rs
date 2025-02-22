@@ -14,14 +14,6 @@ pub async fn run() -> Result<(), CliError> {
         Commands::New { name } => {
             project::create_new_project(&name)?;
         },
-        Commands::Migrate => {
-            println!("Running migrations...");
-            database::run_migrate().await?;
-        },
-        Commands::MigrateFresh => {
-            println!("Dropping all tables and re-running migrations...");
-            database::run_fresh().await?;
-        },
         Commands::EntityGenerate => {
             println!("Generating entities from database schema...");
             database::generate_entities().await?;
@@ -35,11 +27,7 @@ pub async fn run() -> Result<(), CliError> {
         },
         Commands::MakeModel { name } => {
             println!("Creating model {}...", name);
-            make::make_model(&name, true)?;
-        },
-        Commands::MakeMigration { name, model } => {
-            println!("Creating migration {} for model {}...", name, model);
-            make::make_migration(&name, &model)?;
+            make::make_model(&name)?;
         },
         Commands::MakeController { name } => {
             println!("Creating controller {}...", name);
@@ -53,7 +41,7 @@ pub async fn run() -> Result<(), CliError> {
             println!("Creating all components for {}...", name);
             
             println!("\n1. Creating model...");
-            make::make_model(&name, true)?;
+            make::make_model(&name)?;
             
             println!("\n2. Creating DTO...");
             make::make_dto(&name)?;
@@ -62,7 +50,6 @@ pub async fn run() -> Result<(), CliError> {
             make::make_controller(&name)?;
             
             println!("\nSuccessfully created all components!");
-            println!("Run migrations with: cargo kit migrate");
         },
         Commands::InertiaPage { name } => {
             println!("Creating Inertia page components for {}...", name);

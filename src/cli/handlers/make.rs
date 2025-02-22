@@ -4,7 +4,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use console::style;
 
-pub fn make_model(name: &str, with_migration: bool) -> Result<(), CliError> {
+pub fn make_model(name: &str) -> Result<(), CliError> {
     // Create entities directory if it doesn't exist
     let entities_dir = Path::new("src/app/entities");
     if !entities_dir.exists() {
@@ -45,11 +45,6 @@ pub struct {model_name} {{
     // Create model file
     let model_file = models_dir.join(format!("{}.rs", model_name.to_lowercase()));
 
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-
     let model_content = format!(
         r#"use crate::framework::prelude::*;
 use crate::app::entities::{model_name};
@@ -80,32 +75,6 @@ impl Model for {model_name} {{
 
     fn id(&self) -> i64 {{
         self.id
-    }}
-
-    fn factory_definition() -> Self {{
-        let now = chrono::Utc::now().timestamp();
-        Self {{
-            id: 0,
-            // TODO: Add your fake data here using Faker
-            // Example: name: Faker.fake(),
-            created_at: now,
-            updated_at: now,
-        }}
-    }}
-
-    fn migrations() -> Vec<Migration> {{
-        vec![
-            Migration::create("{timestamp}_create_{table_name}_table", |schema| {{
-                schema.create_table("{table_name}", |table| {{
-                    table.id();
-                    // TODO: Add your columns here
-                    table.timestamps();
-                }});
-            }})
-            .down(|schema| {{
-                schema.drop_table("{table_name}");
-            }})
-        ]
     }}
 }}"#
     );
@@ -157,113 +126,6 @@ impl Model for {model_name} {{
 
     fs::write(models_mod_file, models_mod_content)?;
 
-    if with_migration {
-        println!("Don't forget to run migrations with: cargo kit migrate");
-    }
-
-    Ok(())
-}
-
-pub fn make_migration(name: &str, model: &str) -> Result<(), CliError> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    
-    let model_file = format!("src/app/models/{}.rs", model.to_lowercase());
-    let path = Path::new(&model_file);
-    
-    if !path.exists() {
-        return Err(CliError::FileNotFoundError(format!("Model file {} does not exist", model_file)));
-    }
-    
-    let mut content = fs::read_to_string(path)?;
-    
-    if let Some(migrations_start) = content.find("fn migrations() -> Vec<Migration> {") {
-        if let Some(vec_start) = content[migrations_start..].find("vec![") {
-            let vec_content = &content[migrations_start + vec_start..];
-            let mut bracket_count = 0;
-            let mut vec_end = 0;
-            
-            for (i, c) in vec_content.chars().enumerate() {
-                match c {
-                    '[' => bracket_count += 1,
-                    ']' => {
-                        bracket_count -= 1;
-                        if bracket_count == 0 {
-                            vec_end = i;
-                            break;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            
-            if vec_end == 0 {
-                return Err(CliError::MigrationError("Could not find proper end of migrations vector".into()));
-            }
-            
-            let last_migration_pos = vec_content[..vec_end]
-                .rfind("Migration::create")
-                .unwrap_or(vec_end);
-            
-            let insert_pos = if last_migration_pos < vec_end {
-                let remaining = &vec_content[last_migration_pos..vec_end];
-                if let Some(paren_end) = remaining.find("}),") {
-                    migrations_start + vec_start + last_migration_pos + paren_end + 2
-                } else {
-                    migrations_start + vec_start + vec_end
-                }
-            } else {
-                migrations_start + vec_start + vec_end
-            };
-            
-            let migration = if content[..insert_pos].trim_end().ends_with(',') {
-                format!(
-                    r#"
-            Migration::create("{timestamp}_{name}", |schema| {{
-                // TODO: Add your migration schema changes here
-                // Example:
-                // schema.create_table("table_name", |table| {{
-                //     table.id();
-                //     table.text("name").not_null();
-                //     table.timestamp_iso_strings();
-                // }});
-            }})
-            .down(|schema| {{
-                // TODO: Add your rollback schema changes here
-                // Example:
-                // schema.drop_table("table_name");
-            }})"#
-                )
-            } else {
-                format!(
-                    r#",
-            Migration::create("{timestamp}_{name}", |schema| {{
-                // TODO: Add your migration schema changes here
-                // Example:
-                // schema.create_table("table_name", |table| {{
-                //     table.id();
-                //     table.text("name").not_null();
-                //     table.timestamp_iso_strings();
-                // }});
-            }})
-            .down(|schema| {{
-                // TODO: Add your rollback schema changes here
-                // Example:
-                // schema.drop_table("table_name");
-            }})"#
-                )
-            };
-            
-            content.insert_str(insert_pos, &migration);
-            fs::write(path, content)?;
-            
-            println!("Created migration {timestamp}_{name}");
-            println!("Please edit {} to add your migration schema changes", model_file);
-        }
-    }
-    
     Ok(())
 }
 

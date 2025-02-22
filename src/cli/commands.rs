@@ -18,11 +18,6 @@ pub enum Commands {
         /// Name of the project to create
         name: String,
     },
-    /// Run database migrations
-    Migrate,
-    /// Drop all tables and re-run all migrations
-    #[command(name = "migrate:fresh")]
-    MigrateFresh,
     /// Generate entities from database schema
     #[command(name = "entity:generate")]
     EntityGenerate,
@@ -30,20 +25,11 @@ pub enum Commands {
     Dev,
     /// Start production server
     Serve,
-    /// Create a new model with migration
+    /// Create a new model
     #[command(name = "make:model")]
     MakeModel {
         /// Name of the model to create
         name: String,
-    },
-    /// Create a new migration for an existing model
-    #[command(name = "make:migration")]
-    MakeMigration {
-        /// Name of the migration (e.g., "add_email_to_users")
-        name: String,
-        /// Name of the model this migration is for
-        #[arg(short, long)]
-        model: String,
     },
     /// Create a new controller
     #[command(name = "make:controller")]

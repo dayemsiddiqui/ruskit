@@ -3,12 +3,91 @@ use askama_axum::{Response, IntoResponse};
 use axum::extract::Path;
 
 #[derive(Template)]
-#[template(path = "docs.html")]
-pub struct DocsTemplate {
-    pub title: String,
-    pub description: String,
-    pub current_page: String,
+#[template(path = "docs/commands.html")]
+pub struct CommandsTemplate {
+    pub content: String,
     pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/routing.html")]
+pub struct RoutingTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/controllers.html")]
+pub struct ControllersTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/models.html")]
+pub struct ModelsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/views.html")]
+pub struct ViewsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/validation.html")]
+pub struct ValidationTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/dtos.html")]
+pub struct DtosTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/entities.html")]
+pub struct EntitiesTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/middleware.html")]
+pub struct MiddlewareTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/extractors.html")]
+pub struct ExtractorsTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
+
+#[derive(Template)]
+#[template(path = "docs/frontend.html")]
+pub struct FrontendTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
 }
 
 #[derive(Default)]
@@ -24,246 +103,110 @@ pub struct DocItem {
     pub is_active: bool,
 }
 
-impl Default for DocsTemplate {
-    fn default() -> Self {
-        Self {
-            title: String::new(),
-            description: String::new(),
-            current_page: String::new(),
-            sections: vec![
-                DocSection {
-                    title: "Getting Started".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Introduction".to_string(),
-                            path: "/docs/introduction".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Installation".to_string(),
-                            path: "/docs/installation".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-                DocSection {
-                    title: "Basics".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Routing".to_string(),
-                            path: "/docs/routing".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Controllers".to_string(),
-                            path: "/docs/controllers".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Views".to_string(),
-                            path: "/docs/views".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-                DocSection {
-                    title: "Database & Models".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Entities".to_string(),
-                            path: "/docs/entities".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Models".to_string(),
-                            path: "/docs/models".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Migrations".to_string(),
-                            path: "/docs/migrations".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Factories".to_string(),
-                            path: "/docs/factories".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Seeders".to_string(),
-                            path: "/docs/seeders".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-                DocSection {
-                    title: "Frontend".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Frontend Development".to_string(),
-                            path: "/docs/frontend".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-                DocSection {
-                    title: "Advanced".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Middleware".to_string(),
-                            path: "/docs/middleware".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Validation".to_string(),
-                            path: "/docs/validation".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "DTOs".to_string(),
-                            path: "/docs/dtos".to_string(),
-                            is_active: false,
-                        },
-                        DocItem {
-                            title: "Extractors".to_string(),
-                            path: "/docs/extractors".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-                DocSection {
-                    title: "CLI".to_string(),
-                    items: vec![
-                        DocItem {
-                            title: "Commands".to_string(),
-                            path: "/docs/commands".to_string(),
-                            is_active: false,
-                        },
-                    ],
-                },
-            ],
-        }
-    }
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/routing.html")]
-pub struct RoutingTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/controllers.html")]
-pub struct ControllersTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/models.html")]
-pub struct ModelsTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/views.html")]
-pub struct ViewsTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/middleware.html")]
-pub struct MiddlewareTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/validation.html")]
-pub struct ValidationTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/dtos.html")]
-pub struct DtosTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/migrations.html")]
-pub struct MigrationsTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/factories.html")]
-pub struct FactoriesTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/seeders.html")]
-pub struct SeedersTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/commands.html")]
-pub struct CommandsTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/extractors.html")]
-pub struct ExtractorsTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/frontend.html")]
-pub struct FrontendTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
-#[derive(Template, Default)]
-#[template(path = "docs/entities.html")]
-pub struct EntitiesTemplate {
-    pub content: String,
-    pub sections: Vec<DocSection>,
-    pub current_page: String,
-}
-
 pub struct DocsController;
 
 impl DocsController {
     fn get_sections_with_active(page: &str) -> Vec<DocSection> {
         let mut sections = Vec::new();
-        for section in DocsTemplate::default().sections {
+        let default_sections = vec![
+            DocSection {
+                title: "Getting Started".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Introduction".to_string(),
+                        path: "/docs/introduction".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Installation".to_string(),
+                        path: "/docs/installation".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
+                title: "Basics".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Routing".to_string(),
+                        path: "/docs/routing".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Controllers".to_string(),
+                        path: "/docs/controllers".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Views".to_string(),
+                        path: "/docs/views".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
+                title: "Database & Models".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Entities".to_string(),
+                        path: "/docs/entities".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Models".to_string(),
+                        path: "/docs/models".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
+                title: "Frontend".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Frontend Development".to_string(),
+                        path: "/docs/frontend".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
+                title: "Advanced".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Middleware".to_string(),
+                        path: "/docs/middleware".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Validation".to_string(),
+                        path: "/docs/validation".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "DTOs".to_string(),
+                        path: "/docs/dtos".to_string(),
+                        is_active: false,
+                    },
+                    DocItem {
+                        title: "Extractors".to_string(),
+                        path: "/docs/extractors".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
+                title: "CLI".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "Commands".to_string(),
+                        path: "/docs/commands".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+        ];
+
+        for section in default_sections {
             let mut new_section = DocSection {
                 title: section.title,
                 items: Vec::new(),
@@ -285,90 +228,75 @@ impl DocsController {
         let sections = Self::get_sections_with_active(&page);
         
         match page.as_str() {
-            "routing" => RoutingTemplate { 
+            "commands" => CommandsTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "controllers" => ControllersTemplate { 
+            "routing" => RoutingTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "entities" => EntitiesTemplate { 
+            "controllers" => ControllersTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "models" => ModelsTemplate { 
+            "entities" => EntitiesTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "views" => ViewsTemplate { 
+            "models" => ModelsTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "middleware" => MiddlewareTemplate { 
+            "views" => ViewsTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "validation" => ValidationTemplate { 
+            "middleware" => MiddlewareTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "dtos" => DtosTemplate { 
+            "validation" => ValidationTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "migrations" => MigrationsTemplate { 
+            "dtos" => DtosTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "factories" => FactoriesTemplate { 
+            "extractors" => ExtractorsTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "seeders" => SeedersTemplate { 
+            "frontend" => FrontendTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
             }.into_response(),
-            "commands" => CommandsTemplate { 
+            _ => CommandsTemplate {
                 content: String::new(),
                 sections,
-                current_page: page.clone(),
+                current_page: page,
             }.into_response(),
-            "extractors" => ExtractorsTemplate { 
-                content: String::new(),
-                sections,
-                current_page: page.clone(),
-            }.into_response(),
-            "frontend" => FrontendTemplate { 
-                content: String::new(),
-                sections,
-                current_page: page.clone(),
-            }.into_response(),
-            _ => {
-                let mut template = DocsTemplate::default();
-                template.current_page = page;
-                template.title = "Documentation".to_string();
-                template.description = format!("{} - Ruskit Documentation", template.title);
-                template.into_response()
-            }
         }
     }
 
     pub async fn index() -> Response {
-        let mut template = DocsTemplate::default();
-        template.title = "Documentation".to_string();
-        template.description = "Ruskit Documentation".to_string();
-        template.into_response()
+        let sections = Self::get_sections_with_active("introduction");
+        CommandsTemplate {
+            content: String::new(),
+            sections,
+            current_page: "introduction".to_string(),
+        }.into_response()
     }
 } 

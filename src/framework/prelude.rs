@@ -2,7 +2,6 @@
 pub use crate::framework::database::model::{Model, ValidationRules, HasMany, HasOne, BelongsTo, Field, ModelValidation, Rules, Validate};
 pub use crate::framework::database::query_builder::QueryBuilder;
 pub use crate::framework::database::DatabaseError;
-pub use crate::framework::database::migration::Migration;
 
 // Re-export validation related items
 pub use validator::ValidationError;

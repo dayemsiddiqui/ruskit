@@ -28,19 +28,4 @@ impl Model for User {
     fn id(&self) -> i64 {
         self.id
     }
-
-    fn migrations() -> Vec<Migration> {
-        vec![
-            Migration::create("1710000000_create_users_table", |schema| {
-                schema.create_table("users", |table| {
-                    table.id();
-                    // TODO: Add your columns here
-                    table.timestamps();
-                });
-            })
-            .down(|schema| {
-                schema.drop_table("users");
-            })
-        ]
-    }
 }

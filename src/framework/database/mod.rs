@@ -7,10 +7,8 @@ use once_cell::sync::Lazy;
 
 pub mod model;
 pub mod query_builder;
-pub mod migration;
 pub mod config;
 pub mod schema;
-pub mod schema_builder;
 
 use config::DatabaseConfig;
 
