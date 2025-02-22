@@ -14,10 +14,6 @@ pub async fn run() -> Result<(), CliError> {
         Commands::New { name } => {
             project::create_new_project(&name)?;
         },
-        Commands::EntityGenerate => {
-            println!("Generating entities from database schema...");
-            database::generate_entities().await?;
-        },
         Commands::Dev => {
             server::run_dev()?;
         },

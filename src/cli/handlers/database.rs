@@ -4,20 +4,13 @@ use crate::framework::database::{
     config::DatabaseConfig,
 };
 
-pub async fn generate_entities() -> Result<(), CliError> {
-    use crate::framework::database::schema;
-    
+pub async fn initialize_database() -> Result<(), CliError> {
     println!("Initializing database...");
     let db_config = DatabaseConfig::from_env();
-    let pool = initialize(Some(db_config))
+    initialize(Some(db_config))
         .await
         .map_err(|e| CliError::DatabaseError(e.to_string()))?;
     
-    println!("Generating entities from database schema...");
-    schema::generate_all_entities(&pool)
-        .await
-        .map_err(|e| CliError::DatabaseError(e.to_string()))?;
-    
-    println!("Entity generation completed successfully");
+    println!("Database initialization completed successfully");
     Ok(())
 } 

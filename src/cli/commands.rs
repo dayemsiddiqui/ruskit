@@ -18,9 +18,6 @@ pub enum Commands {
         /// Name of the project to create
         name: String,
     },
-    /// Generate entities from database schema
-    #[command(name = "entity:generate")]
-    EntityGenerate,
     /// Start development server with hot reload
     Dev,
     /// Start production server
