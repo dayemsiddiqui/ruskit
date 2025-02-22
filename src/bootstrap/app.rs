@@ -7,6 +7,7 @@ use crate::framework::{
     views::{Metadata, set_global_metadata},
     inertia::InertiaConfig,
     database,
+    cache::config::{CacheConfig, CacheDriver, init_cache},
 };
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
@@ -99,6 +100,9 @@ impl Application {
 
 /// Initialize the application
 pub async fn bootstrap() -> Result<DatabaseConnection, Box<dyn std::error::Error>> {
+    // Load environment variables
+    dotenvy::dotenv().map_err(|e| format!("Failed to load .env file: {}", e))?;
+
     let app = Application::instance().await;
     let mut app = app.write().await;
 
@@ -128,7 +132,27 @@ pub async fn bootstrap() -> Result<DatabaseConnection, Box<dyn std::error::Error
     }).await;
 
     // Initialize database connection
-    let db = database::init().await?;
+    println!("Initializing database connection...");
+    let database_url = std::env::var("DATABASE_URL")
+        .map_err(|_| "DATABASE_URL must be set in environment")?;
+    let db = database::init().await.map_err(|e| format!("Failed to initialize database: {}", e))?;
+    println!("Database connection initialized successfully");
+
+    // Initialize cache
+    println!("Initializing cache...");
+    let cache_config = CacheConfig {
+        driver: if let Ok(_) = std::env::var("REDIS_URL") {
+            CacheDriver::Redis
+        } else {
+            CacheDriver::Database
+        },
+        redis_url: std::env::var("REDIS_URL").ok(),
+        ..Default::default()
+    };
+
+    init_cache(cache_config, db.clone()).await.map_err(|e| format!("Failed to initialize cache: {}", e))?;
+    println!("Cache initialized successfully");
+
     Ok(db)
 }
 

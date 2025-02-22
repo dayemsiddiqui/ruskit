@@ -1,12 +1,20 @@
 use std::net::SocketAddr;
-use ruskit::{web, setup};
-use tokio::net::TcpListener;
 use std::fs;
-use ruskit::framework::export_all_types;
+use tokio::net::TcpListener;
+use axum::serve;
+use axum_inertia::vite;
+use crate::web::AppState;
+use crate::bootstrap::app::bootstrap;
+use crate::framework::typescript::export_all_types;
 use dotenvy::dotenv;
-use axum_inertia::{InertiaConfig, vite};
-use ruskit::web::AppState;
-use sea_orm::DatabaseConnection;
+
+mod cli;
+mod web;
+mod bootstrap;
+mod framework;
+mod app;
+mod config;
+mod routes;
 
 fn generate_typescript_types() -> std::io::Result<()> {
     // Ensure the types directory exists
@@ -26,15 +34,13 @@ fn generate_typescript_types() -> std::io::Result<()> {
 
 #[tokio::main]
 async fn main() {
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let listener = TcpListener::bind(&addr).await.unwrap();
+    println!("Server running on {}", addr);
+
     // Load .env file
     if let Err(e) = dotenv() {
         eprintln!("Warning: Error loading .env file: {}", e);
-    }
-
-    // Setup application
-    if let Err(e) = setup().await {
-        eprintln!("Error setting up application: {}", e);
-        std::process::exit(1);
     }
 
     // Generate TypeScript types
@@ -43,7 +49,16 @@ async fn main() {
     }
 
     // Initialize the application and get the database connection
-    let db = ruskit::bootstrap::app::bootstrap().await.unwrap();
+    let db = match bootstrap().await {
+        Ok(db) => {
+            println!("Application bootstrapped successfully");
+            db
+        },
+        Err(e) => {
+            eprintln!("Failed to bootstrap application: {}", e);
+            std::process::exit(1);
+        }
+    };
     
     // Create the app state
     let app_state = AppState {
@@ -55,18 +70,10 @@ async fn main() {
             .title("Ruskit")
             .into_config(),
     };
-
+    
     // Get the router and add state
     let app = web::routes().await.with_state(app_state);
-
-    // Set up the address to listen on
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-
-    println!("Server running on http://{}", addr);
-
-    // Create the listener
-    let listener = TcpListener::bind(addr).await.unwrap();
-    let service = app.into_make_service();
     
-    axum::serve(listener, service).await.unwrap();
+    println!("Starting server...");
+    serve(listener, app).await.unwrap();
 }

@@ -5,6 +5,10 @@ use once_cell::sync::OnceCell;
 static DB: OnceCell<DatabaseConnection> = OnceCell::new();
 
 pub async fn init() -> Result<DatabaseConnection, DbErr> {
+    if let Some(conn) = DB.get() {
+        return Ok(conn.clone());
+    }
+
     let database_url = std::env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set in environment");
 

@@ -69,3 +69,4 @@ axum-login = "0.12"
 bcrypt = "0.15"
 tower-sessions = "0.10"
 tower-sessions-sqlx-store = { version = "0.10", features = ["sqlite"] }
+redis = { version = "0.24", features = ["tokio-comp"] }
