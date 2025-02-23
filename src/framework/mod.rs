@@ -13,6 +13,7 @@ pub mod config;
 pub mod app;
 pub mod schedule;
 pub mod queue;
+pub mod testing;
 
 // Re-export framework types
 pub use middleware::{
