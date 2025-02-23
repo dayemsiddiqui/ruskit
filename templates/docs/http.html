@@ -1,0 +1,86 @@
+{% extends "docs_base.html" %}
+
+{% block content %}
+<div class="prose prose-slate max-w-none">
+    <h1>HTTP</h1>
+
+    <p>
+        Ruskit provides a powerful HTTP client facade for making HTTP requests. 
+    </p>
+    
+
+    <h2>Making Requests</h2>
+
+    <p>
+        Here's how you can use it:    
+    </p>
+
+    <pre><code class="language-rust">use ruskit::framework::{Http, EndpointConfig, RetryConfig};
+        use std::time::Duration;
+        
+        // Configure multiple endpoints
+        let endpoints = vec![
+            EndpointConfig::new("https://api1.example.com")
+                .with_token("token1")
+                .with_header("X-Custom", "value1"),
+            EndpointConfig::new("https://api2.example.com")
+                .with_token("token2")
+                .with_header("X-Custom", "value2"),
+        ];
+        
+        // Create HTTP client with retry and concurrency config
+        let http = Http::new(endpoints)
+            .with_queue(10) // Enable request queue with max 10 concurrent requests
+            .with_retry(RetryConfig::new()
+                .with_max_retries(3)
+                .with_initial_delay(Duration::from_secs(1))
+                .with_max_delay(Duration::from_secs(10))
+                .with_multiplier(2.0))
+            .with_max_concurrent_requests(20);
+        
+        // Make requests
+        let users: Vec<User> = http.get("/users").await?;
+        let user: User = http.post("/users", &new_user).await?;
+        let updated: User = http.put("/users/1", &user_update).await?;
+        let deleted: User = http.delete("/users/1").await?;</code></pre>
+
+    <h2>For Testing</h2>
+
+    <p>
+        The HTTP facade provides strong support for testing, with fluent helpers for mocking requests and responses.
+    </p>
+
+    <pre><code class="language-rust">
+        #[cfg(test)]
+mod tests {
+    use super::*;
+    use ruskit::framework::MockHttp;
+
+    #[tokio::test]
+    async fn test_api_call() {
+        let mock = MockHttp::new();
+        
+        // Mock a response
+        mock.mock_json("/users/1", 200, &User {
+            id: 1,
+            name: "John Doe".to_string(),
+        }).await;
+
+        // Make the request
+        let user: User = mock.get("/users/1").await.unwrap();
+            assert_eq!(user.name, "John Doe");
+        }
+    }
+    </code></pre>
+
+    <div class="overflow-x-auto">
+        The HTTP facade will automatically:
+        Round-robin between the configured endpoints
+        Retry failed requests with exponential backoff
+        Queue requests if too many concurrent requests are in flight
+        Add authorization headers and custom headers
+        Parse JSON responses into your Rust types
+        Provide a clean testing interface for your HTTP requests
+    </div>
+</div>
+{% endblock %} 

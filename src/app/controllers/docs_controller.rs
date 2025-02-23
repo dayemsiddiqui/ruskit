@@ -114,6 +114,13 @@ pub struct SchedulingTemplate {
     pub current_page: String,
 }
 
+#[derive(Template)]
+#[template(path = "docs/http.html")]
+pub struct HttpTemplate {
+    pub content: String,
+    pub sections: Vec<DocSection>,
+    pub current_page: String,
+}
 #[derive(Default)]
 pub struct DocSection {
     pub title: String,
@@ -204,6 +211,16 @@ impl DocsController {
                     DocItem {
                         title: "Task Scheduling".to_string(),
                         path: "/docs/scheduling".to_string(),
+                        is_active: false,
+                    },
+                ],
+            },
+            DocSection {
+                title: "HTTP".to_string(),
+                items: vec![
+                    DocItem {
+                        title: "HTTP".to_string(),
+                        path: "/docs/http".to_string(),
                         is_active: false,
                     },
                 ],
@@ -328,6 +345,11 @@ impl DocsController {
                 current_page: page.clone(),
             }.into_response(),
             "queues" => QueuesTemplate {
+                content: String::new(),
+                sections,
+                current_page: page.clone(),
+            }.into_response(),
+            "http" => HttpTemplate {
                 content: String::new(),
                 sections,
                 current_page: page.clone(),
