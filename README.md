@@ -1,4 +1,5 @@
 # Ruskit
+**This REPO has been archieved in favor of a more well maintained project https://github.com/dayemsiddiqui/kit, If you are starting a new project please checkout https://github.com/dayemsiddiqui/kit**
 
 Ruskit is a web application framework with expressive, elegant syntax inspired by Laravel, built for Rust. We believe development must be an enjoyable and creative experience. Ruskit takes the pain out of web development by easing common tasks used in many web projects.
 
